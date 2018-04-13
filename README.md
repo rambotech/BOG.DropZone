@@ -27,4 +27,6 @@ The drop zone is intended to be cheap to install and run, and is designed for mu
 
 Also, like its inpiration project (BOG.Pathways.Server), it makes no guarantees of delivery and the sender and receiver take all responsibility for resending missing or dropped work.  BOG.DropZone was designed for simplicity, and as such is a good tool for coordinating data among various processes.  If you need guaranteed delivery, look at another project.
 
+If you need any level of security or anti-tampering, consider BOG.Pathways.Server instead.
+
 
