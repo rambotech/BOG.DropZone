@@ -2,6 +2,17 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Authors>John J Schultz</Authors>
+    <Company>Bits of Genius</Company>
+    <Description>A client for calling the BOG.DropZone API</Description>
+    <PackageProjectUrl>https://github.com/rambotech/BOG.DropZone</PackageProjectUrl>
+    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
+    <RepositoryUrl>https://github.com/rambotech/BOG.DropZone</RepositoryUrl>
+    <RepositoryType>GIT</RepositoryType>
+    <PackageTags>RestAPI aspnetcore netstandard2.0</PackageTags>
+    <PackageReleaseNotes>Initial</PackageReleaseNotes>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <ItemGroup>
