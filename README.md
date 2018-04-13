@@ -4,9 +4,16 @@
 A very simple non-secure, volatile aspnetcore webapi site for inter-application dropoff and pickup of payloads.  It is inspired by BOG.Pathways.Server, but removes security tokens and other auth, and auto-creates a dropzone as needed.
 
 ## How it works
-The drop zone supports four operational actions, and two admin actions.
+A drop zone is a named location for one or more applications to put payloads (strings) into it, and one or more other applications to remove them from it.  The name designates the role and type of traffic for sender's and receivers.  Many drop zones can be created to faciliate many different types of data transfers.
+
+**Important**: one payload from a sender will go to ONLY one receiver.  Observer patterns are not supported.
+
+A drop zone also has a set of key/value pairs as a dictionary.  Unlike payloads, they are not removed when read.  They can be used to hold static reference content, or state.
 
 ### Operational
+
+The drop zone supports four operational actions, and two admin actions.
+
 *Dropoff* :: places a new string (as a payload) onto the queue of other payloads.
 
 *Pickup* :: removes a string payload from the queue and provides it to the calling client.
@@ -15,6 +22,7 @@ The drop zone supports four operational actions, and two admin actions.
 
 *Get Reference* :: returns the refence value for the specified key within the pathway.  Returns an empty string if the key doesn't exist.
 
+NOTE: The reference key "info" is reserved for internal use.  When *Get Reference* is called with this key, a json blob of usage and state statistics for the drop zone is the value.
 
 ### Admin
 *Reset* :: wipes out all pathways, including their payloads and references.
