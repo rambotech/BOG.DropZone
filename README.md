@@ -1,4 +1,6 @@
 # BOG.DropZone
+![alt text](https://github.com/rambotech/BOG.DropZone/blob/master/assets/DropZone.png "They just keep coming and going, and going and coming!")
+
 A very simple non-secure, volatile aspnetcore webapi site for inter-application dropoff and pickup of payloads.  It is inspired by BOG.Pathways.Server, but removes security tokens and other auth, and auto-creates a dropzone as needed.
 
 ## How it works
