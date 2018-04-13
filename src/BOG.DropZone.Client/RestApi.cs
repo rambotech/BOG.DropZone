@@ -10,17 +10,30 @@ using System.Net;
 
 namespace BOG.DropZone.Client
 {
+    /// <summary>
+    /// C# Client for using BOG.DropZone API
+    /// </summary>
     public class RestApi
     {
         private string _baseUrl;
         private HttpClient _client;
 
+        /// <summary>
+        /// Instantiate the class with the base Url
+        /// </summary>
+        /// <param name="baseUrl">The schema://server:port portion of the base URL.  Do net end with a slash.</param>
         public RestApi(string baseUrl)
         {
             _client = new HttpClient();
             _baseUrl = baseUrl;
         }
 
+        /// <summary>
+        /// Place a payload into the pathway's queue
+        /// </summary>
+        /// <param name="pathwayId">The name of the pathway</param>
+        /// <param name="payload">The content to queue as a string value</param>
+        /// <returns></returns>
         public async Task DropOff(string pathwayId, string payload)
         {
             var response = await _client.PostAsync(_baseUrl + $"/api/payload/dropoff/{pathwayId}",
