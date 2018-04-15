@@ -39,4 +39,82 @@ Also, like its inpiration project (BOG.Pathways.Server), it makes no guarantees 
 
 If you need any level of security or anti-tampering, consider BOG.Pathways.Server instead.
 
+## Example usage
+
+Create a console application, and add a reference to BOG.DropZone.Client from either the project here, or from the Nuget package [here](https://www.nuget.org/packages/BOG.DropZone.Client/).  Copy the code below into the main method.
+
+```C#
+using System;
+using System.Threading.Tasks;
+using BOG.DropZone.Client;
+
+namespace BOG.DropZone.Test
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            RunAsync().GetAwaiter().GetResult();
+        }
+
+        static async Task RunAsync()
+        {
+            var restApi = new RestApi("http://localhost:54771");  // adjust the port to the port used by BOG.DropZone
+
+            try
+            {
+                Console.WriteLine("State 1");
+                Console.WriteLine(await restApi.GetReference("CityData", "info"));
+                string[] set = new string[] { "Tallahunda", "Kookamunga", "Whatever" };
+
+                for (int index = 0; index < 20; index++)
+                {
+                    Console.WriteLine($"Add {index}");
+                    await restApi.DropOff("CityData", set[index % 3]);
+                }
+                Console.WriteLine("State 2");
+                Console.WriteLine(await restApi.GetReference("Questions", "info"));
+
+                for (int index = 0; index < 25; index++)
+                {
+                    try
+                    {
+                        Console.WriteLine($"Retrieve {index}");
+                        Console.WriteLine(await restApi.Pickup("CityData"));
+                    }
+                    catch (RestApiNonSuccessException err)
+                    {
+                        Console.WriteLine($"Oops #{index}: {err.StatusCode.ToString()}, {err.Message}");
+                    }
+                    catch (Exception errGeneral)
+                    {
+                        Console.WriteLine($"Crash #{index}: this was unexpected: {errGeneral.Message}");
+                    }
+                }
+
+                Console.WriteLine("Final");
+                Console.WriteLine(await restApi.GetReference("Questions", "info"));
+                Console.WriteLine("Set 1");
+                await restApi.SetReference("Questions", "T1", "The kitty from down the street");
+                Console.WriteLine("Get 1");
+                Console.WriteLine(await restApi.GetReference("Questions", "T1"));
+
+                // await restApi.Reset();
+                // await restApi.Shutdown();
+            }
+            catch (RestApiNonSuccessException err)
+            {
+                Console.WriteLine($"Oops (main): {err.StatusCode.ToString()}, {err.Message}");
+            }
+            catch (Exception err)
+            {
+                Console.WriteLine($"Untrapped: {err.Message.ToString()}");
+            }
+
+            Console.WriteLine("Done");
+            Console.ReadLine();
+        }
+    }
+}
+```
 
