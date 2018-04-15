@@ -28,7 +28,10 @@ namespace BOG.DropZone
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
+
+            // static across controllers and calls.
             services.AddSingleton<IStorage, MemoryStorage>();
+
             // Register the Swagger generator, defining one or more Swagger documents
             services.AddSwaggerGen(c =>
             {
@@ -52,14 +55,14 @@ namespace BOG.DropZone
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, IServiceProvider serviceProvider)
         {
+            var storageArea = serviceProvider.GetService<IStorage>();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
 
             app.UseMvc();
-
-            var x = serviceProvider.GetService<IStorage>();
 
             app.UseSwagger();
 
@@ -79,7 +82,7 @@ namespace BOG.DropZone
             {
                 routes.MapRoute(
                     name: "default",
-                    template: "swagger/ui");
+                    template: "{controller}/{action=Index}/{id?}");
             });
         }
     }
