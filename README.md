@@ -67,7 +67,7 @@ namespace BOG.DropZone.Test
                 Console.WriteLine(await restApi.GetReference("CityData", "info"));
                 string[] set = new string[] { "Tallahunda", "Kookamunga", "Whatever" };
 
-                for (int index = 0; index < 20; index++)
+                for (int index = 0; index < 5; index++)
                 {
                     Console.WriteLine($"Add {index}");
                     await restApi.DropOff("CityData", set[index % 3]);
@@ -75,16 +75,31 @@ namespace BOG.DropZone.Test
                 Console.WriteLine("State 2");
                 Console.WriteLine(await restApi.GetReference("Questions", "info"));
 
-                for (int index = 0; index < 25; index++)
+                var dropZoneName = string.Empty;
+                for (int index = 0; index < 7; index++)
                 {
                     try
                     {
                         Console.WriteLine($"Retrieve {index}");
-                        Console.WriteLine(await restApi.Pickup("CityData"));
+                        dropZoneName = index == 6 ? "MysteryPath" : "CityData";
+                        Console.WriteLine(await restApi.Pickup(dropZoneName));
                     }
                     catch (RestApiNonSuccessException err)
                     {
-                        Console.WriteLine($"Oops #{index}: {err.StatusCode.ToString()}, {err.Message}");
+                        switch (err.StatusCode)
+                        {
+                            case System.Net.HttpStatusCode.NoContent:
+                                Console.WriteLine($"There are no payloads available");
+                                break;
+
+                            case System.Net.HttpStatusCode.NotFound:
+                                Console.WriteLine($"The pathway does not exist: {dropZoneName}");
+                                break;
+
+                            default:
+                                Console.WriteLine($"Oops (main): {err.StatusCode.ToString()}, {err.Message}");
+                                break;
+                        }
                     }
                     catch (Exception errGeneral)
                     {
@@ -93,14 +108,14 @@ namespace BOG.DropZone.Test
                 }
 
                 Console.WriteLine("Final");
-                Console.WriteLine(await restApi.GetReference("Questions", "info"));
+                Console.WriteLine(await restApi.GetReference("CityData", "info"));
                 Console.WriteLine("Set 1");
-                await restApi.SetReference("Questions", "T1", "The kitty from down the street");
+                await restApi.SetReference("CityData", "T1", "The kitty from down the street");
                 Console.WriteLine("Get 1");
-                Console.WriteLine(await restApi.GetReference("Questions", "T1"));
+                Console.WriteLine(await restApi.GetReference("CityData", "T1"));
 
-                // await restApi.Reset();
-                // await restApi.Shutdown();
+                await restApi.Reset();
+                await restApi.Shutdown();
             }
             catch (RestApiNonSuccessException err)
             {
@@ -117,4 +132,3 @@ namespace BOG.DropZone.Test
     }
 }
 ```
-
