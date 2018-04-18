@@ -18,14 +18,14 @@ The drop zone supports four operational actions, and two admin actions.
 
 *Pickup* :: removes a string payload from the queue and provides it to the calling client.
 
-*Set Reference* :: creates a key/value pair in the pathway.
+*Set Reference* :: creates a key/value pair in the drop zone.
 
-*Get Reference* :: returns the refence value for the specified key within the pathway.  Returns an empty string if the key doesn't exist.
+*Get Reference* :: returns the refence value for the specified key within the drop zone.  Returns an empty string if the key doesn't exist.
 
 NOTE: The reference key "info" is reserved for internal use.  When *Get Reference* is called with this key, a json blob of usage and state statistics for the drop zone is the value.
 
 ### Admin
-*Reset* :: wipes out all pathways, including their payloads and references.
+*Reset* :: wipes out all drop zones, including their payloads and references.
 
 *Shutdown* :: kills the web server operation.  It must be retarted from the command line.
 
@@ -93,7 +93,7 @@ namespace BOG.DropZone.Test
                                 break;
 
                             case System.Net.HttpStatusCode.NotFound:
-                                Console.WriteLine($"The pathway does not exist: {dropZoneName}");
+                                Console.WriteLine($"The drop zone does not exist: {dropZoneName}");
                                 break;
 
                             default:
