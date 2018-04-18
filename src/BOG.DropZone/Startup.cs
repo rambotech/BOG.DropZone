@@ -17,14 +17,24 @@ namespace BOG.DropZone
 {
     public class Startup
     {
+        /// <summary>
+        /// The entry point for startup.
+        /// </summary>
+        /// <param name="configuration"></param>
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
         }
 
+        /// <summary>
+        /// Configuration for services.
+        /// </summary>
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
+        /// <summary>
+        /// This method gets called by the runtime. Use this method to add services to the container.
+        /// </summary>
+        /// <param name="services">(injected)</param>
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
@@ -52,7 +62,12 @@ namespace BOG.DropZone
             });
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        /// <summary>
+        /// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        /// </summary>
+        /// <param name="app">(injected)</param>
+        /// <param name="env">(injected)</param>
+        /// <param name="serviceProvider">(injected)</param>
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, IServiceProvider serviceProvider)
         {
             var storageArea = serviceProvider.GetService<IStorage>();

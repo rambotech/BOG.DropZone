@@ -20,7 +20,7 @@ namespace BOG.DropZone
         /// <summary>
         /// The collection of pathways and their data.
         /// </summary>
-        public Dictionary<string, Pathway> PathwayList { get; set; } = new Dictionary<string, Pathway>();
+        public Dictionary<string, Dropzone> DropzoneList { get; set; } = new Dictionary<string, Dropzone>();
         /// <summary>
         /// 
         /// </summary>
@@ -35,7 +35,7 @@ namespace BOG.DropZone
 
         public void Reset()
         {
-            PathwayList.Clear();
+            DropzoneList.Clear();
         }
 
         public void Shutdown()

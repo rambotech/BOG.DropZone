@@ -27,7 +27,7 @@ namespace BOG.DropZone.Controllers
         }
 
         /// <summary>
-        /// Deposit a payload to a pathway
+        /// Deposit a payload to a drop zone
         /// </summary>
         /// <returns>varies: see method declaration</returns>
         [HttpPost("payload/dropoff/{id}", Name = "DropoffPayload")]
@@ -41,32 +41,32 @@ namespace BOG.DropZone.Controllers
             [FromRoute] string id,
             [FromBody] Lockbox payload)
         {
-            if (!_storage.PathwayList.ContainsKey(id))
+            if (!_storage.DropzoneList.ContainsKey(id))
             {
-                _storage.PathwayList.Add(id, new Storage.Pathway());
+                _storage.DropzoneList.Add(id, new Storage.Dropzone());
             }
-            var pathway = _storage.PathwayList[id];
-            if (pathway.PayloadSize + payload.Content.Length > pathway.MaxTotalPayloadsSize)
+            var dropzone = _storage.DropzoneList[id];
+            if (dropzone.PayloadSize + payload.Content.Length > dropzone.MaxTotalDropzonesSize)
             {
-                return StatusCode(429, $"Can't accept: Exceeds maximum payload size of {pathway.MaxTotalPayloadsSize}");
+                return StatusCode(429, $"Can't accept: Exceeds maximum payload size of {dropzone.MaxTotalDropzonesSize}");
             }
-            if (pathway.Payloads.Count >= pathway.MaxPayloadsCount)
+            if (dropzone.Dropzones.Count >= dropzone.MaxDropzonesCount)
             {
-                return StatusCode(429, $"Can't accept: Exceeds maximum payload count of {pathway.MaxPayloadsCount}");
+                return StatusCode(429, $"Can't accept: Exceeds maximum payload count of {dropzone.MaxDropzonesCount}");
             }
-            pathway.PayloadSize += payload.Content.Length;
-            pathway.Payloads.Enqueue(payload);
+            dropzone.PayloadSize += payload.Content.Length;
+            dropzone.Dropzones.Enqueue(payload);
             var info = new Lockbox
             {
-                ContentType = "Pathway",
-                Content = Serializer<Pathway>.ToJson(pathway)
+                ContentType = "drop zone",
+                Content = Serializer<Dropzone>.ToJson(dropzone)
             };
-            _storage.PathwayList[id].References.AddOrUpdate("info", info, (k, o) => info);
+            _storage.DropzoneList[id].References.AddOrUpdate("info", info, (k, o) => info);
             return StatusCode(200, "Payload accepted");
         }
 
         /// <summary>
-        /// Pickup a payload from a pathway
+        /// Pickup a payload from a drop zone
         /// </summary>
         /// <returns>string which is the payload content  (always text/plain)</returns>
         [HttpGet("payload/pickup/{id}", Name = "PickupPayload")]
@@ -78,32 +78,32 @@ namespace BOG.DropZone.Controllers
         [ProducesResponseType(500)]
         public IActionResult PickupPayload([FromRoute] string id)
         {
-            if (!_storage.PathwayList.ContainsKey(id))
+            if (!_storage.DropzoneList.ContainsKey(id))
             {
-                return StatusCode(404, $"Pathway does not exist: {id}");
+                return StatusCode(404, $"drop zone does not exist: {id}");
             }
-            var pathway = _storage.PathwayList[id];
-            if (pathway.Payloads.Count == 0)
+            var dropzone = _storage.DropzoneList[id];
+            if (dropzone.Dropzones.Count == 0)
             {
-                return StatusCode(204, $"No payloads in this pathway: {id}");
+                return StatusCode(204, $"No payloads in this drop zone: {id}");
             }
 
-            if (!pathway.Payloads.TryDequeue(out Lockbox payload))
+            if (!dropzone.Dropzones.TryDequeue(out Lockbox payload))
             {
-                return StatusCode(424, $"Payloads exist, but failed to acquire a payload from this pathway: {id}");
+                return StatusCode(424, $"Dropzones exist, but failed to acquire a payload from this drop zone: {id}");
             }
-            pathway.PayloadSize -= payload.Content.Length;
+            dropzone.PayloadSize -= payload.Content.Length;
             var info = new Lockbox
             {
-                ContentType = "Pathway",
-                Content = Serializer<Pathway>.ToJson(pathway)
+                ContentType = "drop zone",
+                Content = Serializer<Dropzone>.ToJson(dropzone)
             };
-            _storage.PathwayList[id].References.AddOrUpdate("info", info, (k, o) => info);
+            _storage.DropzoneList[id].References.AddOrUpdate("info", info, (k, o) => info);
             return StatusCode(200, payload);
         }
 
         /// <summary>
-        /// Sets the value of a reference key in a pathway.  A reference is a key/value setting.
+        /// Sets the value of a reference key in a dropzone.  A reference is a key/value setting.
         /// </summary>
         /// <returns>varies: see method declaration</returns>
         [HttpPost("reference/set/{id}/{key}", Name = "SetReference")]
@@ -119,57 +119,77 @@ namespace BOG.DropZone.Controllers
             [FromBody] Lockbox value)
         {
             var fixedValue = value ?? new Lockbox();
-            if (!_storage.PathwayList.ContainsKey(id))
+            if (!_storage.DropzoneList.ContainsKey(id))
             {
-                _storage.PathwayList.Add(id, new Storage.Pathway());
+                _storage.DropzoneList.Add(id, new Storage.Dropzone());
             }
-            var pathway = _storage.PathwayList[id];
-            if (pathway.References.ContainsKey(key))
+            var dropzone = _storage.DropzoneList[id];
+            if (dropzone.References.ContainsKey(key))
             {
-                pathway.ReferenceSize -= pathway.References[key].Content.Length;
-                pathway.References.Remove(key, out Lockbox ignored);
+                dropzone.ReferenceSize -= dropzone.References[key].Content.Length;
+                dropzone.References.Remove(key, out Lockbox ignored);
             }
-            if (pathway.ReferenceSize + fixedValue.Content.Length > pathway.MaxTotalReferencesSize)
+            if (dropzone.ReferenceSize + fixedValue.Content.Length > dropzone.MaxTotalReferencesSize)
             {
-                return StatusCode(429, $"Can't accept: Exceeds maximum reference value size of {pathway.MaxTotalReferencesSize}");
+                return StatusCode(429, $"Can't accept: Exceeds maximum reference value size of {dropzone.MaxTotalReferencesSize}");
             }
-            if (pathway.References.Count >= pathway.MaxReferencesCount)
+            if (dropzone.References.Count >= dropzone.MaxReferencesCount)
             {
-                return StatusCode(429, $"Can't accept: Exceeds maximum reference count of {pathway.MaxReferencesCount}");
+                return StatusCode(429, $"Can't accept: Exceeds maximum reference count of {dropzone.MaxReferencesCount}");
             }
-            pathway.ReferenceSize += fixedValue.Content.Length;
-            pathway.References.AddOrUpdate(key.ToLower(), fixedValue, (k, o) => fixedValue);
+            dropzone.ReferenceSize += fixedValue.Content.Length;
+            dropzone.References.AddOrUpdate(key.ToLower(), fixedValue, (k, o) => fixedValue);
             return StatusCode(200, "Reference accepted");
         }
 
         /// <summary>
-        /// Gets the value of a reference key in a pathway.  A reference is a key/value setting.
+        /// Gets the value of a reference key in a dropzone.  A reference is a key/value setting.
         /// </summary>
         /// <returns>string which is the reference value (always text/plain)</returns>
         [HttpGet("reference/get/{id}/{key}", Name = "GetReference")]
         [Produces("application/json")]
         [ProducesResponseType(400, Type = typeof(string))]
         [ProducesResponseType(404, Type = typeof(string))]
-        [ProducesResponseType(200, Type = typeof(Lockbox))]
+        [ProducesResponseType(200, Type = typeof(List<string>))]
         [ProducesResponseType(424, Type = typeof(string))]
         public IActionResult GetReference(
             [FromRoute] string id,
             [FromRoute] string key)
         {
-            if (!_storage.PathwayList.ContainsKey(id))
+            if (!_storage.DropzoneList.ContainsKey(id))
             {
-                _storage.PathwayList.Add(id, new Pathway());
+                _storage.DropzoneList.Add(id, new Dropzone());
             }
-            var pathway = _storage.PathwayList[id];
-            if (pathway.References.Count == 0 || !pathway.References.ContainsKey(key.ToLower()))
+            var dropzone = _storage.DropzoneList[id];
+            if (dropzone.References.Count == 0 || !dropzone.References.ContainsKey(key.ToLower()))
             {
                 return StatusCode(200, new Lockbox());
             }
-            return Ok(pathway.References[key.ToLower()]);
+            return Ok(dropzone.References[key.ToLower()]);
         }
 
         /// <summary>
-        /// Reset: clear all pathways and their data
+        /// Get a list of the refence key names
+        /// </summary>
+        /// <returns>list of strings which contain the reference key names</returns>
+        [HttpGet("reference/list/{id}", Name = "ListReferences")]
+        [Produces("application/json")]
+        [ProducesResponseType(400, Type = typeof(string))]
+        [ProducesResponseType(404, Type = typeof(string))]
+        [ProducesResponseType(200, Type = typeof(Lockbox))]
+        [ProducesResponseType(424, Type = typeof(string))]
+        public IActionResult ListReferences([FromRoute] string id)
+        {
+            if (!_storage.DropzoneList.ContainsKey(id))
+            {
+                _storage.DropzoneList.Add(id, new Dropzone());
+            }
+            var dropzone = _storage.DropzoneList[id];
+            return Ok(dropzone.References.Keys.ToList());
+        }
+
+        /// <summary>
+        /// Reset: clear all drop zones and their data
         /// </summary>
         /// <returns>string</returns>
         [HttpGet("reset", Name = "Reset")]
@@ -178,11 +198,11 @@ namespace BOG.DropZone.Controllers
         public IActionResult Reset()
         {
             _storage.Reset();
-            return Ok("all pathway data cleared");
+            return Ok("all drop zone data cleared");
         }
 
         /// <summary>
-        /// Shutdown: clear all pathways and their data
+        /// Shutdown: clear all drop zones and their data
         /// </summary>
         /// <returns>string</returns>
         [HttpGet("shutdown", Name = "Shutdown")]
@@ -191,7 +211,7 @@ namespace BOG.DropZone.Controllers
         public IActionResult Shutdown()
         {
             _storage.Shutdown();
-            return Ok("all pathway data cleared");
+            return Ok("all drop zone data cleared");
         }
     }
 }

@@ -8,7 +8,7 @@ namespace BOG.DropZone.Interface
 {
     public interface IStorage
     {
-        Dictionary<string, Pathway> PathwayList { get; set; }
+        Dictionary<string, Dropzone> DropzoneList { get; set; }
         void Reset();
         void Shutdown();
     }
