@@ -29,14 +29,14 @@ namespace BOG.DropZone.Client
         }
 
         /// <summary>
-        /// Place a payload into the pathway's queue
+        /// Place a payload into the drop zone's queue
         /// </summary>
-        /// <param name="pathwayId">The name of the pathway</param>
+        /// <param name="dropzoneName">The name of the drop zone</param>
         /// <param name="payload">The content to queue as a string value</param>
         /// <returns></returns>
-        public async Task DropOff(string pathwayId, string payload)
+        public async Task DropOff(string dropzoneName, string payload)
         {
-            var response = await _client.PostAsync(_baseUrl + $"/api/payload/dropoff/{pathwayId}",
+            var response = await _client.PostAsync(_baseUrl + $"/api/payload/dropoff/{dropzoneName}",
                 new StringContent(
                     JsonConvert.SerializeObject(
                         new Lockbox
@@ -48,19 +48,19 @@ namespace BOG.DropZone.Client
             if (response.StatusCode != HttpStatusCode.OK) throw new RestApiNonSuccessException(response.StatusCode);
         }
 
-        public async Task<string> Pickup(string pathwayId)
+        public async Task<string> Pickup(string dropzoneName)
         {
             Lockbox lockbox = null;
-            var response = await _client.GetAsync(_baseUrl + $"/api/payload/pickup/{pathwayId}", HttpCompletionOption.ResponseContentRead);
+            var response = await _client.GetAsync(_baseUrl + $"/api/payload/pickup/{dropzoneName}", HttpCompletionOption.ResponseContentRead);
             if (response.StatusCode != HttpStatusCode.OK) throw new RestApiNonSuccessException(response.StatusCode);
 
             lockbox = Serializer<Lockbox>.FromJson(await response.Content.ReadAsStringAsync());
             return lockbox.Content;
         }
 
-        public async Task SetReference(string pathwayId, string key, string value)
+        public async Task SetReference(string dropzoneName, string key, string value)
         {
-            var response = await _client.PostAsync(_baseUrl + $"/api/reference/set/{pathwayId}/{key}",
+            var response = await _client.PostAsync(_baseUrl + $"/api/reference/set/{dropzoneName}/{key}",
                 new StringContent(
                     JsonConvert.SerializeObject(
                         new Lockbox
@@ -72,10 +72,10 @@ namespace BOG.DropZone.Client
             if (response.StatusCode != HttpStatusCode.OK) throw new RestApiNonSuccessException(response.StatusCode);
         }
 
-        public async Task<string> GetReference(string pathwayId, string key)
+        public async Task<string> GetReference(string dropzoneName, string key)
         {
             Lockbox lockbox = null;
-            var response = await _client.GetAsync(_baseUrl + $"/api/reference/get/{pathwayId}/{key}", HttpCompletionOption.ResponseContentRead);
+            var response = await _client.GetAsync(_baseUrl + $"/api/reference/get/{dropzoneName}/{key}", HttpCompletionOption.ResponseContentRead);
             if (response.StatusCode != HttpStatusCode.OK) throw new RestApiNonSuccessException(response.StatusCode);
 
             lockbox = Serializer<Lockbox>.FromJson(await response.Content.ReadAsStringAsync());

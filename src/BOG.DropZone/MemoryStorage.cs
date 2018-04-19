@@ -18,7 +18,7 @@ namespace BOG.DropZone
         Timer stopTimer = new Timer();
 
         /// <summary>
-        /// The collection of pathways and their data.
+        /// The collection of drop zones and their data.
         /// </summary>
         public Dictionary<string, Dropzone> DropzoneList { get; set; } = new Dictionary<string, Dropzone>();
         /// <summary>
@@ -26,6 +26,9 @@ namespace BOG.DropZone
         /// </summary>
         public Dictionary<string, string> IpCaller = new Dictionary<string, string>();
 
+        /// <summary>
+        /// Constructor.
+        /// </summary>
         public MemoryStorage()
         {
             stopTimer.Enabled = false;
@@ -33,13 +36,20 @@ namespace BOG.DropZone
             stopTimer.Interval = 1000;
         }
 
+        /// <summary>
+        /// Clear all drop zones, including their payloads and reference dictionary.
+        /// </summary>
         public void Reset()
         {
             DropzoneList.Clear();
         }
 
+        /// <summary>
+        /// Shutdowns down the web server, requiring restart at the command line.
+        /// </summary>
         public void Shutdown()
         {
+            // triggers a timer, which does the actual shutdown after the thread is in an idle state.
             stopTimer.Enabled = true;
         }
 
