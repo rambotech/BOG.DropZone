@@ -14,6 +14,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageIconUrl>https://github.com/rambotech/BOG.DropZone</PackageIconUrl>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
