@@ -45,6 +45,7 @@ Create a console application, and add a reference to BOG.DropZone.Client from ei
 
 ```C#
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using BOG.DropZone.Client;
 
@@ -59,67 +60,94 @@ namespace BOG.DropZone.Test
 
         static async Task RunAsync()
         {
-            var restApi = new RestApi("http://localhost:54771");  // adjust the port to the port used by BOG.DropZone
+            // adjust the port to the port used by BOG.DropZone
+            // var restApi = new RestApiCalls("http://localhost:54771");
+            var restApi = new RestApiCalls("http://localhost:54771", "optional_password", "optional_salt");
 
             try
             {
-                Console.WriteLine("State 1");
-                Console.WriteLine(await restApi.GetReference("CityData", "info"));
+                Console.Write("Reset()... ");
+                var result = await restApi.Reset();
+                Console.WriteLine($"{result.StatusCode.ToString()}: {result.HandleAs.ToString()}");
+
+                Console.Write("GetReference()... ");
+                result = await restApi.GetReference("CityData", "Ref1");
+                Console.WriteLine($"{result.StatusCode.ToString()}: {result.HandleAs.ToString()}");
+                Console.WriteLine($"has: {result.Content}");
+                Console.WriteLine();
+
+                Console.Write("SetReference()... ");
+                result = await restApi.SetReference("CityData", "Ref1", "test ref 1");
+                Console.WriteLine($"{result.StatusCode.ToString()}: {result.HandleAs.ToString()}");
+                Console.WriteLine();
+
+                Console.Write("GetReference()... ");
+                result = await restApi.GetReference("CityData", "Ref1");
+                Console.WriteLine($"{result.StatusCode.ToString()}: {result.HandleAs.ToString()}");
+                Console.WriteLine($"has: {result.Content}");
+                Console.WriteLine();
+
+                Console.Write("GetStatistics()... ");
+                result = await restApi.GetStatistics("CityData");
+                Console.WriteLine($"{result.StatusCode.ToString()}: {result.HandleAs.ToString()}");
+                Console.WriteLine($"has: {result.Content}");
+                Console.WriteLine();
+
                 string[] set = new string[] { "Tallahunda", "Kookamunga", "Whatever" };
 
-                for (int index = 0; index < 5; index++)
+                Console.WriteLine("*** Drop off some data ***");
+                for (int index = 0; index < 501; index++)
                 {
-                    Console.WriteLine($"Add {index}");
-                    await restApi.DropOff("CityData", set[index % 3]);
+                    Console.Write($"Add {index}: {set[index % 3]}... ");
+                    // result = await restApi.DropOff("CityData", set[index % 3]);
+                    result = await restApi.DropOff("CityData", bigData);
+                    Console.WriteLine($"{result.StatusCode.ToString()}: {result.HandleAs.ToString()}");
+                    Console.WriteLine($"has: {result.Content}");
+                    Console.WriteLine();
                 }
-                Console.WriteLine("State 2");
-                Console.WriteLine(await restApi.GetReference("Questions", "info"));
+                Console.WriteLine("GetStatistics()...");
+                result = await restApi.GetStatistics("CityData");
+                Console.WriteLine($"{result.StatusCode.ToString()}: {result.HandleAs.ToString()}");
+                Console.WriteLine($"has: {result.Content}");
+                Console.WriteLine();
 
-                var dropZoneName = string.Empty;
-                for (int index = 0; index < 7; index++)
+                Console.WriteLine("*** Pickup some data ***");
+                for (int index = 0; index < 502; index++)
                 {
-                    try
+                    var dropZoneName = index == 6 ? "MysteryPath" : "CityData";
+                    Console.WriteLine($"Retrieve {index} from {dropZoneName}: ");
+                    result = await restApi.Pickup(dropZoneName);
+                    Console.WriteLine($"{result.StatusCode.ToString()}: {result.HandleAs.ToString()}");
+                    if (result.HandleAs == Client.Model.Result.State.OK)
                     {
-                        Console.WriteLine($"Retrieve {index}");
-                        dropZoneName = index == 6 ? "MysteryPath" : "CityData";
-                        Console.WriteLine(await restApi.Pickup(dropZoneName));
+                        Console.WriteLine($"has: {result.Content.Length}");
                     }
-                    catch (RestApiNonSuccessException err)
-                    {
-                        switch (err.StatusCode)
-                        {
-                            case System.Net.HttpStatusCode.NoContent:
-                                Console.WriteLine($"There are no payloads available");
-                                break;
-
-                            case System.Net.HttpStatusCode.NotFound:
-                                Console.WriteLine($"The drop zone does not exist: {dropZoneName}");
-                                break;
-
-                            default:
-                                Console.WriteLine($"Oops (main): {err.StatusCode.ToString()}, {err.Message}");
-                                break;
-                        }
-                    }
-                    catch (Exception errGeneral)
-                    {
-                        Console.WriteLine($"Crash #{index}: this was unexpected: {errGeneral.Message}");
-                    }
+                    Console.WriteLine();
                 }
 
-                Console.WriteLine("Final");
-                Console.WriteLine(await restApi.GetReference("CityData", "info"));
-                Console.WriteLine("Set 1");
-                await restApi.SetReference("CityData", "T1", "The kitty from down the street");
-                Console.WriteLine("Get 1");
-                Console.WriteLine(await restApi.GetReference("CityData", "T1"));
+                Console.WriteLine("*** List references ***");
+                result = await restApi.ListReferences("CityData");
+                Console.WriteLine($"{result.StatusCode.ToString()}: {result.HandleAs.ToString()}");
+                Console.WriteLine();
 
-                await restApi.Reset();
-                await restApi.Shutdown();
-            }
-            catch (RestApiNonSuccessException err)
-            {
-                Console.WriteLine($"Oops (main): {err.StatusCode.ToString()}, {err.Message}");
+                Console.WriteLine("Overload references...");
+                for (int index = 0; index < 51; index++)
+                {
+                    Console.Write($"SetReference(Ref-{index.ToString()})... ");
+                    result = await restApi.SetReference("CityData", $"Ref-{index.ToString()}", $"test ref {index}");
+                    Console.WriteLine($"{result.StatusCode.ToString()}: {result.HandleAs.ToString()}");
+                    Console.WriteLine();
+                }
+
+                Console.WriteLine("*** List references after overload ***");
+                result = await restApi.ListReferences("CityData");
+                Console.WriteLine($"{result.StatusCode.ToString()}: {result.HandleAs.ToString()}");
+                Console.WriteLine($"has: {result.Content}");
+                Console.WriteLine();
+
+                //await restApi.Reset();
+
+                //await restApi.Shutdown();
             }
             catch (Exception err)
             {
