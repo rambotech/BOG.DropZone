@@ -20,7 +20,8 @@ namespace BOG.DropZone.Client.Helpers
         public static readonly JsonSerializerSettings Config = new JsonSerializerSettings
         {
             MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
-            DateParseHandling = DateParseHandling.None,
+            DateParseHandling = DateParseHandling.DateTime,
+            DateFormatHandling = DateFormatHandling.IsoDateFormat,
             NullValueHandling = NullValueHandling.Ignore,
             Formatting = Formatting.Indented
         };

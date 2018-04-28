@@ -12,8 +12,8 @@ namespace BOG.DropZone.Client.Model
         [JsonProperty]
         public string ContentType { get; set; } = "text/plain";
         [JsonProperty]
-        public string MD5 { get; set; } = string.Empty;
-        [JsonProperty]
         public string Content { get; set; } = string.Empty;
+        [JsonProperty]
+        public string MD5 { get; set; } = string.Empty;
     }
 }

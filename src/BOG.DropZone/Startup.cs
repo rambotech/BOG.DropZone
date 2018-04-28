@@ -15,6 +15,9 @@ using Swashbuckle.AspNetCore.Swagger;
 
 namespace BOG.DropZone
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class Startup
     {
         /// <summary>

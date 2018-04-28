@@ -21,10 +21,6 @@ namespace BOG.DropZone
         /// The collection of drop zones and their data.
         /// </summary>
         public Dictionary<string, Dropzone> DropzoneList { get; set; } = new Dictionary<string, Dropzone>();
-        /// <summary>
-        /// 
-        /// </summary>
-        public Dictionary<string, string> IpCaller = new Dictionary<string, string>();
 
         /// <summary>
         /// Constructor.
