@@ -22,6 +22,10 @@ The drop zone supports four operational actions, and two admin actions.
 
 *Get Reference* :: returns the refence value for the specified key within the drop zone.  Returns an empty string if the key doesn't exist.
 
+*List References* :: returns the refence key names available within the drop zone as a string array.
+
+*Get Statistics* :: returns the metrics for the given drop zone.
+
 NOTE: The reference key "info" is reserved for internal use.  When *Get Reference* is called with this key, a json blob of usage and state statistics for the drop zone is the value.
 
 ### Admin
