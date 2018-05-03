@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using BOG.DropZone.Interface;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -41,6 +42,7 @@ namespace BOG.DropZone
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
+            services.AddMvc(o => o.InputFormatters.Insert(0, new RawRequestBodyFormatter()));
 
             // static across controllers and calls.
             services.AddSingleton<IStorage, MemoryStorage>();

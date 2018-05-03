@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using BOG.DropZone.Storage;
 using BOG.SwissArmyKnife;
-using System.Text;
 
 namespace BOG.DropZone.Controllers
 {
@@ -45,10 +44,9 @@ namespace BOG.DropZone.Controllers
         [ProducesResponseType(429, Type = typeof(string))]
         [ProducesResponseType(500)]
         [Produces("text/plain")]
-        [Consumes("application/json")]
         public IActionResult DropoffPayload(
             [FromRoute] string id,
-            [FromBody] Lockbox payload)
+            [FromBody] string payload)
         {
             if (!_storage.DropzoneList.ContainsKey(id))
             {
@@ -59,7 +57,7 @@ namespace BOG.DropZone.Controllers
                 _storage.DropzoneList.Add(id, new Storage.Dropzone());
             }
             var dropzone = _storage.DropzoneList[id];
-            if (dropzone.PayloadSize + payload.Content.Length > dropzone.MaxPayloadSize)
+            if (dropzone.PayloadSize + payload.Length > dropzone.MaxPayloadSize)
             {
                 dropzone.PayloadDropOffsDenied++;
                 return StatusCode(429, $"Can't accept: Exceeds maximum payload size of {dropzone.MaxPayloadSize}");
@@ -69,7 +67,7 @@ namespace BOG.DropZone.Controllers
                 dropzone.PayloadDropOffsDenied++;
                 return StatusCode(429, $"Can't accept: Exceeds maximum payload count of {dropzone.MaxPayloadCount}");
             }
-            dropzone.PayloadSize += payload.Content.Length;
+            dropzone.PayloadSize += payload.Length;
             dropzone.Payloads.Enqueue(payload);
             dropzone.LastDropoff = DateTime.Now;
             return StatusCode(200, "Payload accepted");
@@ -81,9 +79,10 @@ namespace BOG.DropZone.Controllers
         /// <param name="id">the dropzone identifier</param>
         /// <returns>the data to transfer</returns>
         [HttpGet("payload/pickup/{id}", Name = "PickupPayload")]
-        [Produces("application/json")]
-        [ProducesResponseType(200, Type = typeof(Lockbox))]
+        [Produces("text/plain")]
+        [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(204, Type = typeof(string))]
+        [ProducesResponseType(400, Type = typeof(string))]
         [ProducesResponseType(410, Type = typeof(string))]
         [ProducesResponseType(429, Type = typeof(string))]
         [ProducesResponseType(500)]
@@ -103,11 +102,11 @@ namespace BOG.DropZone.Controllers
                 return StatusCode(204, $"No payloads in this drop zone: {id}");
             }
 
-            if (!dropzone.Payloads.TryDequeue(out Lockbox payload))
+            if (!dropzone.Payloads.TryDequeue(out string payload))
             {
                 return StatusCode(410, $"Dropzone exists with payloads, but failed to acquire a payload");
             }
-            dropzone.PayloadSize -= payload.Content.Length;
+            dropzone.PayloadSize -= payload.Length;
             dropzone.LastPickup = DateTime.Now;
             return StatusCode(200, payload);
         }
@@ -149,11 +148,10 @@ namespace BOG.DropZone.Controllers
         [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(429, Type = typeof(string))]
         [ProducesResponseType(500)]
-        [Consumes("application/json")]
         public IActionResult SetReference(
             [FromRoute] string id,
             [FromRoute] string key,
-            [FromBody] Lockbox value)
+            [FromBody] string value)
         {
             var fixedValue = value;
             if (!_storage.DropzoneList.ContainsKey(id))
@@ -167,10 +165,10 @@ namespace BOG.DropZone.Controllers
             var dropzone = _storage.DropzoneList[id];
             if (dropzone.References.ContainsKey(key))
             {
-                dropzone.ReferenceSize -= dropzone.References[key].Content.Length;
-                dropzone.References.Remove(key, out Lockbox ignored);
+                dropzone.ReferenceSize -= dropzone.References[key].Length;
+                dropzone.References.Remove(key, out string ignored);
             }
-            if (dropzone.ReferenceSize + fixedValue.Content.Length > dropzone.MaxReferenceSize)
+            if (dropzone.ReferenceSize + fixedValue.Length > dropzone.MaxReferenceSize)
             {
                 dropzone.ReferenceSetsDenied++;
                 return StatusCode(429, $"Can't accept: Exceeds maximum reference value size of {dropzone.MaxReferenceSize}");
@@ -180,8 +178,8 @@ namespace BOG.DropZone.Controllers
                 dropzone.ReferenceSetsDenied++;
                 return StatusCode(429, $"Can't accept: Exceeds maximum reference count of {dropzone.MaxReferencesCount}");
             }
-            dropzone.References.AddOrUpdate(key.ToLower(), fixedValue, (k, o) => fixedValue);
-            dropzone.ReferenceSize += fixedValue.Content.Length;
+            dropzone.References.AddOrUpdate(key, fixedValue, (k, o) => fixedValue);
+            dropzone.ReferenceSize += fixedValue.Length;
             dropzone.LastSetReference = DateTime.Now;
             return StatusCode(200, "Reference accepted");
         }
@@ -193,10 +191,10 @@ namespace BOG.DropZone.Controllers
         /// <param name="key">the name identifying the value to retrieve</param>
         /// <returns>string which is the reference value (always text/plain)</returns>
         [HttpGet("reference/get/{id}/{key}", Name = "GetReference")]
-        [Produces("application/json")]
+        [Produces("text/plain")]
         [ProducesResponseType(400, Type = typeof(string))]
         [ProducesResponseType(429, Type = typeof(string))]
-        [ProducesResponseType(200, Type = typeof(Lockbox))]
+        [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(500)]
         public IActionResult GetReference(
             [FromRoute] string id,
@@ -211,18 +209,14 @@ namespace BOG.DropZone.Controllers
                 _storage.DropzoneList.Add(id, new Storage.Dropzone());
             }
             var dropzone = _storage.DropzoneList[id];
-            Lockbox result = null;
-            if (dropzone.References.Count == 0 || !dropzone.References.ContainsKey(key.ToLower()))
+            string result = null;
+            if (dropzone.References.Count == 0 || !dropzone.References.ContainsKey(key))
             {
-                result = new Lockbox
-                {
-                    Content = string.Empty
-                };
-                HashMD5.Calculate(result);
+                result = string.Empty;
             }
             else
             {
-                result = dropzone.References[key.ToLower()];
+                result = dropzone.References[key];
             }
             dropzone.LastGetReference = DateTime.Now;
             return Ok(result);
@@ -278,7 +272,7 @@ namespace BOG.DropZone.Controllers
         public IActionResult Shutdown()
         {
             _storage.Shutdown();
-            return Ok("all drop zone data cleared");
+            return Ok("shutdown requested. bye.");
         }
     }
 }

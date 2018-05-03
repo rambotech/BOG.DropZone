@@ -22,7 +22,6 @@ namespace BOG.DropZone.Client
         private string _password = null;
         private string _salt = null;
         private HttpClient _client;
-        private CipherUtility _cipher;
 
         /// <summary>
         /// Instantiate the class with the base Url
@@ -44,7 +43,6 @@ namespace BOG.DropZone.Client
             {
                 throw new ArgumentException("Neither password nor salt can be null or an empty string.");
             }
-            _cipher = new CipherUtility(new AesManaged());
         }
 
         /// <summary>
@@ -56,19 +54,26 @@ namespace BOG.DropZone.Client
         public async Task<Result> DropOff(string dropzoneName, string data)
         {
             var result = new Result { HandleAs = Result.State.OK };
+            string payload = null;
             try
             {
-                var payload = _password == null ? data : _cipher.Encrypt(data, _password, _salt, Base64FormattingOptions.InsertLineBreaks);
-                var response = await _client.PostAsync(_baseUrl + $"/api/payload/dropoff/{dropzoneName}",
+                if (_password == null)
+                {
+                    payload = data ?? string.Empty;
+                }
+                else
+                {
+                    var secureGram = new SecureGram();
+                    secureGram.Message = data;
+                    secureGram.MessageLength = data.Length;
+                    secureGram.CreateGramContent(_password, _salt);
+                    payload = JsonConvert.SerializeObject(secureGram);
+                }
+                var response = await _client.PostAsync(_baseUrl + $"/api/payload/dropoff/{dropzoneName}", 
                     new StringContent(
-                        JsonConvert.SerializeObject(
-                            new Lockbox
-                            {
-                                Content = payload,
-                                MD5 = Hasher.GetHashFromStringContent(payload, Encoding.UTF8, Hasher.HashMethod.MD5)
-                            }),
+                        payload,
                         Encoding.UTF8,
-                        "application/json"));
+                        "text/plain"));
                 result.StatusCode = response.StatusCode;
                 switch (response.StatusCode)
                 {
@@ -121,20 +126,23 @@ namespace BOG.DropZone.Client
                 switch (response.StatusCode)
                 {
                     case HttpStatusCode.OK:
-                        Lockbox lockbox = null;
-                        lockbox = Serializer<Lockbox>.FromJson(await response.Content.ReadAsStringAsync());
-                        if (string.Compare(
-                            lockbox.MD5,
-                            Hasher.GetHashFromStringContent(lockbox.Content, Encoding.UTF8, Hasher.HashMethod.MD5),
-                            true) != 0)
+                        result.Message = await response.Content.ReadAsStringAsync();
+                        if (!string.IsNullOrEmpty(_password))
                         {
-                            result.HandleAs = Result.State.DataCompromised;
-                            result.Message = "MD5 integrity check failed";
+                            var secureGram = new SecureGram();
+                            secureGram.LoadGramContent(result.Message, _password, _salt);
+                            result.Message = secureGram.Message;
+                            if (secureGram.Message.Length != secureGram.MessageLength)
+                            {
+                                result.HandleAs = Result.State.DataCompromised;
+                                result.Message = $"Secure payload length mismatch: expected {secureGram.MessageLength} but was {secureGram.Message.Length}";
+                            }
                         }
-                        else
-                        {
-                            result.Content = _password == null ? lockbox.Content : _cipher.Decrypt(lockbox.Content, _password, _salt);
-                        }
+                        break;
+
+                    case HttpStatusCode.BadRequest:
+                        result.HandleAs = Result.State.UnexpectedResponse;
+                        result.Message = response.ReasonPhrase;
                         break;
 
                     case HttpStatusCode.Conflict:
@@ -143,11 +151,8 @@ namespace BOG.DropZone.Client
                         break;
 
                     case HttpStatusCode.NoContent:
-                        result.HandleAs = Result.State.NoDataAvailable;
-                        break;
-
                     case HttpStatusCode.Gone:
-                        result.HandleAs = Result.State.DataCompromised;
+                        result.HandleAs = Result.State.NoDataAvailable;
                         break;
 
                     case HttpStatusCode.InternalServerError:
@@ -221,19 +226,23 @@ namespace BOG.DropZone.Client
         public async Task<Result> SetReference(string dropzoneName, string key, string value)
         {
             var result = new Result { HandleAs = Result.State.OK };
+            string payload = null;
             try
             {
-                var payload = _password == null ? value : _cipher.Encrypt(value, _password, _salt, Base64FormattingOptions.InsertLineBreaks);
+                if (_password == null)
+                {
+                    payload = value ?? string.Empty;
+                }
+                else
+                {
+                    var secureGram = new SecureGram();
+                    secureGram.Message = value;
+                    secureGram.MessageLength = value.Length;
+                    secureGram.CreateGramContent(_password, _salt);
+                    payload = JsonConvert.SerializeObject(secureGram);
+                }
                 var response = await _client.PostAsync(_baseUrl + $"/api/reference/set/{dropzoneName}/{key}",
-                    new StringContent(
-                        JsonConvert.SerializeObject(
-                            new Lockbox
-                            {
-                                Content = payload,
-                                MD5 = Hasher.GetHashFromStringContent(payload, Encoding.UTF8, Hasher.HashMethod.MD5)
-                            }),
-                        Encoding.UTF8,
-                        "application/json"));
+                    new StringContent(payload, Encoding.UTF8, "text/plain"));
                 result.StatusCode = response.StatusCode;
                 switch (response.StatusCode)
                 {
@@ -280,19 +289,17 @@ namespace BOG.DropZone.Client
                 switch (response.StatusCode)
                 {
                     case HttpStatusCode.OK:
-                        Lockbox lockbox = null;
-                        lockbox = Serializer<Lockbox>.FromJson(await response.Content.ReadAsStringAsync());
-                        if (string.Compare(
-                                lockbox.MD5,
-                                Hasher.GetHashFromStringContent(lockbox.Content, Encoding.UTF8, Hasher.HashMethod.MD5),
-                                true) != 0)
+                        result.Message = await response.Content.ReadAsStringAsync();
+                        if (!string.IsNullOrEmpty(_password))
                         {
-                            result.HandleAs = Result.State.DataCompromised;
-                            result.Message = "MD5 integrity check failed";
-                        }
-                        else
-                        {
-                            result.Content = _password == null ? lockbox.Content : _cipher.Decrypt(lockbox.Content, _password, _salt);
+                            var secureGram = new SecureGram();
+                            secureGram.LoadGramContent(result.Message, _password, _salt);
+                            result.Message = secureGram.Message;
+                            if (secureGram.Message.Length != secureGram.MessageLength)
+                            {
+                                result.HandleAs = Result.State.DataCompromised;
+                                result.Message = $"Secure value length mismatch: expected {secureGram.MessageLength} but was {secureGram.Message.Length}";
+                            }
                         }
                         break;
 
@@ -406,7 +413,7 @@ namespace BOG.DropZone.Client
             return result;
         }
 
-        public async Task <Result> Shutdown()
+        public async Task<Result> Shutdown()
         {
             var result = new Result { HandleAs = Result.State.OK };
             try

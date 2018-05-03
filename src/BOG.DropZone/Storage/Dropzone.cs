@@ -102,12 +102,12 @@ namespace BOG.DropZone.Storage
         /// The payload storage.
         /// </summary>
         [JsonIgnore]
-        public ConcurrentQueue<Lockbox> Payloads { get; set; } = new ConcurrentQueue<Lockbox>();
+        public ConcurrentQueue<string> Payloads { get; set; } = new ConcurrentQueue<string>();
 
         /// <summary>
         /// The reference storage.
         /// </summary>
         [JsonIgnore]
-        public ConcurrentDictionary<string, Lockbox> References { get; set; } = new ConcurrentDictionary<string, Lockbox>();
+        public ConcurrentDictionary<string, string> References { get; set; } = new ConcurrentDictionary<string, string>();
     }
 }
