@@ -12,7 +12,7 @@ A drop zone also has a set of key/value pairs as a dictionary.  Unlike payloads,
 
 ### Operational
 
-The drop zone supports four operational actions, and two admin actions.
+The drop zone supports six operational actions, and two admin actions.
 
 *Dropoff* :: places a new string (as a payload) onto the queue of other payloads.
 
@@ -41,7 +41,7 @@ The drop zone is intended to be cheap to install and run, and is designed for mu
 
 Also, like its inspiration project (BOG.Pathways.Server), it makes no guarantees of delivery and the sender and receiver take all responsibility for resending missing or dropped work.  BOG.DropZone was designed for simplicity, and as such is a good tool for coordinating data among various processes.  If you need guaranteed delivery, look at another project.
 
-If you need any level of security or anti-tampering, consider BOG.Pathways.Server instead.
+If you need any level of security or anti-tampering, check out the SecureGram class in [BOG.SwissArmyKnife](https://www.nuget.org/packages/BOG.SwissArmyKnife/).  It's source repo is a sister project in my repo collection here.
 
 ## Example usage
 
