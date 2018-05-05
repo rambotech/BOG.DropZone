@@ -99,7 +99,7 @@ namespace BOG.DropZone.Controllers
             var dropzone = _storage.DropzoneList[id];
             if (dropzone.Payloads.Count == 0)
             {
-                return StatusCode(204, $"No payloads in this drop zone: {id}");
+                return StatusCode(204);
             }
 
             if (!dropzone.Payloads.TryDequeue(out string payload))
