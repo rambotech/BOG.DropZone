@@ -52,7 +52,7 @@ namespace BOG.DropZone
             {
                 c.SwaggerDoc("v1", new Info
                 {
-                    Version = "v1",
+                    Version = $"v{this.GetType().Assembly.GetName().Version.ToString()}",
                     Title = "BOG.DropZone API",
                     Description = "A non-secure, volatile drop-off and pickup location for quick, inter-application data transfer",
                     TermsOfService = "None",
