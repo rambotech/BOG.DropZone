@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net;
 using System.Collections.Generic;
+using BOG.DropZone.Client.Entity;
 
 namespace BOG.DropZone.Client
 {
@@ -22,6 +23,8 @@ namespace BOG.DropZone.Client
         private string _password = null;
         private string _salt = null;
         private HttpClient _client;
+        private bool _UseEncryption = false;
+        private BOG.SwissArmyKnife.CipherUtility _cipher = new CipherUtility();
 
         /// <summary>
         /// Instantiate the class with the base Url
@@ -43,7 +46,47 @@ namespace BOG.DropZone.Client
             {
                 throw new ArgumentException("Neither password nor salt can be null or an empty string.");
             }
+            _UseEncryption = true;
         }
+
+        #region Payload Helper Methods
+        private string BuildPayloadGram(string payload)
+        {
+            return Serializer<PayloadGram>.ToJson(new PayloadGram
+            {
+                IsEncrypted = _UseEncryption,
+                Length = payload.Length,
+                Payload = _UseEncryption ? _cipher.Encrypt(payload, _password, _salt, Base64FormattingOptions.None) : payload,
+                HashValidation =  Hasher.GetHashFromStringContent(payload, Encoding.UTF8, Hasher.HashMethod.SHA256)
+            });
+        }
+
+        private string ExtractPayloadFromGram(string payloadGram)
+        {
+            var gram = Serializer<PayloadGram>.FromJson(payloadGram);
+            var originalPayload = string.Empty;
+            var originalPayloadHash = string.Empty;
+            if (gram.IsEncrypted)
+            {
+                originalPayload = _cipher.Decrypt(gram.Payload, _password, _salt);
+            }
+            else
+            {
+                originalPayload = gram.Payload;
+            }
+            originalPayloadHash = Hasher.GetHashFromStringContent(originalPayload, Encoding.UTF8, Hasher.HashMethod.SHA256);
+            if (gram.Length != originalPayload.Length)
+            {
+                throw new ArgumentOutOfRangeException($"Expected length of {gram.Length}, but got {originalPayload.Length}");
+            }
+            if (string.Compare(gram.HashValidation, originalPayloadHash, false) != 0)
+            {
+                throw new ArgumentOutOfRangeException($"Expected hash validation value of {gram.HashValidation}, but got {originalPayloadHash}");
+            }
+            return originalPayload;
+        }
+
+        #endregion
 
         /// <summary>
         /// Place a payload into the drop zone's queue
@@ -54,24 +97,12 @@ namespace BOG.DropZone.Client
         public async Task<Result> DropOff(string dropzoneName, string data)
         {
             var result = new Result { HandleAs = Result.State.OK };
-            string payload = null;
+            var datagram = BuildPayloadGram(data);
             try
             {
-                if (_password == null)
-                {
-                    payload = data ?? string.Empty;
-                }
-                else
-                {
-                    var secureGram = new SecureGram();
-                    secureGram.Message = data;
-                    secureGram.MessageLength = data.Length;
-                    secureGram.CreateGramContent(_password, _salt);
-                    payload = JsonConvert.SerializeObject(secureGram);
-                }
                 var response = await _client.PostAsync(_baseUrl + $"/api/payload/dropoff/{dropzoneName}", 
                     new StringContent(
-                        payload,
+                        datagram,
                         Encoding.UTF8,
                         "text/plain"));
                 result.StatusCode = response.StatusCode;
@@ -126,17 +157,14 @@ namespace BOG.DropZone.Client
                 switch (response.StatusCode)
                 {
                     case HttpStatusCode.OK:
-                        result.Message = await response.Content.ReadAsStringAsync();
-                        if (!string.IsNullOrEmpty(_password))
+                        try
                         {
-                            var secureGram = new SecureGram();
-                            secureGram.LoadGramContent(result.Message, _password, _salt);
-                            result.Message = secureGram.Message;
-                            if (secureGram.Message.Length != secureGram.MessageLength)
-                            {
-                                result.HandleAs = Result.State.DataCompromised;
-                                result.Message = $"Secure payload length mismatch: expected {secureGram.MessageLength} but was {secureGram.Message.Length}";
-                            }
+                            result.Message = ExtractPayloadFromGram(await response.Content.ReadAsStringAsync());
+                        }
+                        catch (ArgumentOutOfRangeException err)
+                        { 
+                            result.HandleAs = Result.State.DataCompromised;
+                            result.Message = err.Message;
                         }
                         break;
 
@@ -226,23 +254,11 @@ namespace BOG.DropZone.Client
         public async Task<Result> SetReference(string dropzoneName, string key, string value)
         {
             var result = new Result { HandleAs = Result.State.OK };
-            string payload = null;
+            var datagram = BuildPayloadGram(value);
             try
             {
-                if (_password == null)
-                {
-                    payload = value ?? string.Empty;
-                }
-                else
-                {
-                    var secureGram = new SecureGram();
-                    secureGram.Message = value;
-                    secureGram.MessageLength = value.Length;
-                    secureGram.CreateGramContent(_password, _salt);
-                    payload = JsonConvert.SerializeObject(secureGram);
-                }
                 var response = await _client.PostAsync(_baseUrl + $"/api/reference/set/{dropzoneName}/{key}",
-                    new StringContent(payload, Encoding.UTF8, "text/plain"));
+                    new StringContent(datagram, Encoding.UTF8, "text/plain"));
                 result.StatusCode = response.StatusCode;
                 switch (response.StatusCode)
                 {
@@ -289,17 +305,14 @@ namespace BOG.DropZone.Client
                 switch (response.StatusCode)
                 {
                     case HttpStatusCode.OK:
-                        result.Message = await response.Content.ReadAsStringAsync();
-                        if (!string.IsNullOrEmpty(_password))
+                        try
                         {
-                            var secureGram = new SecureGram();
-                            secureGram.LoadGramContent(result.Message, _password, _salt);
-                            result.Message = secureGram.Message;
-                            if (secureGram.Message.Length != secureGram.MessageLength)
-                            {
-                                result.HandleAs = Result.State.DataCompromised;
-                                result.Message = $"Secure value length mismatch: expected {secureGram.MessageLength} but was {secureGram.Message.Length}";
-                            }
+                            result.Message = ExtractPayloadFromGram(await response.Content.ReadAsStringAsync());
+                        }
+                        catch (ArgumentOutOfRangeException err)
+                        {
+                            result.HandleAs = Result.State.DataCompromised;
+                            result.Message = err.Message;
                         }
                         break;
 
