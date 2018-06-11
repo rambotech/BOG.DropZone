@@ -307,7 +307,8 @@ namespace BOG.DropZone.Client
                     case HttpStatusCode.OK:
                         try
                         {
-                            result.Message = ExtractPayloadFromGram(await response.Content.ReadAsStringAsync());
+                            var body = await response.Content.ReadAsStringAsync();
+                            result.Message = body.Length == 0 ? string.Empty : ExtractPayloadFromGram(body);
                         }
                         catch (ArgumentOutOfRangeException err)
                         {
