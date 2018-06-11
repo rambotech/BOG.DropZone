@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <Authors>John J Schultz</Authors>
     <Company>Bits of Genius</Company>
-    <Description>A client for calling the BOG.DropZone API</Description>
+    <Description>A client for calling the BOG.DropZone API, which supports optional encryption.</Description>
     <PackageProjectUrl>https://github.com/rambotech/BOG.DropZone</PackageProjectUrl>
     <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
     <RepositoryUrl>https://github.com/rambotech/BOG.DropZone</RepositoryUrl>
@@ -13,7 +13,7 @@
     <PackageReleaseNotes>Initial</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageIconUrl>https://github.com/rambotech/BOG.DropZone</PackageIconUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/rambotech/BOG.DropZone/master/assets/parachute.ico</PackageIconUrl>
     <Version>1.4.0</Version>
     <AssemblyVersion>1.4.0.0</AssemblyVersion>
     <FileVersion>1.4.0.0</FileVersion>
