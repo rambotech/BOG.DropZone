@@ -11,7 +11,7 @@ namespace BOG.DropZone.Client.Entity
         [JsonProperty]
         public string Payload { get; set; } = string.Empty;
         [JsonProperty]
-        public int Length { get; set; } = 0;
+        public string Length { get; set; } = string.Empty;
         [JsonProperty]
         public string HashValidation { get; set; } = string.Empty;
         [JsonProperty]

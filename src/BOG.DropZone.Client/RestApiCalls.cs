@@ -50,42 +50,79 @@ namespace BOG.DropZone.Client
         }
 
         #region Payload Helper Methods
+        private string MakeRandomCharacters(int minLength, int maxLength)
+        {
+            var result = new StringBuilder();
+            var rnd = new Random(DateTime.Now.Millisecond);
+            int length = rnd.Next(minLength, maxLength);
+            for (int index = 0; index < length; index++)
+            {
+                result.Append((char)rnd.Next(48, 57));
+            }
+            return result.ToString();
+        }
+
         private string BuildPayloadGram(string payload)
         {
             return Serializer<PayloadGram>.ToJson(new PayloadGram
             {
                 IsEncrypted = _UseEncryption,
-                Length = payload.Length,
-                Payload = _UseEncryption ? _cipher.Encrypt(payload, _password, _salt, Base64FormattingOptions.None) : payload,
-                HashValidation =  Hasher.GetHashFromStringContent(payload, Encoding.UTF8, Hasher.HashMethod.SHA256)
+                Length = _UseEncryption
+                    ? _cipher.Encrypt(
+                        string.Format("{0},{1},{2}",
+                            MakeRandomCharacters(3, 5),
+                            payload.Length,
+                            MakeRandomCharacters(4, 7)),
+                            _password,
+                            _salt,
+                            Base64FormattingOptions.None)
+                    : payload.Length.ToString(),
+                Payload = _UseEncryption
+                    ? _cipher.Encrypt(
+                            payload,
+                            _password,
+                            _salt,
+                            Base64FormattingOptions.None)
+                    : payload,
+                HashValidation = _UseEncryption
+                    ? _cipher.Encrypt(
+                        Hasher.GetHashFromStringContent(payload, Encoding.UTF8, Hasher.HashMethod.SHA256),
+                        _password,
+                        _salt,
+                        Base64FormattingOptions.None)
+                    : Hasher.GetHashFromStringContent(payload, Encoding.UTF8, Hasher.HashMethod.SHA256)
             });
         }
 
         private string ExtractPayloadFromGram(string payloadGram)
         {
             var gram = Serializer<PayloadGram>.FromJson(payloadGram);
-            var originalPayload = string.Empty;
-            var originalPayloadHash = string.Empty;
+            var originalPayload = gram.Payload;
+            var originalPayloadHash = gram.HashValidation;
+            int originalPayloadLength = -1;
             if (gram.IsEncrypted)
             {
                 originalPayload = _cipher.Decrypt(gram.Payload, _password, _salt);
+                originalPayloadHash = _cipher.Decrypt(gram.HashValidation, _password, _salt);
+                var payloadLength = _cipher.Decrypt(gram.Length, _password, _salt);
+                int.TryParse(payloadLength.Split(new char[] { ',' })[1], out originalPayloadLength);
             }
             else
             {
-                originalPayload = gram.Payload;
+                int.TryParse(gram.Length, out originalPayloadLength);
             }
-            originalPayloadHash = Hasher.GetHashFromStringContent(originalPayload, Encoding.UTF8, Hasher.HashMethod.SHA256);
-            if (gram.Length != originalPayload.Length)
+            if (originalPayloadLength != originalPayload.Length)
             {
-                throw new ArgumentOutOfRangeException($"Expected length of {gram.Length}, but got {originalPayload.Length}");
+                throw new ArgumentOutOfRangeException($"Expected length of {originalPayload.Length}, but got {originalPayloadLength}");
             }
-            if (string.Compare(gram.HashValidation, originalPayloadHash, false) != 0)
+            if (string.Compare(
+                Hasher.GetHashFromStringContent(originalPayload, Encoding.UTF8, Hasher.HashMethod.SHA256),
+                originalPayloadHash, false) != 0)
             {
                 throw new ArgumentOutOfRangeException($"Expected hash validation value of {gram.HashValidation}, but got {originalPayloadHash}");
             }
             return originalPayload;
         }
-
         #endregion
 
         /// <summary>
@@ -100,7 +137,7 @@ namespace BOG.DropZone.Client
             var datagram = BuildPayloadGram(data);
             try
             {
-                var response = await _client.PostAsync(_baseUrl + $"/api/payload/dropoff/{dropzoneName}", 
+                var response = await _client.PostAsync(_baseUrl + $"/api/payload/dropoff/{dropzoneName}",
                     new StringContent(
                         datagram,
                         Encoding.UTF8,
@@ -162,7 +199,7 @@ namespace BOG.DropZone.Client
                             result.Message = ExtractPayloadFromGram(await response.Content.ReadAsStringAsync());
                         }
                         catch (ArgumentOutOfRangeException err)
-                        { 
+                        {
                             result.HandleAs = Result.State.DataCompromised;
                             result.Message = err.Message;
                         }
