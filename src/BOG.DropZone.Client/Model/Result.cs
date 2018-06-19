@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -22,9 +23,11 @@ namespace BOG.DropZone.Client.Model
         };
 
         [JsonProperty]
+        [JsonConverter(typeof(StringEnumConverter))]
         public State HandleAs { get; set; } = State.OK;
 
         [JsonProperty]
+        [JsonConverter(typeof(StringEnumConverter))]
         public HttpStatusCode StatusCode { get; set; } = HttpStatusCode.Unused;
 
         [JsonProperty]
