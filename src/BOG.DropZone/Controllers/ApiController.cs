@@ -1,14 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using BOG.DropZone.Interface;
-using BOG.DropZone.Client.Model;
 using BOG.DropZone.Client.Helpers;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using BOG.DropZone.Storage;
-using BOG.SwissArmyKnife;
 
 namespace BOG.DropZone.Controllers
 {
@@ -35,28 +31,28 @@ namespace BOG.DropZone.Controllers
         /// <summary>
         /// Deposit a payload to a drop zone
         /// </summary>
-        /// <param name="id">the dropzone identifier</param>
+        /// <param name="dropzoneName">the dropzone identifier</param>
         /// <param name="payload">the content to transfer</param>
         /// <returns>varies: see method declaration</returns>
-        [HttpPost("payload/dropoff/{id}", Name = "DropoffPayload")]
+        [HttpPost("payload/dropoff/{dropzoneName}", Name = "DropoffPayload")]
         [ProducesResponseType(400, Type = typeof(string))]
         [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(429, Type = typeof(string))]
         [ProducesResponseType(500)]
         [Produces("text/plain")]
         public IActionResult DropoffPayload(
-            [FromRoute] string id,
+            [FromRoute] string dropzoneName,
             [FromBody] string payload)
         {
-            if (!_storage.DropzoneList.ContainsKey(id))
+            if (!_storage.DropzoneList.ContainsKey(dropzoneName))
             {
                 if (_storage.DropzoneList.Count >= MaxDropzones)
                 {
-                    return StatusCode(429, $"Can't create new dropzone {id}.. at maximum of {MaxDropzones} dropzone definitions.");
+                    return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {MaxDropzones} dropzone definitions.");
                 }
-                _storage.DropzoneList.Add(id, new Storage.Dropzone());
+                _storage.DropzoneList.Add(dropzoneName, new Storage.Dropzone());
             }
-            var dropzone = _storage.DropzoneList[id];
+            var dropzone = _storage.DropzoneList[dropzoneName];
             if (dropzone.PayloadSize + payload.Length > dropzone.MaxPayloadSize)
             {
                 dropzone.PayloadDropOffsDenied++;
@@ -76,9 +72,9 @@ namespace BOG.DropZone.Controllers
         /// <summary>
         /// Pickup a payload from a drop zone
         /// </summary>
-        /// <param name="id">the dropzone identifier</param>
+        /// <param name="dropzoneName">the dropzone identifier</param>
         /// <returns>the data to transfer</returns>
-        [HttpGet("payload/pickup/{id}", Name = "PickupPayload")]
+        [HttpGet("payload/pickup/{dropzoneName}", Name = "PickupPayload")]
         [Produces("text/plain")]
         [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(204, Type = typeof(string))]
@@ -86,17 +82,17 @@ namespace BOG.DropZone.Controllers
         [ProducesResponseType(410, Type = typeof(string))]
         [ProducesResponseType(429, Type = typeof(string))]
         [ProducesResponseType(500)]
-        public IActionResult PickupPayload([FromRoute] string id)
+        public IActionResult PickupPayload([FromRoute] string dropzoneName)
         {
-            if (!_storage.DropzoneList.ContainsKey(id))
+            if (!_storage.DropzoneList.ContainsKey(dropzoneName))
             {
                 if (_storage.DropzoneList.Count >= MaxDropzones)
                 {
-                    return StatusCode(429, $"Can't create new dropzone {id}.. at maximum of {MaxDropzones} dropzone definitions.");
+                    return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {MaxDropzones} dropzone definitions.");
                 }
-                _storage.DropzoneList.Add(id, new Storage.Dropzone());
+                _storage.DropzoneList.Add(dropzoneName, new Storage.Dropzone());
             }
-            var dropzone = _storage.DropzoneList[id];
+            var dropzone = _storage.DropzoneList[dropzoneName];
             if (dropzone.Payloads.Count == 0)
             {
                 return StatusCode(204);
@@ -114,55 +110,55 @@ namespace BOG.DropZone.Controllers
         /// <summary>
         /// Get statistics for a dropzone
         /// </summary>
-        /// <param name="id">the dropzone identifier</param>
+        /// <param name="dropzoneName">the dropzone identifier</param>
         /// <returns>varies: see method declaration</returns>
-        [HttpGet("payload/statistics/{id}", Name = "GetStatistics")]
+        [HttpGet("payload/statistics/{dropzoneName}", Name = "GetStatistics")]
         [ProducesResponseType(400, Type = typeof(string))]
         [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(429, Type = typeof(string))]
         [ProducesResponseType(500)]
         [Produces("text/plain")]
-        public IActionResult GetStatistics([FromRoute] string id)
+        public IActionResult GetStatistics([FromRoute] string dropzoneName)
         {
-            if (!_storage.DropzoneList.ContainsKey(id))
+            if (!_storage.DropzoneList.ContainsKey(dropzoneName))
             {
                 if (_storage.DropzoneList.Count >= MaxDropzones)
                 {
-                    return StatusCode(429, $"Can't create new dropzone {id}.. at maximum of {MaxDropzones} dropzone definitions.");
+                    return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {MaxDropzones} dropzone definitions.");
                 }
-                _storage.DropzoneList.Add(id, new Storage.Dropzone());
+                _storage.DropzoneList.Add(dropzoneName, new Storage.Dropzone());
             }
-            return StatusCode(200, Serializer<Dropzone>.ToJson(_storage.DropzoneList[id]));
+            return StatusCode(200, Serializer<Dropzone>.ToJson(_storage.DropzoneList[dropzoneName]));
         }
 
         /// <summary>
         /// Sets the value of a reference key in a dropzone.  A reference is a key/value setting.
         /// </summary>
-        /// <param name="id">the dropzone identifier</param>
+        /// <param name="dropzoneName">the dropzone identifier</param>
         /// <param name="key">the name for the value to store</param>
         /// <param name="value">the value to store for the key name</param>
         /// <returns>varies: see method declaration</returns>
-        [HttpPost("reference/set/{id}/{key}", Name = "SetReference")]
+        [HttpPost("reference/set/{dropzoneName}/{key}", Name = "SetReference")]
         [Produces("text/plain")]
         [ProducesResponseType(400, Type = typeof(string))]
         [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(429, Type = typeof(string))]
         [ProducesResponseType(500)]
         public IActionResult SetReference(
-            [FromRoute] string id,
+            [FromRoute] string dropzoneName,
             [FromRoute] string key,
             [FromBody] string value)
         {
             var fixedValue = value;
-            if (!_storage.DropzoneList.ContainsKey(id))
+            if (!_storage.DropzoneList.ContainsKey(dropzoneName))
             {
                 if (_storage.DropzoneList.Count >= MaxDropzones)
                 {
-                    return StatusCode(429, $"Can't create new dropzone {id}.. at maximum of {MaxDropzones} dropzone definitions.");
+                    return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {MaxDropzones} dropzone definitions.");
                 }
-                _storage.DropzoneList.Add(id, new Storage.Dropzone());
+                _storage.DropzoneList.Add(dropzoneName, new Storage.Dropzone());
             }
-            var dropzone = _storage.DropzoneList[id];
+            var dropzone = _storage.DropzoneList[dropzoneName];
             if (dropzone.References.ContainsKey(key))
             {
                 dropzone.ReferenceSize -= dropzone.References[key].Length;
@@ -187,28 +183,28 @@ namespace BOG.DropZone.Controllers
         /// <summary>
         /// Gets the value of a reference key in a dropzone.  A reference is a key/value setting.
         /// </summary>
-        /// <param name="id">the dropzone identifier</param>
+        /// <param name="dropzoneName">the dropzone identifier</param>
         /// <param name="key">the name identifying the value to retrieve</param>
         /// <returns>string which is the reference value (always text/plain)</returns>
-        [HttpGet("reference/get/{id}/{key}", Name = "GetReference")]
+        [HttpGet("reference/get/{dropzoneName}/{key}", Name = "GetReference")]
         [Produces("text/plain")]
         [ProducesResponseType(400, Type = typeof(string))]
         [ProducesResponseType(429, Type = typeof(string))]
         [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(500)]
         public IActionResult GetReference(
-            [FromRoute] string id,
+            [FromRoute] string dropzoneName,
             [FromRoute] string key)
         {
-            if (!_storage.DropzoneList.ContainsKey(id))
+            if (!_storage.DropzoneList.ContainsKey(dropzoneName))
             {
                 if (_storage.DropzoneList.Count >= MaxDropzones)
                 {
-                    return StatusCode(429, $"Can't create new dropzone {id}.. at maximum of {MaxDropzones} dropzone definitions.");
+                    return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {MaxDropzones} dropzone definitions.");
                 }
-                _storage.DropzoneList.Add(id, new Storage.Dropzone());
+                _storage.DropzoneList.Add(dropzoneName, new Storage.Dropzone());
             }
-            var dropzone = _storage.DropzoneList[id];
+            var dropzone = _storage.DropzoneList[dropzoneName];
             string result = null;
             if (dropzone.References.Count == 0 || !dropzone.References.ContainsKey(key))
             {
@@ -225,30 +221,47 @@ namespace BOG.DropZone.Controllers
         /// <summary>
         /// Get a list of the reference key names available
         /// </summary>
-        /// <param name="id">the dropzone identifier</param>
+        /// <param name="dropzoneName">the dropzone identifier</param>
         /// <returns>list of strings which contain the reference key names</returns>
-        [HttpGet("reference/list/{id}", Name = "ListReferences")]
+        [HttpGet("reference/list/{dropzoneName}", Name = "ListReferences")]
         [Produces("application/json")]
         [ProducesResponseType(400, Type = typeof(string))]
         [ProducesResponseType(404, Type = typeof(string))]
         [ProducesResponseType(200, Type = typeof(List<string>))]
         [ProducesResponseType(500)]
-        public IActionResult ListReferences([FromRoute] string id)
+        public IActionResult ListReferences([FromRoute] string dropzoneName)
         {
-            if (!_storage.DropzoneList.ContainsKey(id))
+            if (!_storage.DropzoneList.ContainsKey(dropzoneName))
             {
                 if (_storage.DropzoneList.Count >= MaxDropzones)
                 {
-                    return StatusCode(429, $"Can't create new dropzone {id}.. at maximum of {MaxDropzones} dropzone definitions.");
+                    return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {MaxDropzones} dropzone definitions.");
                 }
-                _storage.DropzoneList.Add(id, new Storage.Dropzone());
+                _storage.DropzoneList.Add(dropzoneName, new Storage.Dropzone());
             }
-            var dropzone = _storage.DropzoneList[id];
+            var dropzone = _storage.DropzoneList[dropzoneName];
             return Ok(dropzone.References.Keys.ToList());
         }
 
         /// <summary>
-        /// Reset: clear all drop zones and their data
+        /// Clear: drops all payloads and references from a specific drop zone, and resets its statistics.
+        /// </summary>
+        /// <returns>string</returns>
+        [HttpGet("clear/{dropzoneName}", Name = "Clear")]
+        [Produces("text/plain")]
+        [ProducesResponseType(200, Type = typeof(string))]
+        [ProducesResponseType(500)]
+        public IActionResult Clear([FromRoute] string dropzoneName)
+        {
+            if (_storage.DropzoneList.ContainsKey(dropzoneName))
+            {
+                _storage.DropzoneList.Remove(dropzoneName);
+            }
+            return Ok($"drop zone {dropzoneName} cleared");
+        }
+
+        /// <summary>
+        /// Reset: clear all drop zones and their data.  Essentially a soft boot.
         /// </summary>
         /// <returns>string</returns>
         [HttpGet("reset", Name = "Reset")]

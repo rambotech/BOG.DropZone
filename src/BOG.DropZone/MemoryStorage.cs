@@ -41,6 +41,14 @@ namespace BOG.DropZone
         }
 
         /// <summary>
+        /// Clear a specific drop zone, including their payloads and reference dictionary.
+        /// </summary>
+        public void Clear(string dropZone)
+        {
+            DropzoneList.Remove(dropZone);
+        }
+
+        /// <summary>
         /// Shutdowns down the web server, requiring restart at the command line.
         /// </summary>
         public void Shutdown()

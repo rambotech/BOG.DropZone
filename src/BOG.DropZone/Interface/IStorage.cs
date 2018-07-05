@@ -22,6 +22,11 @@ namespace BOG.DropZone.Interface
         void Reset();
 
         /// <summary>
+        /// Reset the site to a fresh startup state.
+        /// </summary>
+        void Clear(string dropZone);
+
+        /// <summary>
         /// Shutdown the site using an application exit.
         /// </summary>
         void Shutdown();

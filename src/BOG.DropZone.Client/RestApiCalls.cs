@@ -426,6 +426,44 @@ namespace BOG.DropZone.Client
             return result;
         }
 
+        public async Task<Result> Clear(string dropzoneName)
+        {
+            var result = new Result { HandleAs = Result.State.OK };
+            try
+            {
+                var response = await _client.GetAsync(_baseUrl + $"/api/clear/{dropzoneName}", HttpCompletionOption.ResponseContentRead);
+                result.StatusCode = response.StatusCode;
+                switch (response.StatusCode)
+                {
+                    case HttpStatusCode.OK:
+                        result.Content = await response.Content.ReadAsStringAsync();
+                        break;
+
+                    case HttpStatusCode.InternalServerError:
+                        result.HandleAs = Result.State.ServerError;
+                        result.Message = response.ReasonPhrase;
+                        break;
+
+                    default:
+                        result.HandleAs = Result.State.UnexpectedResponse;
+                        result.Message = response.ReasonPhrase;
+                        break;
+
+                }
+            }
+            catch (HttpRequestException httpEx)
+            {
+                result.HandleAs = Result.State.ConnectionFailed;
+                result.Message = httpEx.Message;
+            }
+            catch (Exception ex)
+            {
+                result.HandleAs = Result.State.Fatal;
+                result.Exception = ex;
+            }
+            return result;
+        }
+
         public async Task<Result> Reset()
         {
             var result = new Result { HandleAs = Result.State.OK };
