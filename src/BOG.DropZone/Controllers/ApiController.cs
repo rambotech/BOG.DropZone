@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using BOG.DropZone.Interface;
-using BOG.DropZone.Client.Helpers;
+using BOG.SwissArmyKnife;
 using Microsoft.AspNetCore.Mvc;
 using BOG.DropZone.Storage;
 

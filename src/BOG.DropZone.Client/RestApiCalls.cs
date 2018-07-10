@@ -1,5 +1,4 @@
-﻿using BOG.DropZone.Client.Helpers;
-using BOG.DropZone.Client.Model;
+﻿using BOG.DropZone.Client.Model;
 using BOG.SwissArmyKnife;
 using System;
 using System.Net.Http;
