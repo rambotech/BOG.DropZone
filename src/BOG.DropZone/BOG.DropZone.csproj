@@ -2,6 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
+    <RuntimeIdentifiers>win10-x64</RuntimeIdentifiers>
+    <RuntimeIdentifiers>linux-x64</RuntimeIdentifiers>
+    <RuntimeIdentifiers>linux-arm</RuntimeIdentifiers>
     <Version>1.6.0</Version>
     <AssemblyVersion>1.6.0.0</AssemblyVersion>
   </PropertyGroup>
@@ -23,7 +26,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BOG.DropZone.Client" Version="1.2.0" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.5" />
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.7" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
