@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Collections.Generic;
 using BOG.DropZone.Client.Entity;
+using BOG.DropZone.Common.Dto;
 
 namespace BOG.DropZone.Client
 {
@@ -123,6 +124,49 @@ namespace BOG.DropZone.Client
             return originalPayload;
         }
         #endregion
+
+        public async Task<Result> CheckHeartbeat()
+        {
+            var result = new Result { HandleAs = Result.State.OK };
+            try
+            {
+                var response = await _client.GetAsync(_baseUrl + $"/api/payload/heartbeat", HttpCompletionOption.ResponseContentRead);
+                result.StatusCode = response.StatusCode;
+                switch (response.StatusCode)
+                {
+                    case HttpStatusCode.OK:
+                        result.Content = await response.Content.ReadAsStringAsync();
+                        break;
+
+                    case HttpStatusCode.Conflict:
+                        result.HandleAs = Result.State.OverLimit;
+                        result.Message = response.ReasonPhrase;
+                        break;
+
+                    case HttpStatusCode.InternalServerError:
+                        result.HandleAs = Result.State.ServerError;
+                        result.Message = response.ReasonPhrase;
+                        break;
+
+                    default:
+                        result.HandleAs = Result.State.UnexpectedResponse;
+                        result.Message = response.ReasonPhrase;
+                        break;
+
+                }
+            }
+            catch (HttpRequestException httpEx)
+            {
+                result.HandleAs = Result.State.ConnectionFailed;
+                result.Message = httpEx.Message;
+            }
+            catch (Exception ex)
+            {
+                result.HandleAs = Result.State.Fatal;
+                result.Exception = ex;
+            }
+            return result;
+        }
 
         /// <summary>
         /// Place a payload into the drop zone's queue
@@ -528,7 +572,6 @@ namespace BOG.DropZone.Client
                         result.HandleAs = Result.State.UnexpectedResponse;
                         result.Message = response.ReasonPhrase;
                         break;
-
                 }
             }
             catch (HttpRequestException httpEx)
@@ -542,6 +585,11 @@ namespace BOG.DropZone.Client
                 result.Exception = ex;
             }
             return result;
+        }
+
+        public DropZoneInfo GetStatisticsObject(string getStatisticsResponse)
+        {
+            return Serializer<DropZoneInfo>.FromJson(getStatisticsResponse);
         }
     }
 }

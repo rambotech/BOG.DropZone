@@ -14,7 +14,7 @@ namespace BOG.DropZone.Interface
         /// <summary>
         /// The list of dropzone information
         /// </summary>
-        Dictionary<string, Dropzone> DropzoneList { get; set; }
+        Dictionary<string, DropPoint> DropZoneList { get; set; }
 
         /// <summary>
         /// Reset the site to a fresh startup state.
@@ -24,7 +24,7 @@ namespace BOG.DropZone.Interface
         /// <summary>
         /// Reset the site to a fresh startup state.
         /// </summary>
-        void Clear(string dropZone);
+        void Clear(string dropZoneName);
 
         /// <summary>
         /// Shutdown the site using an application exit.

@@ -1,18 +1,22 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Concurrent;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Text;
+using Newtonsoft.Json;
 
-namespace BOG.DropZone.Storage
+namespace BOG.DropZone.Common.Dto
 {
     /// <summary>
     /// Defines a payload: its metrics, its activity and its content.
     /// </summary>
     [JsonObject]
-    public class Dropzone
+    public class DropZoneInfo
     {
+        /// <summary>
+        /// The name of the dropzone
+        /// </summary>
+        [JsonProperty]
+        public string Name { get; set; } = string.Empty;
+
         /// <summary>
         /// Specifies the maximum payloads this dropzone is allowed to have.
         /// </summary>
@@ -23,7 +27,7 @@ namespace BOG.DropZone.Storage
         /// Specifies the maximum total size of all payload content the dropzone can store.
         /// </summary>
         [JsonProperty]
-        public Int64 MaxPayloadSize { get; set; } = 1048L*1024*01024;
+        public Int64 MaxPayloadSize { get; set; } = 1048L * 1024 * 01024;
 
         /// <summary>
         /// The number of payload dropoffs denied due to count or size limits triggered.
@@ -59,7 +63,7 @@ namespace BOG.DropZone.Storage
         /// The total count of payloads currently stored in the dropzone.
         /// </summary>
         [JsonProperty]
-        public int PayloadCount { get { return Payloads.Count; } }
+        public int PayloadCount { get; set; } = 0;
 
         /// <summary>
         /// The total size of all references currently stored in the dropzone.
@@ -71,7 +75,7 @@ namespace BOG.DropZone.Storage
         /// The total count of references currently stored in the dropzone.
         /// </summary>
         [JsonProperty]
-        public int ReferenceCount { get { return References.Count; } }
+        public int ReferenceCount { get; set; } = 0;
 
         /// <summary>
         /// The time a payload was last dropped off.
@@ -96,17 +100,5 @@ namespace BOG.DropZone.Storage
         /// </summary>
         [JsonProperty]
         public DateTime LastSetReference { get; set; }
-
-        /// <summary>
-        /// The payload storage.
-        /// </summary>
-        [JsonIgnore]
-        public ConcurrentQueue<string> Payloads { get; set; } = new ConcurrentQueue<string>();
-
-        /// <summary>
-        /// The reference storage.
-        /// </summary>
-        [JsonIgnore]
-        public ConcurrentDictionary<string, string> References { get; set; } = new ConcurrentDictionary<string, string>();
     }
 }

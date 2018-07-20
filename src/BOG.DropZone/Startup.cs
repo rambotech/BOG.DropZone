@@ -50,7 +50,7 @@ namespace BOG.DropZone
             // Register the Swagger generator, defining one or more Swagger documents
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new Info
+                c.SwaggerDoc("v1", new Swashbuckle.AspNetCore.Swagger.Info
                 {
                     Version = $"v{this.GetType().Assembly.GetName().Version.ToString()}",
                     Title = "BOG.DropZone API",

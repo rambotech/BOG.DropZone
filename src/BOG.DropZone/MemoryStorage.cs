@@ -20,7 +20,7 @@ namespace BOG.DropZone
         /// <summary>
         /// The collection of drop zones and their data.
         /// </summary>
-        public Dictionary<string, Dropzone> DropzoneList { get; set; } = new Dictionary<string, Dropzone>();
+        public Dictionary<string, BOG.DropZone.Storage.DropPoint> DropZoneList { get; set; } = new Dictionary<string, BOG.DropZone.Storage.DropPoint>();
 
         /// <summary>
         /// Constructor.
@@ -37,15 +37,15 @@ namespace BOG.DropZone
         /// </summary>
         public void Reset()
         {
-            DropzoneList.Clear();
+            DropZoneList.Clear();
         }
 
         /// <summary>
         /// Clear a specific drop zone, including their payloads and reference dictionary.
         /// </summary>
-        public void Clear(string dropZone)
+        public void Clear(string dropZoneName)
         {
-            DropzoneList.Remove(dropZone);
+            DropZoneList.Remove(dropZoneName);
         }
 
         /// <summary>
