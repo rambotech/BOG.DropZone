@@ -2,6 +2,16 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>John J Schultz</Authors>
+    <Company>Bits of Genius</Company>
+    <Description>A dependency for BOG.DropZone.Client</Description>
+    <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/rambotech/BOG.DropZone</PackageProjectUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/rambotech/BOG.DropZone/master/assets/parachute.ico</PackageIconUrl>
+    <RepositoryUrl>https://github.com/rambotech/BOG.DropZone</RepositoryUrl>
+    <RepositoryType>GIT</RepositoryType>
+    <PackageTags>RestAPI aspnetcore netstandard2</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>

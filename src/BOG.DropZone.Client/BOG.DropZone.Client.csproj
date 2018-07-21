@@ -10,7 +10,7 @@
     <RepositoryUrl>https://github.com/rambotech/BOG.DropZone</RepositoryUrl>
     <RepositoryType>GIT</RepositoryType>
     <PackageTags>RestAPI aspnetcore netstandard2</PackageTags>
-    <PackageReleaseNotes>Initial</PackageReleaseNotes>
+    <PackageReleaseNotes></PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageIconUrl>https://raw.githubusercontent.com/rambotech/BOG.DropZone/master/assets/parachute.ico</PackageIconUrl>
