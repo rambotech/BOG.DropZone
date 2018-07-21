@@ -64,7 +64,7 @@ namespace BOG.dropzone.Statistics.Controllers
                 {
                     return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {MaxDropzones} dropzone definitions.");
                 }
-                _storage.DropZoneList.Add(dropzoneName, new DropPoint());
+                CreateDropZone(dropzoneName);
             }
             var dropzone = _storage.DropZoneList[dropzoneName];
             if (dropzone.Statistics.PayloadSize + payload.Length > dropzone.Statistics.MaxPayloadSize)
@@ -105,7 +105,7 @@ namespace BOG.dropzone.Statistics.Controllers
                 {
                     return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {MaxDropzones} dropzone definitions.");
                 }
-                _storage.DropZoneList.Add(dropzoneName, new DropPoint());
+                CreateDropZone(dropzoneName);
             }
             var dropzone = _storage.DropZoneList[dropzoneName];
             if (dropzone.Payloads.Count == 0)
@@ -142,8 +142,7 @@ namespace BOG.dropzone.Statistics.Controllers
                 {
                     return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {MaxDropzones} dropzone definitions.");
                 }
-                _storage.DropZoneList.Add(dropzoneName, new DropPoint());
-                _storage.DropZoneList[dropzoneName].Statistics.Name = dropzoneName;
+                CreateDropZone(dropzoneName);
             }
             return StatusCode(200, Serializer<DropZoneInfo>.ToJson(_storage.DropZoneList[dropzoneName].Statistics));
         }
@@ -173,7 +172,7 @@ namespace BOG.dropzone.Statistics.Controllers
                 {
                     return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {MaxDropzones} dropzone definitions.");
                 }
-                _storage.DropZoneList.Add(dropzoneName, new DropPoint());
+                CreateDropZone(dropzoneName);
             }
             var dropzone = _storage.DropZoneList[dropzoneName];
             if (dropzone.References.ContainsKey(key))
@@ -220,7 +219,7 @@ namespace BOG.dropzone.Statistics.Controllers
                 {
                     return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {MaxDropzones} dropzone definitions.");
                 }
-                _storage.DropZoneList.Add(dropzoneName, new DropPoint());
+                CreateDropZone(dropzoneName);
             }
             var dropzone = _storage.DropZoneList[dropzoneName];
             string result = null;
@@ -255,7 +254,7 @@ namespace BOG.dropzone.Statistics.Controllers
                 {
                     return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {MaxDropzones} dropzone definitions.");
                 }
-                _storage.DropZoneList.Add(dropzoneName, new DropPoint());
+                CreateDropZone(dropzoneName);
             }
             var dropzone = _storage.DropZoneList[dropzoneName];
             return Ok(dropzone.References.Keys.ToList());
@@ -304,6 +303,12 @@ namespace BOG.dropzone.Statistics.Controllers
         {
             _storage.Shutdown();
             return Ok("shutdown requested. bye.");
+        }
+
+        private void CreateDropZone(string dropzoneName)
+        {
+            _storage.DropZoneList.Add(dropzoneName, new DropPoint());
+            _storage.DropZoneList[dropzoneName].Statistics.Name = dropzoneName;
         }
     }
 }
