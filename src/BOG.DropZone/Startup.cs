@@ -31,7 +31,7 @@ namespace BOG.DropZone
         }
 
         /// <summary>
-        /// Configuration for services.
+        /// The Configuration object.
         /// </summary>
         public IConfiguration Configuration { get; }
 

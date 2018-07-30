@@ -6,6 +6,7 @@ using BOG.DropZone.Storage;
 using BOG.SwissArmyKnife;
 using BOG.DropZone.Common.Dto;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 
 namespace BOG.dropzone.Statistics.Controllers
 {
@@ -19,45 +20,66 @@ namespace BOG.dropzone.Statistics.Controllers
         private const int MaxDropzones = 10;
 
         private IStorage _storage;
+        private IConfiguration _configuration;
 
         /// <summary>
         /// Instantiated via injection
         /// </summary>
         /// <param name="storage">(injected)</param>
-        public ApiController(IStorage storage)
+        /// <param name="configuration">(injected)</param>
+        public ApiController(IStorage storage, IConfiguration configuration)
         {
             _storage = storage;
+            _configuration = configuration;
         }
 
         /// <summary>
         /// Heartbeat check for clients
         /// </summary>
+        /// <param name="AccessToken">Optional: access token value if used.</param>
         /// <returns>varies: see method declaration</returns>
         [HttpGet("heartbeat", Name = "Heartbeat")]
         [ProducesResponseType(200, Type = typeof(string))]
+        [ProducesResponseType(401)]
         [ProducesResponseType(500)]
         [Produces("text/plain")]
-        public IActionResult Heartbeat()
+        public IActionResult Heartbeat([FromHeader] string AccessToken)
         {
+            if (string.Compare(AccessToken, _storage.AccessToken, false) != 0)
+            {
+                return Unauthorized();
+            }
             return StatusCode(200, "Active");
         }
 
         /// <summary>
         /// Deposit a payload to a drop zone
         /// </summary>
+        /// <param name="AccessToken">Optional: access token value if used.</param>
         /// <param name="dropzoneName">the dropzone identifier</param>
         /// <param name="payload">the content to transfer</param>
         /// <returns>varies: see method declaration</returns>
         [HttpPost("payload/dropoff/{dropzoneName}", Name = "DropoffPayload")]
-        [ProducesResponseType(400, Type = typeof(string))]
         [ProducesResponseType(200, Type = typeof(string))]
+        [ProducesResponseType(400, Type = typeof(string))]
+        [ProducesResponseType(401)]
         [ProducesResponseType(429, Type = typeof(string))]
         [ProducesResponseType(500)]
         [Produces("text/plain")]
         public IActionResult DropoffPayload(
+            [FromHeader] string AccessToken,
             [FromRoute] string dropzoneName,
             [FromBody] string payload)
         {
+            if (string.Compare(AccessToken, _storage.AccessToken, false) != 0)
+            {
+                return Unauthorized();
+            }
+            if (string.Compare(AccessToken, _storage.AccessToken, false) != 0)
+            {
+                return Unauthorized();
+            }
+
             if (!_storage.DropZoneList.ContainsKey(dropzoneName))
             {
                 if (_storage.DropZoneList.Count >= MaxDropzones)
@@ -87,6 +109,7 @@ namespace BOG.dropzone.Statistics.Controllers
         /// <summary>
         /// Pickup a payload from a drop zone
         /// </summary>
+        /// <param name="AccessToken">Optional: access token value if used.</param>
         /// <param name="dropzoneName">the dropzone identifier</param>
         /// <returns>the data to transfer</returns>
         [HttpGet("payload/pickup/{dropzoneName}", Name = "PickupPayload")]
@@ -94,11 +117,18 @@ namespace BOG.dropzone.Statistics.Controllers
         [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(204, Type = typeof(string))]
         [ProducesResponseType(400, Type = typeof(string))]
+        [ProducesResponseType(401)]
         [ProducesResponseType(410, Type = typeof(string))]
         [ProducesResponseType(429, Type = typeof(string))]
         [ProducesResponseType(500)]
-        public IActionResult PickupPayload([FromRoute] string dropzoneName)
+        public IActionResult PickupPayload(
+            [FromHeader] string AccessToken,
+            [FromRoute] string dropzoneName)
         {
+            if (string.Compare(AccessToken, _storage.AccessToken, false) != 0)
+            {
+                return Unauthorized();
+            }
             if (!_storage.DropZoneList.ContainsKey(dropzoneName))
             {
                 if (_storage.DropZoneList.Count >= MaxDropzones)
@@ -126,16 +156,24 @@ namespace BOG.dropzone.Statistics.Controllers
         /// <summary>
         /// Get statistics for a dropzone
         /// </summary>
+        /// <param name="AccessToken">Optional: access token value if used.</param>
         /// <param name="dropzoneName">the dropzone identifier</param>
         /// <returns>varies: see method declaration</returns>
         [HttpGet("payload/statistics/{dropzoneName}", Name = "GetStatistics")]
         [ProducesResponseType(400, Type = typeof(string))]
+        [ProducesResponseType(401)]
         [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(429, Type = typeof(string))]
         [ProducesResponseType(500)]
         [Produces("text/plain")]
-        public IActionResult GetStatistics([FromRoute] string dropzoneName)
+        public IActionResult GetStatistics(
+            [FromHeader] string AccessToken,
+            [FromRoute] string dropzoneName)
         {
+            if (string.Compare(AccessToken, _storage.AccessToken, false) != 0)
+            {
+                return Unauthorized();
+            }
             if (!_storage.DropZoneList.ContainsKey(dropzoneName))
             {
                 if (_storage.DropZoneList.Count >= MaxDropzones)
@@ -150,6 +188,7 @@ namespace BOG.dropzone.Statistics.Controllers
         /// <summary>
         /// Sets the value of a reference key in a dropzone.Statistics.  A reference is a key/value setting.
         /// </summary>
+        /// <param name="AccessToken">Optional: access token value if used.</param>
         /// <param name="dropzoneName">the dropzone identifier</param>
         /// <param name="key">the name for the value to store</param>
         /// <param name="value">the value to store for the key name</param>
@@ -157,14 +196,20 @@ namespace BOG.dropzone.Statistics.Controllers
         [HttpPost("reference/set/{dropzoneName}/{key}", Name = "SetReference")]
         [Produces("text/plain")]
         [ProducesResponseType(400, Type = typeof(string))]
+        [ProducesResponseType(401)]
         [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(429, Type = typeof(string))]
         [ProducesResponseType(500)]
         public IActionResult SetReference(
+            [FromHeader] string AccessToken,
             [FromRoute] string dropzoneName,
             [FromRoute] string key,
             [FromBody] string value)
         {
+            if (string.Compare(AccessToken, _storage.AccessToken, false) != 0)
+            {
+                return Unauthorized();
+            }
             var fixedValue = value;
             if (!_storage.DropZoneList.ContainsKey(dropzoneName))
             {
@@ -200,19 +245,26 @@ namespace BOG.dropzone.Statistics.Controllers
         /// <summary>
         /// Gets the value of a reference key in a dropzone.Statistics.  A reference is a key/value setting.
         /// </summary>
+        /// <param name="AccessToken">Optional: access token value if used.</param>
         /// <param name="dropzoneName">the dropzone identifier</param>
         /// <param name="key">the name identifying the value to retrieve</param>
         /// <returns>string which is the reference value (always text/plain)</returns>
         [HttpGet("reference/get/{dropzoneName}/{key}", Name = "GetReference")]
         [Produces("text/plain")]
         [ProducesResponseType(400, Type = typeof(string))]
+        [ProducesResponseType(401)]
         [ProducesResponseType(429, Type = typeof(string))]
         [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(500)]
         public IActionResult GetReference(
+            [FromHeader] string AccessToken,
             [FromRoute] string dropzoneName,
             [FromRoute] string key)
         {
+            if (string.Compare(AccessToken, _storage.AccessToken, false) != 0)
+            {
+                return Unauthorized();
+            }
             if (!_storage.DropZoneList.ContainsKey(dropzoneName))
             {
                 if (_storage.DropZoneList.Count >= MaxDropzones)
@@ -238,16 +290,24 @@ namespace BOG.dropzone.Statistics.Controllers
         /// <summary>
         /// Get a list of the reference key names available
         /// </summary>
+        /// <param name="AccessToken">Optional: access token value if used.</param>
         /// <param name="dropzoneName">the dropzone identifier</param>
         /// <returns>list of strings which contain the reference key names</returns>
         [HttpGet("reference/list/{dropzoneName}", Name = "ListReferences")]
         [Produces("application/json")]
-        [ProducesResponseType(400, Type = typeof(string))]
-        [ProducesResponseType(404, Type = typeof(string))]
         [ProducesResponseType(200, Type = typeof(List<string>))]
+        [ProducesResponseType(400, Type = typeof(string))]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(404, Type = typeof(string))]
         [ProducesResponseType(500)]
-        public IActionResult ListReferences([FromRoute] string dropzoneName)
+        public IActionResult ListReferences(
+            [FromHeader] string AccessToken,
+            [FromRoute] string dropzoneName)
         {
+            if (string.Compare(AccessToken, _storage.AccessToken, false) != 0)
+            {
+                return Unauthorized();
+            }
             if (!_storage.DropZoneList.ContainsKey(dropzoneName))
             {
                 if (_storage.DropZoneList.Count >= MaxDropzones)
@@ -263,13 +323,22 @@ namespace BOG.dropzone.Statistics.Controllers
         /// <summary>
         /// Clear: drops all payloads and references from a specific drop zone, and resets its statistics.
         /// </summary>
+        /// <param name="AccessToken">Optional: access token value if used.</param>
+        /// <param name="dropzoneName">the dropzone identifier</param>
         /// <returns>string</returns>
         [HttpGet("clear/{dropzoneName}", Name = "Clear")]
         [Produces("text/plain")]
         [ProducesResponseType(200, Type = typeof(string))]
+        [ProducesResponseType(401)]
         [ProducesResponseType(500)]
-        public IActionResult Clear([FromRoute] string dropzoneName)
+        public IActionResult Clear(
+            [FromHeader] string AccessToken,
+            [FromRoute] string dropzoneName)
         {
+            if (string.Compare(AccessToken, _storage.AccessToken, false) != 0)
+            {
+                return Unauthorized();
+            }
             if (_storage.DropZoneList.ContainsKey(dropzoneName))
             {
                 _storage.DropZoneList.Remove(dropzoneName);
@@ -280,13 +349,20 @@ namespace BOG.dropzone.Statistics.Controllers
         /// <summary>
         /// Reset: clear all drop zones and their data.  Essentially a soft boot.
         /// </summary>
+        /// <param name="AccessToken">Optional: access token value if used.</param>
         /// <returns>string</returns>
         [HttpGet("reset", Name = "Reset")]
         [Produces("text/plain")]
         [ProducesResponseType(200, Type = typeof(string))]
+        [ProducesResponseType(401)]
         [ProducesResponseType(500)]
-        public IActionResult Reset()
+        public IActionResult Reset(
+            [FromHeader] string AccessToken)
         {
+            if (string.Compare(AccessToken, _storage.AccessToken, false) != 0)
+            {
+                return Unauthorized();
+            }
             _storage.Reset();
             return Ok("all drop zone data cleared");
         }
@@ -294,13 +370,20 @@ namespace BOG.dropzone.Statistics.Controllers
         /// <summary>
         /// Shutdown: clear all drop zones and their data
         /// </summary>
+        /// <param name="AccessToken">Optional: access token value if used.</param>
         /// <returns>string</returns>
         [HttpGet("shutdown", Name = "Shutdown")]
         [Produces("text/plain")]
         [ProducesResponseType(200, Type = typeof(string))]
+        [ProducesResponseType(401)]
         [ProducesResponseType(500)]
-        public IActionResult Shutdown()
+        public IActionResult Shutdown(
+            [FromHeader] string AccessToken)
         {
+            if (string.Compare(AccessToken, _storage.AccessToken, false) != 0)
+            {
+                return Unauthorized();
+            }
             _storage.Shutdown();
             return Ok("shutdown requested. bye.");
         }

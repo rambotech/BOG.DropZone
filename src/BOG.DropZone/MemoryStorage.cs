@@ -7,6 +7,7 @@ using System.Timers;
 using BOG.DropZone.Interface;
 using BOG.DropZone.Storage;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace BOG.DropZone
 {
@@ -18,6 +19,11 @@ namespace BOG.DropZone
         Timer stopTimer = new Timer();
 
         /// <summary>
+        /// If not empty, the header value "Access" must contain this value to use the site.
+        /// </summary>
+        public string AccessToken { get; set; } = string.Empty;
+
+        /// <summary>
         /// The collection of drop zones and their data.
         /// </summary>
         public Dictionary<string, BOG.DropZone.Storage.DropPoint> DropZoneList { get; set; } = new Dictionary<string, BOG.DropZone.Storage.DropPoint>();
@@ -25,8 +31,10 @@ namespace BOG.DropZone
         /// <summary>
         /// Constructor.
         /// </summary>
-        public MemoryStorage()
+        public MemoryStorage(IConfiguration config)
         {
+            AccessToken = config["AccessToken"];
+
             stopTimer.Enabled = false;
             stopTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
             stopTimer.Interval = 1000;

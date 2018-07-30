@@ -14,6 +14,11 @@ namespace BOG.DropZone.Interface
         /// <summary>
         /// The list of dropzone information
         /// </summary>
+        string AccessToken { get; set; }
+
+        /// <summary>
+        /// The list of dropzone information
+        /// </summary>
         Dictionary<string, DropPoint> DropZoneList { get; set; }
 
         /// <summary>
