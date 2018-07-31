@@ -1,7 +1,7 @@
 # BOG.DropZone
 ![alt text](https://github.com/rambotech/BOG.DropZone/blob/master/assets/DropZone.png "They just keep coming and going, and going and coming!")
 
-A very simple non-secure, volatile aspnetcore webapi site for inter-application dropoff and pickup of payloads.  It is inspired by [BOG.Pathways.Server](https://github.com/rambotech/BOG.Pathways.Server), but removes security tokens and other auth, and auto-creates a dropzone as needed.
+A very simple non-secure, volatile aspnetcore webapi site for inter-application dropoff and pickup of payloads.  It is inspired by [BOG.Pathways.Server](https://github.com/rambotech/BOG.Pathways.Server), but uses an optional access token for authentication, and auto-creates a dropzone as needed.
 
 ## How it works
 A drop zone is a named location for one or more applications to put payloads (strings) into it, and one or more other applications to remove them from it.  The name designates the role and type of traffic for sender's and receivers.  Many drop zones can be created to faciliate many different types of data transfers.
