@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 15.0.27428.2037
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BOG.DropZone", "BOG.DropZone\BOG.DropZone.csproj", "{D3B5FB0B-E3A2-4926-AB50-2218FD314A8F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E045EF4B-328F-4AEB-AB5E-F78ACD569336} = {E045EF4B-328F-4AEB-AB5E-F78ACD569336}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BOG.DropZone.Client", "BOG.DropZone.Client\BOG.DropZone.Client.csproj", "{E045EF4B-328F-4AEB-AB5E-F78ACD569336}"
 EndProject
@@ -11,6 +14,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 	ProjectSection(SolutionItems) = preProject
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
+		..\LICENSE = ..\LICENSE
+		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Assets", "Assets", "{60624F85-40AD-42A9-B367-1D902907A858}"

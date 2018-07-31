@@ -19,12 +19,13 @@ namespace BOG.DropZone.Client
     /// </summary>
     public class RestApiCalls
     {
-        private string _baseUrl;
-        private string _password = null;
-        private string _salt = null;
-        private HttpClient _client;
+        private string _BaseUrl;
+        private string _AccessToken;
+        private string _Password = null;
+        private string _Salt = null;
+        private HttpClient _Client;
         private bool _UseEncryption = false;
-        private BOG.SwissArmyKnife.CipherUtility _cipher = new CipherUtility();
+        private BOG.SwissArmyKnife.CipherUtility _Cipher = new CipherUtility();
 
         /// <summary>
         /// Instantiate the class with the base Url
@@ -32,21 +33,58 @@ namespace BOG.DropZone.Client
         /// <param name="baseUrl">The schema://server:port portion of the base URL.  Do net end with a slash.</param>
         public RestApiCalls(string baseUrl)
         {
-            _client = new HttpClient();
-            _baseUrl = baseUrl;
+            RestApiCallsSetup(baseUrl, string.Empty, string.Empty, string.Empty);
         }
 
+        /// <summary>
+        /// Instantiate the class with the base Url and access token.
+        /// </summary>
+        /// <param name="baseUrl">The schema://server:port portion of the base URL.  Do net end with a slash.</param>
+        /// <param name="accessToken"></param>
+        public RestApiCalls(string baseUrl, string accessToken)
+        {
+            RestApiCallsSetup(baseUrl, accessToken, string.Empty, string.Empty);
+        }
+
+        /// <summary>
+        /// Instantiate the class with all arguments explicit
+        /// </summary>
+        /// <param name="baseUrl"></param>
+        /// <param name="accessToken"></param>
+        /// <param name="password"></param>
+        /// <param name="salt"></param>
+        public RestApiCalls(string baseUrl, string accessToken, string password, string salt)
+        {
+            RestApiCallsSetup(baseUrl, accessToken, password, salt);
+        }
+
+        /// <summary>
+        /// Instantiate the class with all arguments except access token
+        /// </summary>
+        /// <param name="baseUrl"></param>
+        /// <param name="password"></param>
+        /// <param name="salt"></param>
         public RestApiCalls(string baseUrl, string password, string salt)
         {
-            _client = new HttpClient();
-            _baseUrl = baseUrl;
-            _password = password;
-            _salt = salt;
+            RestApiCallsSetup(baseUrl, string.Empty, password, salt);
+        }
+
+        private void RestApiCallsSetup(string baseUrl, string accessToken, string password, string salt)
+        {
+            _Client = new HttpClient();
+            _BaseUrl = baseUrl;
+            _AccessToken = accessToken ?? string.Empty;
+            _Password = password;
+            _Salt = salt;
             if (string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(salt))
             {
                 throw new ArgumentException("Neither password nor salt can be null or an empty string.");
             }
-            _UseEncryption = true;
+            _UseEncryption = ! string.IsNullOrWhiteSpace(password);
+            if (!string.IsNullOrEmpty(_AccessToken))
+            {
+                _Client.DefaultRequestHeaders.Add("AccessToken", _AccessToken);
+            }
         }
 
         #region Payload Helper Methods
@@ -68,27 +106,27 @@ namespace BOG.DropZone.Client
             {
                 IsEncrypted = _UseEncryption,
                 Length = _UseEncryption
-                    ? _cipher.Encrypt(
+                    ? _Cipher.Encrypt(
                         string.Format("{0},{1},{2}",
                             MakeRandomCharacters(3, 5),
                             payload.Length,
                             MakeRandomCharacters(4, 7)),
-                            _password,
-                            _salt,
+                            _Password,
+                            _Salt,
                             Base64FormattingOptions.None)
                     : payload.Length.ToString(),
                 Payload = _UseEncryption
-                    ? _cipher.Encrypt(
+                    ? _Cipher.Encrypt(
                             payload,
-                            _password,
-                            _salt,
+                            _Password,
+                            _Salt,
                             Base64FormattingOptions.None)
                     : payload,
                 HashValidation = _UseEncryption
-                    ? _cipher.Encrypt(
+                    ? _Cipher.Encrypt(
                         Hasher.GetHashFromStringContent(payload, Encoding.UTF8, Hasher.HashMethod.SHA256),
-                        _password,
-                        _salt,
+                        _Password,
+                        _Salt,
                         Base64FormattingOptions.None)
                     : Hasher.GetHashFromStringContent(payload, Encoding.UTF8, Hasher.HashMethod.SHA256)
             });
@@ -102,9 +140,9 @@ namespace BOG.DropZone.Client
             int originalPayloadLength = -1;
             if (gram.IsEncrypted)
             {
-                originalPayload = _cipher.Decrypt(gram.Payload, _password, _salt);
-                originalPayloadHash = _cipher.Decrypt(gram.HashValidation, _password, _salt);
-                var payloadLength = _cipher.Decrypt(gram.Length, _password, _salt);
+                originalPayload = _Cipher.Decrypt(gram.Payload, _Password, _Salt);
+                originalPayloadHash = _Cipher.Decrypt(gram.HashValidation, _Password, _Salt);
+                var payloadLength = _Cipher.Decrypt(gram.Length, _Password, _Salt);
                 int.TryParse(payloadLength.Split(new char[] { ',' })[1], out originalPayloadLength);
             }
             else
@@ -130,7 +168,7 @@ namespace BOG.DropZone.Client
             var result = new Result { HandleAs = Result.State.OK };
             try
             {
-                var response = await _client.GetAsync(_baseUrl + $"/api/payload/heartbeat", HttpCompletionOption.ResponseContentRead);
+                var response = await _Client.GetAsync(_BaseUrl + $"/api/payload/heartbeat", HttpCompletionOption.ResponseContentRead);
                 result.StatusCode = response.StatusCode;
                 switch (response.StatusCode)
                 {
@@ -180,7 +218,7 @@ namespace BOG.DropZone.Client
             var datagram = BuildPayloadGram(data);
             try
             {
-                var response = await _client.PostAsync(_baseUrl + $"/api/payload/dropoff/{dropzoneName}",
+                var response = await _Client.PostAsync(_BaseUrl + $"/api/payload/dropoff/{dropzoneName}",
                     new StringContent(
                         datagram,
                         Encoding.UTF8,
@@ -232,7 +270,7 @@ namespace BOG.DropZone.Client
             var result = new Result { HandleAs = Result.State.OK };
             try
             {
-                var response = await _client.GetAsync(_baseUrl + $"/api/payload/pickup/{dropzoneName}", HttpCompletionOption.ResponseContentRead);
+                var response = await _Client.GetAsync(_BaseUrl + $"/api/payload/pickup/{dropzoneName}", HttpCompletionOption.ResponseContentRead);
                 result.StatusCode = response.StatusCode;
                 switch (response.StatusCode)
                 {
@@ -293,7 +331,7 @@ namespace BOG.DropZone.Client
             var result = new Result { HandleAs = Result.State.OK };
             try
             {
-                var response = await _client.GetAsync(_baseUrl + $"/api/payload/statistics/{dropzoneName}", HttpCompletionOption.ResponseContentRead);
+                var response = await _Client.GetAsync(_BaseUrl + $"/api/payload/statistics/{dropzoneName}", HttpCompletionOption.ResponseContentRead);
                 result.StatusCode = response.StatusCode;
                 switch (response.StatusCode)
                 {
@@ -337,7 +375,7 @@ namespace BOG.DropZone.Client
             var datagram = BuildPayloadGram(value);
             try
             {
-                var response = await _client.PostAsync(_baseUrl + $"/api/reference/set/{dropzoneName}/{key}",
+                var response = await _Client.PostAsync(_BaseUrl + $"/api/reference/set/{dropzoneName}/{key}",
                     new StringContent(datagram, Encoding.UTF8, "text/plain"));
                 result.StatusCode = response.StatusCode;
                 switch (response.StatusCode)
@@ -380,7 +418,7 @@ namespace BOG.DropZone.Client
             var result = new Result { HandleAs = Result.State.OK };
             try
             {
-                var response = await _client.GetAsync(_baseUrl + $"/api/reference/get/{dropzoneName}/{key}", HttpCompletionOption.ResponseContentRead);
+                var response = await _Client.GetAsync(_BaseUrl + $"/api/reference/get/{dropzoneName}/{key}", HttpCompletionOption.ResponseContentRead);
                 result.StatusCode = response.StatusCode;
                 switch (response.StatusCode)
                 {
@@ -432,7 +470,7 @@ namespace BOG.DropZone.Client
             var result = new Result { HandleAs = Result.State.OK };
             try
             {
-                var response = await _client.GetAsync(_baseUrl + $"/api/reference/list/{dropzoneName}", HttpCompletionOption.ResponseContentRead);
+                var response = await _Client.GetAsync(_BaseUrl + $"/api/reference/list/{dropzoneName}", HttpCompletionOption.ResponseContentRead);
                 result.StatusCode = response.StatusCode;
                 switch (response.StatusCode)
                 {
@@ -474,7 +512,7 @@ namespace BOG.DropZone.Client
             var result = new Result { HandleAs = Result.State.OK };
             try
             {
-                var response = await _client.GetAsync(_baseUrl + $"/api/clear/{dropzoneName}", HttpCompletionOption.ResponseContentRead);
+                var response = await _Client.GetAsync(_BaseUrl + $"/api/clear/{dropzoneName}", HttpCompletionOption.ResponseContentRead);
                 result.StatusCode = response.StatusCode;
                 switch (response.StatusCode)
                 {
@@ -512,7 +550,7 @@ namespace BOG.DropZone.Client
             var result = new Result { HandleAs = Result.State.OK };
             try
             {
-                var response = await _client.GetAsync(_baseUrl + $"/api/reset", HttpCompletionOption.ResponseContentRead);
+                var response = await _Client.GetAsync(_BaseUrl + $"/api/reset", HttpCompletionOption.ResponseContentRead);
                 result.StatusCode = response.StatusCode;
                 switch (response.StatusCode)
                 {
@@ -550,7 +588,7 @@ namespace BOG.DropZone.Client
             var result = new Result { HandleAs = Result.State.OK };
             try
             {
-                var response = await _client.GetAsync(_baseUrl + $"/api/shutdown", HttpCompletionOption.ResponseContentRead);
+                var response = await _Client.GetAsync(_BaseUrl + $"/api/shutdown", HttpCompletionOption.ResponseContentRead);
                 result.StatusCode = response.StatusCode;
                 switch (response.StatusCode)
                 {

@@ -45,7 +45,7 @@ namespace BOG.dropzone.Statistics.Controllers
         [Produces("text/plain")]
         public IActionResult Heartbeat([FromHeader] string AccessToken)
         {
-            if (string.Compare(AccessToken, _storage.AccessToken, false) != 0)
+            if (string.Compare(AccessToken ?? string.Empty, _storage.AccessToken ?? string.Empty, false) != 0)
             {
                 return Unauthorized();
             }
@@ -71,7 +71,7 @@ namespace BOG.dropzone.Statistics.Controllers
             [FromRoute] string dropzoneName,
             [FromBody] string payload)
         {
-            if (string.Compare(AccessToken, _storage.AccessToken, false) != 0)
+            if (string.Compare(AccessToken ?? string.Empty, _storage.AccessToken ?? string.Empty, false) != 0)
             {
                 return Unauthorized();
             }
@@ -125,7 +125,7 @@ namespace BOG.dropzone.Statistics.Controllers
             [FromHeader] string AccessToken,
             [FromRoute] string dropzoneName)
         {
-            if (string.Compare(AccessToken, _storage.AccessToken, false) != 0)
+            if (string.Compare(AccessToken ?? string.Empty, _storage.AccessToken ?? string.Empty, false) != 0)
             {
                 return Unauthorized();
             }
@@ -170,7 +170,7 @@ namespace BOG.dropzone.Statistics.Controllers
             [FromHeader] string AccessToken,
             [FromRoute] string dropzoneName)
         {
-            if (string.Compare(AccessToken, _storage.AccessToken, false) != 0)
+            if (string.Compare(AccessToken ?? string.Empty, _storage.AccessToken ?? string.Empty, false) != 0)
             {
                 return Unauthorized();
             }
@@ -206,7 +206,7 @@ namespace BOG.dropzone.Statistics.Controllers
             [FromRoute] string key,
             [FromBody] string value)
         {
-            if (string.Compare(AccessToken, _storage.AccessToken, false) != 0)
+            if (string.Compare(AccessToken ?? string.Empty, _storage.AccessToken ?? string.Empty, false) != 0)
             {
                 return Unauthorized();
             }
@@ -220,12 +220,12 @@ namespace BOG.dropzone.Statistics.Controllers
                 CreateDropZone(dropzoneName);
             }
             var dropzone = _storage.DropZoneList[dropzoneName];
+            int sizeOffset = 0;
             if (dropzone.References.ContainsKey(key))
             {
-                dropzone.Statistics.ReferenceSize -= dropzone.References[key].Length;
-                dropzone.References.Remove(key, out string ignored);
+                sizeOffset = dropzone.References[key].Length;
             }
-            if (dropzone.Statistics.ReferenceSize + fixedValue.Length > dropzone.Statistics.MaxReferenceSize)
+            if ((dropzone.Statistics.ReferenceSize - sizeOffset + fixedValue.Length) > dropzone.Statistics.MaxReferenceSize)
             {
                 dropzone.Statistics.ReferenceSetsDenied++;
                 return StatusCode(429, $"Can't accept: Exceeds maximum reference value size of {dropzone.Statistics.MaxReferenceSize}");
@@ -235,6 +235,8 @@ namespace BOG.dropzone.Statistics.Controllers
                 dropzone.Statistics.ReferenceSetsDenied++;
                 return StatusCode(429, $"Can't accept: Exceeds maximum reference count of {dropzone.Statistics.MaxReferencesCount}");
             }
+            dropzone.Statistics.ReferenceSize -= sizeOffset;
+            dropzone.References.Remove(key, out string ignored);
             dropzone.References.AddOrUpdate(key, fixedValue, (k, o) => fixedValue);
             dropzone.Statistics.ReferenceSize += fixedValue.Length;
             dropzone.Statistics.ReferenceCount = dropzone.References.Count();
@@ -261,7 +263,7 @@ namespace BOG.dropzone.Statistics.Controllers
             [FromRoute] string dropzoneName,
             [FromRoute] string key)
         {
-            if (string.Compare(AccessToken, _storage.AccessToken, false) != 0)
+            if (string.Compare(AccessToken ?? string.Empty, _storage.AccessToken ?? string.Empty, false) != 0)
             {
                 return Unauthorized();
             }
@@ -304,7 +306,7 @@ namespace BOG.dropzone.Statistics.Controllers
             [FromHeader] string AccessToken,
             [FromRoute] string dropzoneName)
         {
-            if (string.Compare(AccessToken, _storage.AccessToken, false) != 0)
+            if (string.Compare(AccessToken ?? string.Empty, _storage.AccessToken ?? string.Empty, false) != 0)
             {
                 return Unauthorized();
             }
@@ -335,7 +337,7 @@ namespace BOG.dropzone.Statistics.Controllers
             [FromHeader] string AccessToken,
             [FromRoute] string dropzoneName)
         {
-            if (string.Compare(AccessToken, _storage.AccessToken, false) != 0)
+            if (string.Compare(AccessToken ?? string.Empty, _storage.AccessToken ?? string.Empty, false) != 0)
             {
                 return Unauthorized();
             }
@@ -359,7 +361,7 @@ namespace BOG.dropzone.Statistics.Controllers
         public IActionResult Reset(
             [FromHeader] string AccessToken)
         {
-            if (string.Compare(AccessToken, _storage.AccessToken, false) != 0)
+            if (string.Compare(AccessToken ?? string.Empty, _storage.AccessToken ?? string.Empty, false) != 0)
             {
                 return Unauthorized();
             }
@@ -380,7 +382,7 @@ namespace BOG.dropzone.Statistics.Controllers
         public IActionResult Shutdown(
             [FromHeader] string AccessToken)
         {
-            if (string.Compare(AccessToken, _storage.AccessToken, false) != 0)
+            if (string.Compare(AccessToken ?? string.Empty, _storage.AccessToken ?? string.Empty, false) != 0)
             {
                 return Unauthorized();
             }

@@ -76,6 +76,7 @@ namespace BOG.DropZone
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, IServiceProvider serviceProvider)
         {
             var storageArea = serviceProvider.GetService<IStorage>();
+            storageArea.AccessToken = Configuration.GetValue<string>("AccessToken");
 
             if (env.IsDevelopment())
             {

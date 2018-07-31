@@ -31,10 +31,8 @@ namespace BOG.DropZone
         /// <summary>
         /// Constructor.
         /// </summary>
-        public MemoryStorage(IConfiguration config)
+        public MemoryStorage()
         {
-            AccessToken = config["AccessToken"];
-
             stopTimer.Enabled = false;
             stopTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
             stopTimer.Interval = 1000;
