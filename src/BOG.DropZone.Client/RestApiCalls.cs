@@ -76,9 +76,9 @@ namespace BOG.DropZone.Client
             _AccessToken = accessToken ?? string.Empty;
             _Password = password;
             _Salt = salt;
-            if (string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(salt))
+            if (string.IsNullOrWhiteSpace(password) ^ string.IsNullOrWhiteSpace(salt))
             {
-                throw new ArgumentException("Neither password nor salt can be null or an empty string.");
+                throw new ArgumentException("Both password and salt must be a non-empty string, or both must be null or empty.  You can not specify just one.");
             }
             _UseEncryption = ! string.IsNullOrWhiteSpace(password);
             if (!string.IsNullOrEmpty(_AccessToken))

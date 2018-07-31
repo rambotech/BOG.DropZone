@@ -210,7 +210,7 @@ namespace BOG.dropzone.Statistics.Controllers
             {
                 return Unauthorized();
             }
-            var fixedValue = value;
+            var fixedValue = value ?? string.Empty;
             if (!_storage.DropZoneList.ContainsKey(dropzoneName))
             {
                 if (_storage.DropZoneList.Count >= MaxDropzones)
