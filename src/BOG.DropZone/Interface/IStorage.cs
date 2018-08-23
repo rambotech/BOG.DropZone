@@ -1,8 +1,6 @@
-﻿using BOG.DropZone.Storage;
-using System;
+﻿using BOG.DropZone.Common.Dto;
+using BOG.DropZone.Storage;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace BOG.DropZone.Interface
 {
@@ -20,6 +18,11 @@ namespace BOG.DropZone.Interface
         /// The list of dropzone information
         /// </summary>
         Dictionary<string, DropPoint> DropZoneList { get; set; }
+
+        /// <summary>
+        /// The list of clients who have submitted invalid 
+        /// </summary>
+        List<FailedAuthTokenWatch> FailedAuthTokenWatchList { get; set; }
 
         /// <summary>
         /// Reset the site to a fresh startup state.

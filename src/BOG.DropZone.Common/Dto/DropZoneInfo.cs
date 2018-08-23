@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
+using System.Threading;
 using Newtonsoft.Json;
 
 namespace BOG.DropZone.Common.Dto
@@ -33,7 +35,7 @@ namespace BOG.DropZone.Common.Dto
         /// The number of payload dropoffs denied due to count or size limits triggered.
         /// </summary>
         [JsonProperty]
-        public int PayloadDropOffsDenied { get; set; } = 0;
+        public int PayloadDropOffsFailedCount { get; set; } = 0;
 
         /// <summary>
         /// Specifies the maximum count of references this dropzone is allowed to have.
@@ -51,7 +53,7 @@ namespace BOG.DropZone.Common.Dto
         /// The number of reference set actions denied due to count or size limits triggered.
         /// </summary>
         [JsonProperty]
-        public int ReferenceSetsDenied { get; set; } = 0;
+        public int ReferenceSetsFailedCount { get; set; } = 0;
 
         /// <summary>
         /// The total size of all payloads currently stored in the dropzone.

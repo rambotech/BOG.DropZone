@@ -9,7 +9,8 @@
   },
   "profiles": {
     "BOG.DropZone": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "--AccessToken YourValueHere"
     }
   }
 }

@@ -1,7 +1,7 @@
 # BOG.DropZone
 ![alt text](https://github.com/rambotech/BOG.DropZone/blob/master/assets/DropZone.png "They just keep coming and going, and going and coming!")
 
-A very simple non-secure, volatile aspnetcore webapi site for inter-application dropoff and pickup of payloads.  It is inspired by [BOG.Pathways.Server](https://github.com/rambotech/BOG.Pathways.Server), but uses an optional access token for authentication, and auto-creates a dropzone as needed.
+A very simple volatile aspnetcore webapi site for inter-application dropoff and pickup of payloads.  It is inspired by [BOG.Pathways.Server](https://github.com/rambotech/BOG.Pathways.Server), but uses an optional access token for authentication, and auto-creates a dropzone as needed.
 
 ## How it works
 A drop zone is a named location for one or more applications to put payloads (strings) into it, and one or more other applications to remove them from it.  The name designates the role and type of traffic for sender's and receivers.  Many drop zones can be created to faciliate many different types of data transfers.
@@ -12,7 +12,7 @@ A drop zone also has a set of key/value pairs as a dictionary.  Unlike payloads,
 
 ### Operational
 
-The drop zone supports six operational actions, and two admin actions.
+The drop zone supports seven operational actions, and two admin actions.
 
 *Dropoff* :: places a new string (as a payload) onto the queue of other payloads.
 
@@ -25,6 +25,8 @@ The drop zone supports six operational actions, and two admin actions.
 *List References* :: returns the refence key names available within the drop zone as a string array.
 
 *Get Statistics* :: returns the metrics for the given drop zone.
+
+*Get Security* :: returns information on client attempts to access the site with an invalid access token value.
 
 NOTE: The reference key "info" is reserved for internal use.  When *Get Reference* is called with this key, a json blob of usage and state statistics for the drop zone is the value.
 
@@ -66,7 +68,9 @@ namespace BOG.DropZone.Test
         {
             // adjust the port to the port used by BOG.DropZone
             // var restApi = new RestApiCalls("http://localhost:54771");
-            var restApi = new RestApiCalls("http://localhost:54771", "optional_password", "optional_salt");
+            // var restApi = new RestApiCalls("http://localhost:54771", "YourAccessTokenValue");
+            // var restApi = new RestApiCalls("http://localhost:54771", "optional_password", "optional_salt");
+            // var restApi = new RestApiCalls("http://localhost:54771", "YourAccessTokenValue", "optional_password", "optional_salt");
 
             try
             {
@@ -93,6 +97,12 @@ namespace BOG.DropZone.Test
 
                 Console.Write("GetStatistics()... ");
                 result = await restApi.GetStatistics("CityData");
+                Console.WriteLine($"{result.StatusCode.ToString()}: {result.HandleAs.ToString()}");
+                Console.WriteLine($"has: {result.Content}");
+                Console.WriteLine();
+
+                Console.Write("GetSecurityInfo()... ");
+                result = await restApi.GetSecurity();
                 Console.WriteLine($"{result.StatusCode.ToString()}: {result.HandleAs.ToString()}");
                 Console.WriteLine($"has: {result.Content}");
                 Console.WriteLine();

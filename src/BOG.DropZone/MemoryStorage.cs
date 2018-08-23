@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
+using BOG.DropZone.Common.Dto;
 using BOG.DropZone.Interface;
 using BOG.DropZone.Storage;
 using Microsoft.EntityFrameworkCore;
@@ -26,7 +27,12 @@ namespace BOG.DropZone
         /// <summary>
         /// The collection of drop zones and their data.
         /// </summary>
-        public Dictionary<string, BOG.DropZone.Storage.DropPoint> DropZoneList { get; set; } = new Dictionary<string, BOG.DropZone.Storage.DropPoint>();
+        public Dictionary<string, DropPoint> DropZoneList { get; set; } = new Dictionary<string, DropPoint>();
+
+        /// <summary>
+        /// The list of clients who have submitted invalid 
+        /// </summary>
+        public List<FailedAuthTokenWatch> FailedAuthTokenWatchList { get; set; } = new List<FailedAuthTokenWatch>();
 
         /// <summary>
         /// Constructor.

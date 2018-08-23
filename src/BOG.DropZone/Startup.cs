@@ -43,6 +43,7 @@ namespace BOG.DropZone
         {
             services.AddMvc();
             services.AddMvc(o => o.InputFormatters.Insert(0, new RawRequestBodyFormatter()));
+            services.AddHttpContextAccessor();
 
             // static across controllers and calls.
             services.AddSingleton<IStorage, MemoryStorage>();
