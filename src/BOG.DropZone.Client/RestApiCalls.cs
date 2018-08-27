@@ -168,7 +168,7 @@ namespace BOG.DropZone.Client
             var result = new Result { HandleAs = Result.State.OK };
             try
             {
-                var response = await _Client.GetAsync(_BaseUrl + $"/api/payload/heartbeat", HttpCompletionOption.ResponseContentRead);
+                var response = await _Client.GetAsync(_BaseUrl + $"/api/heartbeat", HttpCompletionOption.ResponseContentRead);
                 result.StatusCode = response.StatusCode;
                 switch (response.StatusCode)
                 {
