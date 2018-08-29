@@ -416,6 +416,7 @@ namespace BOG.DropZone.Client
         {
             var result = new Result { HandleAs = Result.State.OK };
             var datagram = BuildPayloadGram(value);
+            var l = datagram.Length;
             try
             {
                 var response = await _Client.PostAsync(_BaseUrl + $"/api/reference/set/{dropzoneName}/{key}",
@@ -480,6 +481,11 @@ namespace BOG.DropZone.Client
 
                     case HttpStatusCode.Conflict:
                         result.HandleAs = Result.State.OverLimit;
+                        result.Message = response.ReasonPhrase;
+                        break;
+
+                    case HttpStatusCode.NoContent:
+                        result.HandleAs = Result.State.NoDataAvailable;
                         result.Message = response.ReasonPhrase;
                         break;
 
@@ -671,6 +677,11 @@ namespace BOG.DropZone.Client
         public DropZoneInfo GetStatisticsObject(string getStatisticsResponse)
         {
             return Serializer<DropZoneInfo>.FromJson(getStatisticsResponse);
+        }
+
+        public List<ClientWatch> GetClientWatchListObject(string getClientWatchListResponse)
+        {
+            return Serializer<List<ClientWatch>>.FromJson(getClientWatchListResponse);
         }
     }
 }

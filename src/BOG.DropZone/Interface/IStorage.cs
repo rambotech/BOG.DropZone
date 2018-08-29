@@ -10,9 +10,24 @@ namespace BOG.DropZone.Interface
     public interface IStorage
     {
         /// <summary>
-        /// The list of dropzone information
+        /// An optional access token value which the client must provide to use any method.
         /// </summary>
         string AccessToken { get; set; }
+
+        /// <summary>
+        /// The list of dropzone information
+        /// </summary>
+        int MaxDropzones { get; set; }
+
+        /// <summary>
+        /// The number of consecutive mismatched access token values which triggers a lockout period.
+        /// </summary>
+        int MaximumFailedAttemptsBeforeLockout { get; set; }
+
+        /// <summary>
+        /// The number of seconds which a lockout endures.
+        /// </summary>
+        int LockoutSeconds { get; set; } 
 
         /// <summary>
         /// The list of dropzone information
@@ -22,7 +37,7 @@ namespace BOG.DropZone.Interface
         /// <summary>
         /// The list of clients who have submitted invalid 
         /// </summary>
-        List<FailedAuthTokenWatch> FailedAuthTokenWatchList { get; set; }
+        List<ClientWatch> ClientWatchList { get; set; }
 
         /// <summary>
         /// Reset the site to a fresh startup state.
@@ -30,7 +45,7 @@ namespace BOG.DropZone.Interface
         void Reset();
 
         /// <summary>
-        /// Reset the site to a fresh startup state.
+        /// Reset only this dropzone to a fresh startup state.
         /// </summary>
         void Clear(string dropZoneName);
 

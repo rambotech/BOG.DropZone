@@ -1,0 +1,29 @@
+Release Notes:
+
+1.7.3 -- 2018.08.29
+* Refactor FailedAuthTokenWatch to ClientWatch, with simplier property structure.
+* Remove 451 (Legal Reasons) return codes and use only 401 (Not Authorized) return codes.
+  Separate return values provided a semaphore to attackers of when their attempts were being ignored or not.
+  Now all attempts appear valid.
+* Add overridable parameters for:
+  ** Drop zone count
+  ** Max failed attempts before lockout
+  ** Lockout seconds of duration
+* Created lockout logic that will return not authorized when a valid access token is provided during a lockout period.
+  This can give the impression to brute force attackers that they still have not discovered the proper value.
+* GetReference will now return a 204 response if the key does not exist.  Previously, it would have return a value of 
+  empty string.
+
+1.7.2 -- 2018.08.26
+* Correct a path error for the api method Heartbeat
+
+1.7.1 -- 2018.08.23
+* Adds GetSecurity method for exposing client information.
+
+1.7.0 -- 2018.07.31
+* Security: Adds support for an optional access token in the client header.
+* Adds 401 and 451 result codes for invalid access tokens.
+
+1.6.1 -- 2018.07.10
+* Add Clear method to remove only a dropzone
+

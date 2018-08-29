@@ -78,6 +78,28 @@ namespace BOG.DropZone
         {
             var storageArea = serviceProvider.GetService<IStorage>();
             storageArea.AccessToken = Configuration.GetValue<string>("AccessToken");
+            Console.WriteLine($"AccessToken: {storageArea.AccessToken}");
+
+            var configValue = Configuration.GetValue<string>("MaxDropzones");
+            if (!string.IsNullOrWhiteSpace(configValue))
+            {
+                storageArea.MaxDropzones = int.Parse(configValue);
+            }
+            Console.WriteLine($"MaxDropzones: {storageArea.MaxDropzones}");
+
+            configValue = Configuration.GetValue<string>("MaximumFailedAttemptsBeforeLockout");
+            if (!string.IsNullOrWhiteSpace(configValue))
+            {
+                storageArea.MaximumFailedAttemptsBeforeLockout = int.Parse(configValue);
+            }
+            Console.WriteLine($"MaximumFailedAttemptsBeforeLockout: {storageArea.MaximumFailedAttemptsBeforeLockout}");
+
+            configValue = Configuration.GetValue<string>("LockoutSeconds");
+            if (!string.IsNullOrWhiteSpace(configValue))
+            {
+                storageArea.LockoutSeconds = int.Parse(configValue);
+            }
+            Console.WriteLine($"LockoutSeconds: {storageArea.LockoutSeconds}");
 
             if (env.IsDevelopment())
             {

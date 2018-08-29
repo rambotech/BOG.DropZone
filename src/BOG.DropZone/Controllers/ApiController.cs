@@ -20,17 +20,14 @@ namespace BOG.DropZone.Controllers
     [Route("api")]
     public class ApiController : Controller
     {
-        private const int MaxDropzones = 10;
-
         private IHttpContextAccessor _accessor;
         private IStorage _storage;
         private IConfiguration _configuration;
 
         private Stopwatch upTime = new Stopwatch();
-        private Dictionary<string, DateTime> BlacklistedClients = new Dictionary<string, DateTime>();
 
-        private object LockBlacklist = new object();
-        private object LockAuthTokenFailList = new object();
+        private object LockClientWatchList = new object();
+        private object lockDropZoneInfo = new object();
 
         /// <summary>
         /// Instantiated via injection
@@ -57,13 +54,10 @@ namespace BOG.DropZone.Controllers
         [Produces("text/plain")]
         public IActionResult Heartbeat([FromHeader] string AccessToken)
         {
-            if (IsClientBlacklisted(_accessor.HttpContext.Connection.RemoteIpAddress.ToString()))
+            var clientIp = _accessor.HttpContext.Connection.RemoteIpAddress.ToString();
+            if (!IsValidatedClient(clientIp, AccessToken, "*global*", System.Reflection.MethodBase.GetCurrentMethod().Name))
             {
-                return StatusCode(451, "You are not playing nice.");
-            }
-            if (string.Compare(AccessToken ?? string.Empty, _storage.AccessToken ?? string.Empty, false) != 0)
-            {
-                return HandleFailedAuthTokenValue(_accessor.HttpContext.Connection.RemoteIpAddress.ToString(), string.Empty, "Heartbeat");
+                return Unauthorized();
             }
             return StatusCode(200, "Active");
         }
@@ -88,38 +82,39 @@ namespace BOG.DropZone.Controllers
             [FromRoute] string dropzoneName,
             [FromBody] string payload)
         {
-            if (IsClientBlacklisted(_accessor.HttpContext.Connection.RemoteIpAddress.ToString()))
+            var clientIp = _accessor.HttpContext.Connection.RemoteIpAddress.ToString();
+            if (!IsValidatedClient(clientIp, AccessToken, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
             {
-                return StatusCode(451, "You are not playing nice.");
+                return Unauthorized();
             }
-            if (string.Compare(AccessToken ?? string.Empty, _storage.AccessToken ?? string.Empty, false) != 0)
+            lock (lockDropZoneInfo)
             {
-                return HandleFailedAuthTokenValue(_accessor.HttpContext.Connection.RemoteIpAddress.ToString(), dropzoneName, "DropoffPayload");
-            }
-            if (!_storage.DropZoneList.ContainsKey(dropzoneName))
-            {
-                if (_storage.DropZoneList.Count >= MaxDropzones)
+                if (!_storage.DropZoneList.ContainsKey(dropzoneName))
                 {
-                    return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {MaxDropzones} dropzone definitions.");
+                    if (_storage.DropZoneList.Count >= _storage.MaxDropzones)
+                    {
+                        return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {_storage.MaxDropzones} dropzone definitions.");
+                    }
+                    CreateDropZone(dropzoneName);
                 }
-                CreateDropZone(dropzoneName);
+                var dropzone = _storage.DropZoneList[dropzoneName];
+                if (dropzone.Statistics.PayloadSize + payload.Length > dropzone.Statistics.MaxPayloadSize)
+                {
+                    dropzone.Statistics.PayloadDropOffsFailedCount++;
+                    return StatusCode(429, $"Can't accept: Exceeds maximum payload size of {dropzone.Statistics.MaxPayloadSize}");
+                }
+                if (dropzone.Payloads.Count >= dropzone.Statistics.MaxPayloadCount)
+                {
+                    dropzone.Statistics.PayloadDropOffsFailedCount++;
+                    return StatusCode(429, $"Can't accept: Exceeds maximum payload count of {dropzone.Statistics.MaxPayloadCount}");
+                }
+                dropzone.Statistics.PayloadSize += payload.Length;
+                dropzone.Payloads.Enqueue(payload);
+                dropzone.Statistics.PayloadCount = dropzone.Payloads.Count();
+                dropzone.Statistics.LastDropoff = DateTime.Now;
+
+                return StatusCode(200, "Payload accepted");
             }
-            var dropzone = _storage.DropZoneList[dropzoneName];
-            if (dropzone.Statistics.PayloadSize + payload.Length > dropzone.Statistics.MaxPayloadSize)
-            {
-                dropzone.Statistics.PayloadDropOffsFailedCount++;
-                return StatusCode(429, $"Can't accept: Exceeds maximum payload size of {dropzone.Statistics.MaxPayloadSize}");
-            }
-            if (dropzone.Payloads.Count >= dropzone.Statistics.MaxPayloadCount)
-            {
-                dropzone.Statistics.PayloadDropOffsFailedCount++;
-                return StatusCode(429, $"Can't accept: Exceeds maximum payload count of {dropzone.Statistics.MaxPayloadCount}");
-            }
-            dropzone.Statistics.PayloadSize += payload.Length;
-            dropzone.Payloads.Enqueue(payload);
-            dropzone.Statistics.PayloadCount = dropzone.Payloads.Count();
-            dropzone.Statistics.LastDropoff = DateTime.Now;
-            return StatusCode(200, "Payload accepted");
         }
 
         /// <summary>
@@ -142,36 +137,37 @@ namespace BOG.DropZone.Controllers
             [FromHeader] string AccessToken,
             [FromRoute] string dropzoneName)
         {
-            if (IsClientBlacklisted(_accessor.HttpContext.Connection.RemoteIpAddress.ToString()))
+            var clientIp = _accessor.HttpContext.Connection.RemoteIpAddress.ToString();
+            if (!IsValidatedClient(clientIp, AccessToken, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
             {
-                return StatusCode(451, "You are not playing nice.");
+                return Unauthorized();
             }
-            if (string.Compare(AccessToken ?? string.Empty, _storage.AccessToken ?? string.Empty, false) != 0)
+            lock (lockDropZoneInfo)
             {
-                return HandleFailedAuthTokenValue(_accessor.HttpContext.Connection.RemoteIpAddress.ToString(), string.Empty, "PickupPayload");
-            }
-            if (!_storage.DropZoneList.ContainsKey(dropzoneName))
-            {
-                if (_storage.DropZoneList.Count >= MaxDropzones)
+                if (!_storage.DropZoneList.ContainsKey(dropzoneName))
                 {
-                    return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {MaxDropzones} dropzone definitions.");
+                    if (_storage.DropZoneList.Count >= _storage.MaxDropzones)
+                    {
+                        return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {_storage.MaxDropzones} dropzone definitions.");
+                    }
+                    CreateDropZone(dropzoneName);
                 }
-                CreateDropZone(dropzoneName);
-            }
-            var dropzone = _storage.DropZoneList[dropzoneName];
-            if (dropzone.Payloads.Count == 0)
-            {
-                return StatusCode(204);
-            }
+                var dropzone = _storage.DropZoneList[dropzoneName];
+                if (dropzone.Payloads.Count == 0)
+                {
+                    return StatusCode(204);
+                }
 
-            if (!dropzone.Payloads.TryDequeue(out string payload))
-            {
-                return StatusCode(410, $"Dropzone exists with payloads, but failed to acquire a payload");
+                if (!dropzone.Payloads.TryDequeue(out string payload))
+                {
+                    return StatusCode(410, $"Dropzone exists with payloads, but failed to acquire a payload");
+                }
+                dropzone.Statistics.PayloadSize -= payload.Length;
+                dropzone.Statistics.PayloadCount = dropzone.Payloads.Count();
+                dropzone.Statistics.LastPickup = DateTime.Now;
+
+                return StatusCode(200, payload);
             }
-            dropzone.Statistics.PayloadSize -= payload.Length;
-            dropzone.Statistics.PayloadCount = dropzone.Payloads.Count();
-            dropzone.Statistics.LastPickup = DateTime.Now;
-            return StatusCode(200, payload);
         }
 
         /// <summary>
@@ -192,23 +188,23 @@ namespace BOG.DropZone.Controllers
             [FromHeader] string AccessToken,
             [FromRoute] string dropzoneName)
         {
-            if (IsClientBlacklisted(_accessor.HttpContext.Connection.RemoteIpAddress.ToString()))
+            var clientIp = _accessor.HttpContext.Connection.RemoteIpAddress.ToString();
+            if (!IsValidatedClient(clientIp, AccessToken, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
             {
-                return StatusCode(451, "You are not playing nice.");
+                return Unauthorized();
             }
-            if (string.Compare(AccessToken ?? string.Empty, _storage.AccessToken ?? string.Empty, false) != 0)
+            lock (lockDropZoneInfo)
             {
-                return HandleFailedAuthTokenValue(_accessor.HttpContext.Connection.RemoteIpAddress.ToString(), string.Empty, "GetStatistics");
-            }
-            if (!_storage.DropZoneList.ContainsKey(dropzoneName))
-            {
-                if (_storage.DropZoneList.Count >= MaxDropzones)
+                if (!_storage.DropZoneList.ContainsKey(dropzoneName))
                 {
-                    return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {MaxDropzones} dropzone definitions.");
+                    if (_storage.DropZoneList.Count >= _storage.MaxDropzones)
+                    {
+                        return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {_storage.MaxDropzones} dropzone definitions.");
+                    }
+                    CreateDropZone(dropzoneName);
                 }
-                CreateDropZone(dropzoneName);
+                return StatusCode(200, Serializer<DropZoneInfo>.ToJson(_storage.DropZoneList[dropzoneName].Statistics));
             }
-            return StatusCode(200, Serializer<DropZoneInfo>.ToJson(_storage.DropZoneList[dropzoneName].Statistics));
         }
 
         /// <summary>
@@ -225,15 +221,15 @@ namespace BOG.DropZone.Controllers
         public IActionResult GetSecurityInfo(
             [FromHeader] string AccessToken)
         {
-            if (IsClientBlacklisted(_accessor.HttpContext.Connection.RemoteIpAddress.ToString()))
+            var clientIp = _accessor.HttpContext.Connection.RemoteIpAddress.ToString();
+            if (!IsValidatedClient(clientIp, AccessToken, "*global*", System.Reflection.MethodBase.GetCurrentMethod().Name))
             {
-                return StatusCode(451, "You are not playing nice.");
+                return Unauthorized();
             }
-            if (string.Compare(AccessToken ?? string.Empty, _storage.AccessToken ?? string.Empty, false) != 0)
+            lock (LockClientWatchList)
             {
-                return HandleFailedAuthTokenValue(_accessor.HttpContext.Connection.RemoteIpAddress.ToString(), string.Empty, "GetSecurityStatistics");
+                return StatusCode(200, Serializer<List<ClientWatch>>.ToJson(_storage.ClientWatchList));
             }
-            return StatusCode(200, Serializer<List<FailedAuthTokenWatch>>.ToJson(_storage.FailedAuthTokenWatchList));
         }
 
         /// <summary>
@@ -258,46 +254,46 @@ namespace BOG.DropZone.Controllers
             [FromRoute] string key,
             [FromBody] string value)
         {
-            if (IsClientBlacklisted(_accessor.HttpContext.Connection.RemoteIpAddress.ToString()))
+            var clientIp = _accessor.HttpContext.Connection.RemoteIpAddress.ToString();
+            if (!IsValidatedClient(clientIp, AccessToken, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
             {
-                return StatusCode(451, "You are not playing nice.");
-            }
-            if (string.Compare(AccessToken ?? string.Empty, _storage.AccessToken ?? string.Empty, false) != 0)
-            {
-                return HandleFailedAuthTokenValue(_accessor.HttpContext.Connection.RemoteIpAddress.ToString(), string.Empty, "SetReference");
+                return Unauthorized();
             }
             var fixedValue = value ?? string.Empty;
-            if (!_storage.DropZoneList.ContainsKey(dropzoneName))
+            lock (lockDropZoneInfo)
             {
-                if (_storage.DropZoneList.Count >= MaxDropzones)
+                if (!_storage.DropZoneList.ContainsKey(dropzoneName))
                 {
-                    return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {MaxDropzones} dropzone definitions.");
+                    if (_storage.DropZoneList.Count >= _storage.MaxDropzones)
+                    {
+                        return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {_storage.MaxDropzones} dropzone definitions.");
+                    }
+                    CreateDropZone(dropzoneName);
                 }
-                CreateDropZone(dropzoneName);
+                var dropzone = _storage.DropZoneList[dropzoneName];
+                int sizeOffset = 0;
+                if (dropzone.References.ContainsKey(key))
+                {
+                    sizeOffset = dropzone.References[key].Length;
+                }
+                if ((dropzone.Statistics.ReferenceSize - sizeOffset + fixedValue.Length) > dropzone.Statistics.MaxReferenceSize)
+                {
+                    dropzone.Statistics.ReferenceSetsFailedCount++;
+                    return StatusCode(429, $"Can't accept: Exceeds maximum reference value size of {dropzone.Statistics.MaxReferenceSize}");
+                }
+                if (dropzone.References.Count >= dropzone.Statistics.MaxReferencesCount)
+                {
+                    dropzone.Statistics.ReferenceSetsFailedCount++;
+                    return StatusCode(429, $"Can't accept: Exceeds maximum reference count of {dropzone.Statistics.MaxReferencesCount}");
+                }
+                dropzone.Statistics.ReferenceSize -= sizeOffset;
+                dropzone.References.Remove(key, out string ignored);
+                dropzone.References.AddOrUpdate(key, fixedValue, (k, o) => fixedValue);
+                dropzone.Statistics.ReferenceSize += fixedValue.Length;
+                dropzone.Statistics.ReferenceCount = dropzone.References.Count();
+                dropzone.Statistics.LastSetReference = DateTime.Now;
+                return StatusCode(200, "Reference accepted");
             }
-            var dropzone = _storage.DropZoneList[dropzoneName];
-            int sizeOffset = 0;
-            if (dropzone.References.ContainsKey(key))
-            {
-                sizeOffset = dropzone.References[key].Length;
-            }
-            if ((dropzone.Statistics.ReferenceSize - sizeOffset + fixedValue.Length) > dropzone.Statistics.MaxReferenceSize)
-            {
-                dropzone.Statistics.ReferenceSetsFailedCount++;
-                return StatusCode(429, $"Can't accept: Exceeds maximum reference value size of {dropzone.Statistics.MaxReferenceSize}");
-            }
-            if (dropzone.References.Count >= dropzone.Statistics.MaxReferencesCount)
-            {
-                dropzone.Statistics.ReferenceSetsFailedCount++;
-                return StatusCode(429, $"Can't accept: Exceeds maximum reference count of {dropzone.Statistics.MaxReferencesCount}");
-            }
-            dropzone.Statistics.ReferenceSize -= sizeOffset;
-            dropzone.References.Remove(key, out string ignored);
-            dropzone.References.AddOrUpdate(key, fixedValue, (k, o) => fixedValue);
-            dropzone.Statistics.ReferenceSize += fixedValue.Length;
-            dropzone.Statistics.ReferenceCount = dropzone.References.Count();
-            dropzone.Statistics.LastSetReference = DateTime.Now;
-            return StatusCode(200, "Reference accepted");
         }
 
         /// <summary>
@@ -314,40 +310,41 @@ namespace BOG.DropZone.Controllers
         [ProducesResponseType(451)]
         [ProducesResponseType(429, Type = typeof(string))]
         [ProducesResponseType(200, Type = typeof(string))]
+        [ProducesResponseType(204, Type = typeof(string))]
         [ProducesResponseType(500)]
         public IActionResult GetReference(
             [FromHeader] string AccessToken,
             [FromRoute] string dropzoneName,
             [FromRoute] string key)
         {
-            if (IsClientBlacklisted(_accessor.HttpContext.Connection.RemoteIpAddress.ToString()))
+            var clientIp = _accessor.HttpContext.Connection.RemoteIpAddress.ToString();
+            if (!IsValidatedClient(clientIp, AccessToken, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
             {
-                return StatusCode(451, "You are not playing nice.");
+                return Unauthorized();
             }
-            if (string.Compare(AccessToken ?? string.Empty, _storage.AccessToken ?? string.Empty, false) != 0)
+            lock (lockDropZoneInfo)
             {
-                return HandleFailedAuthTokenValue(_accessor.HttpContext.Connection.RemoteIpAddress.ToString(), string.Empty, "GetReference");
-            }
-            if (!_storage.DropZoneList.ContainsKey(dropzoneName))
-            {
-                if (_storage.DropZoneList.Count >= MaxDropzones)
+                if (!_storage.DropZoneList.ContainsKey(dropzoneName))
                 {
-                    return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {MaxDropzones} dropzone definitions.");
+                    if (_storage.DropZoneList.Count >= _storage.MaxDropzones)
+                    {
+                        return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {_storage.MaxDropzones} dropzone definitions.");
+                    }
+                    CreateDropZone(dropzoneName);
                 }
-                CreateDropZone(dropzoneName);
+                var dropzone = _storage.DropZoneList[dropzoneName];
+                string result = null;
+                if (dropzone.References.Count == 0 || !dropzone.References.ContainsKey(key))
+                {
+                    return StatusCode(204);
+                }
+                else
+                {
+                    result = dropzone.References[key];
+                }
+                dropzone.Statistics.LastGetReference = DateTime.Now;
+                return Ok(result);
             }
-            var dropzone = _storage.DropZoneList[dropzoneName];
-            string result = null;
-            if (dropzone.References.Count == 0 || !dropzone.References.ContainsKey(key))
-            {
-                result = string.Empty;
-            }
-            else
-            {
-                result = dropzone.References[key];
-            }
-            dropzone.Statistics.LastGetReference = DateTime.Now;
-            return Ok(result);
         }
 
         /// <summary>
@@ -368,24 +365,24 @@ namespace BOG.DropZone.Controllers
             [FromHeader] string AccessToken,
             [FromRoute] string dropzoneName)
         {
-            if (IsClientBlacklisted(_accessor.HttpContext.Connection.RemoteIpAddress.ToString()))
+            var clientIp = _accessor.HttpContext.Connection.RemoteIpAddress.ToString();
+            if (!IsValidatedClient(clientIp, AccessToken, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
             {
-                return StatusCode(451, "You are not playing nice.");
+                return Unauthorized();
             }
-            if (string.Compare(AccessToken ?? string.Empty, _storage.AccessToken ?? string.Empty, false) != 0)
+            lock (lockDropZoneInfo)
             {
-                return HandleFailedAuthTokenValue(_accessor.HttpContext.Connection.RemoteIpAddress.ToString(), string.Empty, "ListReferences");
-            }
-            if (!_storage.DropZoneList.ContainsKey(dropzoneName))
-            {
-                if (_storage.DropZoneList.Count >= MaxDropzones)
+                if (!_storage.DropZoneList.ContainsKey(dropzoneName))
                 {
-                    return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {MaxDropzones} dropzone definitions.");
+                    if (_storage.DropZoneList.Count >= _storage.MaxDropzones)
+                    {
+                        return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {_storage.MaxDropzones} dropzone definitions.");
+                    }
+                    CreateDropZone(dropzoneName);
                 }
-                CreateDropZone(dropzoneName);
+                var dropzone = _storage.DropZoneList[dropzoneName];
+                return Ok(dropzone.References.Keys.ToList());
             }
-            var dropzone = _storage.DropZoneList[dropzoneName];
-            return Ok(dropzone.References.Keys.ToList());
         }
 
         /// <summary>
@@ -404,17 +401,17 @@ namespace BOG.DropZone.Controllers
             [FromHeader] string AccessToken,
             [FromRoute] string dropzoneName)
         {
-            if (IsClientBlacklisted(_accessor.HttpContext.Connection.RemoteIpAddress.ToString()))
+            var clientIp = _accessor.HttpContext.Connection.RemoteIpAddress.ToString();
+            if (!IsValidatedClient(clientIp, AccessToken, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
             {
-                return StatusCode(451, "You are not playing nice.");
+                return Unauthorized();
             }
-            if (string.Compare(AccessToken ?? string.Empty, _storage.AccessToken ?? string.Empty, false) != 0)
+            lock (lockDropZoneInfo)
             {
-                return HandleFailedAuthTokenValue(_accessor.HttpContext.Connection.RemoteIpAddress.ToString(), string.Empty, "Clear");
-            }
-            if (_storage.DropZoneList.ContainsKey(dropzoneName))
-            {
-                _storage.DropZoneList.Remove(dropzoneName);
+                if (_storage.DropZoneList.ContainsKey(dropzoneName))
+                {
+                    ReleaseDropZone(dropzoneName);
+                }
             }
             return Ok($"drop zone {dropzoneName} cleared");
         }
@@ -433,15 +430,15 @@ namespace BOG.DropZone.Controllers
         public IActionResult Reset(
             [FromHeader] string AccessToken)
         {
-            if (IsClientBlacklisted(_accessor.HttpContext.Connection.RemoteIpAddress.ToString()))
+            var clientIp = _accessor.HttpContext.Connection.RemoteIpAddress.ToString();
+            if (!IsValidatedClient(clientIp, AccessToken, "*global*", System.Reflection.MethodBase.GetCurrentMethod().Name))
             {
-                return StatusCode(451, "You are not playing nice.");
+                return Unauthorized();
             }
-            if (string.Compare(AccessToken ?? string.Empty, _storage.AccessToken ?? string.Empty, false) != 0)
+            lock (lockDropZoneInfo)
             {
-                return HandleFailedAuthTokenValue(_accessor.HttpContext.Connection.RemoteIpAddress.ToString(), string.Empty, "Reset");
+                _storage.Reset();
             }
-            _storage.Reset();
             return Ok("all drop zone data cleared");
         }
 
@@ -459,84 +456,89 @@ namespace BOG.DropZone.Controllers
         public IActionResult Shutdown(
             [FromHeader] string AccessToken)
         {
-            if (IsClientBlacklisted(_accessor.HttpContext.Connection.RemoteIpAddress.ToString()))
+            var clientIp = _accessor.HttpContext.Connection.RemoteIpAddress.ToString();
+            if (!IsValidatedClient(clientIp, AccessToken, "*global*", System.Reflection.MethodBase.GetCurrentMethod().Name))
             {
-                return StatusCode(451, "You are not playing nice.");
-            }
-            if (string.Compare(AccessToken ?? string.Empty, _storage.AccessToken ?? string.Empty, false) != 0)
-            {
-                return HandleFailedAuthTokenValue(_accessor.HttpContext.Connection.RemoteIpAddress.ToString(), string.Empty, "Shutdown");
+                return Unauthorized();
             }
             _storage.Shutdown();
             return Ok("Shutdown requested... bye");
         }
 
+        #region Helper Methods
+
+        // Adds the new drop zone to the memory storage tracker.
         private void CreateDropZone(string dropzoneName)
         {
             _storage.DropZoneList.Add(dropzoneName, new DropPoint());
             _storage.DropZoneList[dropzoneName].Statistics.Name = dropzoneName;
         }
 
-        private bool IsClientBlacklisted(string ipAddress)
+        private void ReleaseDropZone(string dropzoneName)
         {
-            lock (LockBlacklist)
-            {
-                if (!BlacklistedClients.ContainsKey(ipAddress)) return false;
-                if (BlacklistedClients[ipAddress] < DateTime.Now.AddMinutes(-2))
-                {
-                    BlacklistedClients.Remove(ipAddress);
-                    return false;
-                }
-                return true;
-            }
+            _storage.DropZoneList.Remove(dropzoneName);
         }
 
-        private IActionResult HandleFailedAuthTokenValue(string ipAddress, string dropZoneName, string apiMethodName)
+        // Validates that the auth token provided is valid, and tracks failures.
+        // NOTE:
+        //     This method will return false when a valid access token is provided, but the client has exceeded
+        //     the maximum allowed attempts within a timeframe (i.e. is in a lockdown period).  This protects 
+        //     against brute force attacks, because the attacker can believe that it has not yet discovered the
+        //     correct value.
+        private bool IsValidatedClient(string ipAddress, string accessToken, string dropzoneName, string apiMethodName)
         {
-            var entry = new KeyValuePair<string, string>(dropZoneName, apiMethodName);
-            var failedAuthToken = _storage.FailedAuthTokenWatchList.Where(t => t.IpAddress == ipAddress).FirstOrDefault();
-            if (failedAuthToken == null)
+            lock (LockClientWatchList)
             {
-                _storage.FailedAuthTokenWatchList.Add(new FailedAuthTokenWatch
+                var validAuthToken = string.Compare(accessToken ?? string.Empty, _storage.AccessToken ?? string.Empty, false) == 0;
+                var allowAccess = validAuthToken;
+                var clientInfo = _storage.ClientWatchList.Where(t => t.IpAddress == ipAddress).FirstOrDefault();
+                if (clientInfo == null)
                 {
-                    IpAddress = ipAddress,
-                    Attempts = 1
-                });
-                failedAuthToken = _storage.FailedAuthTokenWatchList.Where(t => t.IpAddress == ipAddress).First();
-                failedAuthToken.AccessPoints.Add(dropZoneName, new Dictionary<string, long>());
-                failedAuthToken.AccessPoints[dropZoneName].Add(apiMethodName, 1);
-                failedAuthToken.AccessPointCount++;
-            }
-            else
-            {
-                failedAuthToken.Attempts++;
-                failedAuthToken.LatestAttempt = DateTime.Now;
-                if (failedAuthToken.AccessPointCount < 100)
-                {
-                    if (!failedAuthToken.AccessPoints.ContainsKey(dropZoneName))
+                    _storage.ClientWatchList.Add(new ClientWatch
                     {
-                        failedAuthToken.AccessPoints.Add(dropZoneName, new Dictionary<string, long>());
-                    }
-                    if (!failedAuthToken.AccessPoints[dropZoneName].ContainsKey(apiMethodName))
+                        IpAddress = ipAddress
+                    });
+                    clientInfo = _storage.ClientWatchList.Where(t => t.IpAddress == ipAddress).First();
+                }
+
+                clientInfo.LatestAttempt = DateTime.Now;
+                clientInfo.AccessAttemptsTotalCount++;
+                if (!clientInfo.AccessPoints.ContainsKey(dropzoneName))
+                {
+                    clientInfo.AccessPoints.Add(dropzoneName, new Dictionary<string, long>());
+                }
+                if (!clientInfo.AccessPoints[dropzoneName].ContainsKey(apiMethodName))
+                {
+                    clientInfo.AccessPoints[dropzoneName].Add(apiMethodName, 0);
+                }
+                clientInfo.AccessPoints[dropzoneName][apiMethodName]++;
+
+                if (!validAuthToken)
+                {
+                    clientInfo.FailedAccessAttemptsTotalCount++;
+                    if (clientInfo.FailedAccessTimes.Count == _storage.MaximumFailedAttemptsBeforeLockout)
                     {
-                        failedAuthToken.AccessPoints[dropZoneName].Add(apiMethodName, 0);
+                        clientInfo.FailedAccessTimes.Dequeue();
                     }
-                    failedAuthToken.AccessPoints[dropZoneName][apiMethodName]++;
-                    failedAuthToken.AccessPointCount++;
+                    clientInfo.FailedAccessTimes.Enqueue(DateTime.Now);
                 }
-            }
-            if (failedAuthToken.AccessPointCount >= 5)
-            {
-                if (!BlacklistedClients.ContainsKey(ipAddress))
+
+                // prune out failed attempts that have expired.
+                while (clientInfo.FailedAccessTimes.Count > 0)
                 {
-                    BlacklistedClients.Add(ipAddress, DateTime.Now);
+                    var thisAttemptTime = clientInfo.FailedAccessTimes.Peek();
+                    if (thisAttemptTime.AddSeconds(_storage.LockoutSeconds) < DateTime.Now)
+                    {
+                        clientInfo.FailedAccessTimes.Dequeue();
+                        continue;
+                    }
+                    break;
                 }
-                else
-                {
-                    BlacklistedClients[ipAddress] = DateTime.Now;
-                }
+
+                allowAccess &= (clientInfo.FailedAccessTimes.Count < _storage.MaximumFailedAttemptsBeforeLockout);
+                return allowAccess;
             }
-            return Unauthorized();
         }
+        #endregion
     }
 }

@@ -18,11 +18,27 @@ namespace BOG.DropZone
     public class MemoryStorage : IStorage
     {
         Timer stopTimer = new Timer();
+        object lockPoint = new object();
 
         /// <summary>
-        /// If not empty, the header value "Access" must contain this value to use the site.
+        /// If not empty, the header value "AccessToken" from the client must contain this value to use the site.
         /// </summary>
         public string AccessToken { get; set; } = string.Empty;
+
+        /// <summary>
+        /// The maximum number of dropzones to allow.
+        /// </summary>
+        public int MaxDropzones { get; set; } = 10;
+
+        /// <summary>
+        /// The maximum number of failed attempts before a lockout delay is invoked.
+        /// </summary>
+        public int MaximumFailedAttemptsBeforeLockout { get; set; } = 6;
+
+        /// <summary>
+        /// The duration of the lock out when imposed.
+        /// </summary>
+        public int LockoutSeconds { get; set; } = 600;
 
         /// <summary>
         /// The collection of drop zones and their data.
@@ -32,7 +48,7 @@ namespace BOG.DropZone
         /// <summary>
         /// The list of clients who have submitted invalid 
         /// </summary>
-        public List<FailedAuthTokenWatch> FailedAuthTokenWatchList { get; set; } = new List<FailedAuthTokenWatch>();
+        public List<ClientWatch> ClientWatchList { get; set; } = new List<ClientWatch>();
 
         /// <summary>
         /// Constructor.
@@ -50,6 +66,7 @@ namespace BOG.DropZone
         public void Reset()
         {
             DropZoneList.Clear();
+            ClientWatchList.Clear();
         }
 
         /// <summary>
@@ -58,6 +75,16 @@ namespace BOG.DropZone
         public void Clear(string dropZoneName)
         {
             DropZoneList.Remove(dropZoneName);
+            lock (lockPoint)
+            {
+                foreach (var clientEntry in ClientWatchList)
+                {
+                    if (clientEntry.AccessPoints.ContainsKey(dropZoneName))
+                    {
+                        clientEntry.AccessPoints.Remove(dropZoneName);
+                    }
+                }
+            }
         }
 
         /// <summary>
