@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using BOG.DropZone.Interface;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,8 +43,16 @@ namespace BOG.DropZone
         /// <param name="services">(injected)</param>
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc();
-            services.AddMvc(o => o.InputFormatters.Insert(0, new RawRequestBodyFormatter()));
+            services.Configure<CookiePolicyOptions>(options =>
+            {
+                // This lambda determines whether user consent for non-essential cookies is needed for a given request.
+                options.CheckConsentNeeded = context => true;
+                options.MinimumSameSitePolicy = SameSiteMode.None;
+            });
+            services.AddMvc(
+                o => o.InputFormatters.Insert(0, new RawRequestBodyFormatter())
+                ).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            //services.AddMvc(o => o.InputFormatters.Insert(0, new RawRequestBodyFormatter()));
             services.AddHttpContextAccessor();
 
             // static across controllers and calls.
@@ -105,12 +115,17 @@ namespace BOG.DropZone
             {
                 app.UseDeveloperExceptionPage();
             }
+            else
+            {
+                app.UseHsts();
+            }
 
-            app.UseMvc();
+            app.UseHttpsRedirection();
+
+            app.UseStaticFiles();
 
             app.UseSwagger();
 
-            // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.), specifying the Swagger JSON endpoint.
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "BOG.DropZone Server API v1");

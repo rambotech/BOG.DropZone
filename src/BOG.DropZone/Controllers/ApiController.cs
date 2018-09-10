@@ -47,6 +47,7 @@ namespace BOG.DropZone.Controllers
         /// </summary>
         /// <returns>varies: see method declaration</returns>
         [HttpGet("heartbeat", Name = "Heartbeat")]
+        [RequestSizeLimit(1024)]
         [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(401)]
         [ProducesResponseType(451)]
@@ -70,6 +71,7 @@ namespace BOG.DropZone.Controllers
         /// <param name="payload">the content to transfer</param>
         /// <returns>varies: see method declaration</returns>
         [HttpPost("payload/dropoff/{dropzoneName}", Name = "DropoffPayload")]
+        [RequestSizeLimit(5242880)]
         [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(400, Type = typeof(string))]
         [ProducesResponseType(401)]
@@ -124,6 +126,7 @@ namespace BOG.DropZone.Controllers
         /// <param name="dropzoneName">the dropzone identifier</param>
         /// <returns>the data to transfer</returns>
         [HttpGet("payload/pickup/{dropzoneName}", Name = "PickupPayload")]
+        [RequestSizeLimit(5242880)]
         [Produces("text/plain")]
         [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(204, Type = typeof(string))]
@@ -177,6 +180,7 @@ namespace BOG.DropZone.Controllers
         /// <param name="dropzoneName">the dropzone identifier</param>
         /// <returns>varies: see method declaration</returns>
         [HttpGet("payload/statistics/{dropzoneName}", Name = "GetStatistics")]
+        [RequestSizeLimit(1024)]
         [ProducesResponseType(400, Type = typeof(string))]
         [ProducesResponseType(401)]
         [ProducesResponseType(451)]
@@ -213,6 +217,7 @@ namespace BOG.DropZone.Controllers
         /// <param name="AccessToken">Optional: access token value if used.</param>
         /// <returns>varies: see method declaration</returns>
         [HttpGet("securityinfo", Name = "GetSecurityInfo")]
+        [RequestSizeLimit(1024)]
         [ProducesResponseType(401)]
         [ProducesResponseType(451)]
         [ProducesResponseType(200, Type = typeof(string))]
@@ -241,13 +246,14 @@ namespace BOG.DropZone.Controllers
         /// <param name="value">the value to store for the key name</param>
         /// <returns>varies: see method declaration</returns>
         [HttpPost("reference/set/{dropzoneName}/{key}", Name = "SetReference")]
-        [Produces("text/plain")]
+        [RequestSizeLimit(5242880)]
         [ProducesResponseType(400, Type = typeof(string))]
         [ProducesResponseType(401)]
         [ProducesResponseType(451)]
         [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(429, Type = typeof(string))]
         [ProducesResponseType(500)]
+        [Produces("text/plain")]
         public IActionResult SetReference(
             [FromHeader] string AccessToken,
             [FromRoute] string dropzoneName,
@@ -304,7 +310,7 @@ namespace BOG.DropZone.Controllers
         /// <param name="key">the name identifying the value to retrieve</param>
         /// <returns>string which is the reference value (always text/plain)</returns>
         [HttpGet("reference/get/{dropzoneName}/{key}", Name = "GetReference")]
-        [Produces("text/plain")]
+        [RequestSizeLimit(5242880)]
         [ProducesResponseType(400, Type = typeof(string))]
         [ProducesResponseType(401)]
         [ProducesResponseType(451)]
@@ -312,6 +318,7 @@ namespace BOG.DropZone.Controllers
         [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(204, Type = typeof(string))]
         [ProducesResponseType(500)]
+        [Produces("text/plain")]
         public IActionResult GetReference(
             [FromHeader] string AccessToken,
             [FromRoute] string dropzoneName,
@@ -354,13 +361,14 @@ namespace BOG.DropZone.Controllers
         /// <param name="dropzoneName">the dropzone identifier</param>
         /// <returns>list of strings which contain the reference key names</returns>
         [HttpGet("reference/list/{dropzoneName}", Name = "ListReferences")]
-        [Produces("application/json")]
+        [RequestSizeLimit(1024)]
         [ProducesResponseType(200, Type = typeof(List<string>))]
         [ProducesResponseType(400, Type = typeof(string))]
         [ProducesResponseType(401)]
         [ProducesResponseType(451)]
         [ProducesResponseType(404, Type = typeof(string))]
         [ProducesResponseType(500)]
+        [Produces("application/json")]
         public IActionResult ListReferences(
             [FromHeader] string AccessToken,
             [FromRoute] string dropzoneName)
@@ -392,11 +400,12 @@ namespace BOG.DropZone.Controllers
         /// <param name="dropzoneName">the dropzone identifier</param>
         /// <returns>string</returns>
         [HttpGet("clear/{dropzoneName}", Name = "Clear")]
-        [Produces("text/plain")]
+        [RequestSizeLimit(1024)]
         [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(401)]
         [ProducesResponseType(451)]
         [ProducesResponseType(500)]
+        [Produces("text/plain")]
         public IActionResult Clear(
             [FromHeader] string AccessToken,
             [FromRoute] string dropzoneName)
@@ -422,11 +431,12 @@ namespace BOG.DropZone.Controllers
         /// <param name="AccessToken">Optional: access token value if used.</param>
         /// <returns>string</returns>
         [HttpGet("reset", Name = "Reset")]
-        [Produces("text/plain")]
+        [RequestSizeLimit(1024)]
         [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(401)]
         [ProducesResponseType(451)]
         [ProducesResponseType(500)]
+        [Produces("text/plain")]
         public IActionResult Reset(
             [FromHeader] string AccessToken)
         {
@@ -448,11 +458,12 @@ namespace BOG.DropZone.Controllers
         /// <param name="AccessToken">Optional: access token value if used.</param>
         /// <returns>string</returns>
         [HttpGet("shutdown", Name = "Shutdown")]
-        [Produces("text/plain")]
+        [RequestSizeLimit(1024)]
         [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(401)]
         [ProducesResponseType(451)]
         [ProducesResponseType(500)]
+        [Produces("text/plain")]
         public IActionResult Shutdown(
             [FromHeader] string AccessToken)
         {

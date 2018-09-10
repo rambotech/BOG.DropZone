@@ -1,5 +1,10 @@
 Release Notes:
 
+1.7.4 -- 2018.09.09
+* Add body size limit of 5Mb to Api calls for payload dropoff and set reference, and 1,024 for admin calls.
+* Client: add DropZoneConfig class for configuration.
+* Listening on both http and https ports now enabled.
+
 1.7.3 -- 2018.08.29
 * Refactor FailedAuthTokenWatch to ClientWatch, with simplier property structure.
 * Remove 451 (Legal Reasons) return codes and use only 401 (Not Authorized) return codes.

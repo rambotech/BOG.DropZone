@@ -40,7 +40,7 @@ namespace BOG.DropZone
                     config.AddCommandLine(args);
                 })
                 .UseStartup<Startup>()
-                .UseUrls("http://0.0.0.0:5000")
+                .UseUrls("http://0.0.0.0:5000", "https://0.0.0.0:5001")
                 .Build();
     }
 }
