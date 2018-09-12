@@ -88,7 +88,7 @@ namespace BOG.DropZone.Client
         /// Instantiate the class with a DropZoneConfig object
         /// </summary>
         /// <param name="config">DropZoneConfig </param>
-        private void RestApiCallsSetup(DropZoneConfig config)
+        public void RestApiCallsSetup(DropZoneConfig config)
         {
             _Config = config;
             _Client = new HttpClient();

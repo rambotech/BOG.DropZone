@@ -1,5 +1,11 @@
 Release Notes:
 
+1.7.6 -- 2018.09.11
+* Make overload of instantiator with DropZoneConfig object public access.
+
+1.7.5 -- 2018.09.09
+* Nuget package updates
+
 1.7.4 -- 2018.09.09
 * Add body size limit of 5Mb to Api calls for payload dropoff and set reference, and 1,024 for admin calls.
 * Client: add DropZoneConfig class for configuration.

@@ -5,8 +5,8 @@
     <RuntimeIdentifiers>win10-x64</RuntimeIdentifiers>
     <RuntimeIdentifiers>linux-x64</RuntimeIdentifiers>
     <RuntimeIdentifiers>linux-arm</RuntimeIdentifiers>
-    <Version>1.7.5</Version>
-    <AssemblyVersion>1.7.5.0</AssemblyVersion>
+    <Version>1.7.6</Version>
+    <AssemblyVersion>1.7.6.0</AssemblyVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
