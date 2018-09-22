@@ -10,7 +10,7 @@
   "profiles": {
     "BOG.DropZone": {
       "commandName": "Project",
-      "commandLineArgs": "--AccessToken YourValueHere --MaxDropzones 5 --MaximumFailedAttemptsBeforeLockout 3 --LockoutSeconds 300"
+      "commandLineArgs": "--AccessToken YourAccessValueHere --AdminToken YourAdminValueHere --MaxDropzones 5 --MaximumFailedAttemptsBeforeLockout 3 --LockoutSeconds 300"
     }
   }
 }

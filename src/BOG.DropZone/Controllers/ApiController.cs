@@ -20,14 +20,16 @@ namespace BOG.DropZone.Controllers
     [Route("api")]
     public class ApiController : Controller
     {
-        private IHttpContextAccessor _accessor;
-        private IStorage _storage;
-        private IConfiguration _configuration;
+        private enum TokenType : int { Access = 0, Admin = 1}
 
-        private Stopwatch upTime = new Stopwatch();
+        private readonly IHttpContextAccessor _accessor;
+        private readonly IStorage _storage;
+        private readonly IConfiguration _configuration;
 
-        private object LockClientWatchList = new object();
-        private object lockDropZoneInfo = new object();
+        private readonly Stopwatch upTime = new Stopwatch();
+
+        private readonly object LockClientWatchList = new object();
+        private readonly object lockDropZoneInfo = new object();
 
         /// <summary>
         /// Instantiated via injection
@@ -56,7 +58,7 @@ namespace BOG.DropZone.Controllers
         public IActionResult Heartbeat([FromHeader] string AccessToken)
         {
             var clientIp = _accessor.HttpContext.Connection.RemoteIpAddress.ToString();
-            if (!IsValidatedClient(clientIp, AccessToken, "*global*", System.Reflection.MethodBase.GetCurrentMethod().Name))
+            if (!IsValidatedClient(clientIp, AccessToken, TokenType.Access, "*global*", System.Reflection.MethodBase.GetCurrentMethod().Name))
             {
                 return Unauthorized();
             }
@@ -69,6 +71,7 @@ namespace BOG.DropZone.Controllers
         /// <param name="AccessToken">Optional: access token value if used.</param>
         /// <param name="dropzoneName">the dropzone identifier</param>
         /// <param name="payload">the content to transfer</param>
+        /// <param name="expires">(optional): when the value should no longer be returned.</param>
         /// <returns>varies: see method declaration</returns>
         [HttpPost("payload/dropoff/{dropzoneName}", Name = "DropoffPayload")]
         [RequestSizeLimit(5242880)]
@@ -80,12 +83,13 @@ namespace BOG.DropZone.Controllers
         [ProducesResponseType(500)]
         [Produces("text/plain")]
         public IActionResult DropoffPayload(
-            [FromHeader] string AccessToken,
+            [FromHeader] string AccessToken, 
             [FromRoute] string dropzoneName,
-            [FromBody] string payload)
+            [FromBody] string payload,
+            [FromQuery] DateTime? expires)
         {
             var clientIp = _accessor.HttpContext.Connection.RemoteIpAddress.ToString();
-            if (!IsValidatedClient(clientIp, AccessToken, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
+            if (!IsValidatedClient(clientIp, AccessToken, TokenType.Access, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
             {
                 return Unauthorized();
             }
@@ -111,7 +115,11 @@ namespace BOG.DropZone.Controllers
                     return StatusCode(429, $"Can't accept: Exceeds maximum payload count of {dropzone.Statistics.MaxPayloadCount}");
                 }
                 dropzone.Statistics.PayloadSize += payload.Length;
-                dropzone.Payloads.Enqueue(payload);
+                dropzone.Payloads.Enqueue(new StoredValue
+                {
+                    Value = payload,
+                    Expires = expires ?? DateTime.MaxValue
+                });
                 dropzone.Statistics.PayloadCount = dropzone.Payloads.Count();
                 dropzone.Statistics.LastDropoff = DateTime.Now;
 
@@ -137,11 +145,11 @@ namespace BOG.DropZone.Controllers
         [ProducesResponseType(429, Type = typeof(string))]
         [ProducesResponseType(500)]
         public IActionResult PickupPayload(
-            [FromHeader] string AccessToken,
+            [FromHeader] string AccessToken, 
             [FromRoute] string dropzoneName)
         {
             var clientIp = _accessor.HttpContext.Connection.RemoteIpAddress.ToString();
-            if (!IsValidatedClient(clientIp, AccessToken, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
+            if (!IsValidatedClient(clientIp, AccessToken, TokenType.Access, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
             {
                 return Unauthorized();
             }
@@ -156,20 +164,29 @@ namespace BOG.DropZone.Controllers
                     CreateDropZone(dropzoneName);
                 }
                 var dropzone = _storage.DropZoneList[dropzoneName];
-                if (dropzone.Payloads.Count == 0)
+                StoredValue payload = null;
+                bool payloadAvailable = false;
+                while (dropzone.Payloads.Count > 0 && !payloadAvailable)
+                {
+                    if (!dropzone.Payloads.TryDequeue(out payload))
+                    {
+                        return StatusCode(410, $"Dropzone exists with payloads, but failed to acquire a payload");
+                    }
+                    if (payload.Expires < DateTime.Now)
+                    {
+                        dropzone.Statistics.PayloadExpiredCount++;
+                        continue;
+                    }
+                    dropzone.Statistics.PayloadSize -= payload.Value.Length;
+                    dropzone.Statistics.PayloadCount = dropzone.Payloads.Count();
+                    dropzone.Statistics.LastPickup = DateTime.Now;
+                    payloadAvailable = true;
+                }
+                if (!payloadAvailable)
                 {
                     return StatusCode(204);
                 }
-
-                if (!dropzone.Payloads.TryDequeue(out string payload))
-                {
-                    return StatusCode(410, $"Dropzone exists with payloads, but failed to acquire a payload");
-                }
-                dropzone.Statistics.PayloadSize -= payload.Length;
-                dropzone.Statistics.PayloadCount = dropzone.Payloads.Count();
-                dropzone.Statistics.LastPickup = DateTime.Now;
-
-                return StatusCode(200, payload);
+                return StatusCode(200, payload.Value);
             }
         }
 
@@ -189,11 +206,11 @@ namespace BOG.DropZone.Controllers
         [ProducesResponseType(500)]
         [Produces("text/plain")]
         public IActionResult GetStatistics(
-            [FromHeader] string AccessToken,
+            [FromHeader] string AccessToken, 
             [FromRoute] string dropzoneName)
         {
             var clientIp = _accessor.HttpContext.Connection.RemoteIpAddress.ToString();
-            if (!IsValidatedClient(clientIp, AccessToken, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
+            if (!IsValidatedClient(clientIp, AccessToken, TokenType.Access, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
             {
                 return Unauthorized();
             }
@@ -214,7 +231,7 @@ namespace BOG.DropZone.Controllers
         /// <summary>
         /// Get security information for a dropzone
         /// </summary>
-        /// <param name="AccessToken">Optional: access token value if used.</param>
+        /// <param name="AdminToken">Optional: admin token value if used.</param>
         /// <returns>varies: see method declaration</returns>
         [HttpGet("securityinfo", Name = "GetSecurityInfo")]
         [RequestSizeLimit(1024)]
@@ -223,11 +240,10 @@ namespace BOG.DropZone.Controllers
         [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(500)]
         [Produces("text/plain")]
-        public IActionResult GetSecurityInfo(
-            [FromHeader] string AccessToken)
+        public IActionResult GetSecurityInfo([FromHeader] string AdminToken)
         {
             var clientIp = _accessor.HttpContext.Connection.RemoteIpAddress.ToString();
-            if (!IsValidatedClient(clientIp, AccessToken, "*global*", System.Reflection.MethodBase.GetCurrentMethod().Name))
+            if (!IsValidatedClient(clientIp, AdminToken, TokenType.Admin, "*global*", System.Reflection.MethodBase.GetCurrentMethod().Name))
             {
                 return Unauthorized();
             }
@@ -243,6 +259,7 @@ namespace BOG.DropZone.Controllers
         /// <param name="AccessToken">Optional: access token value if used.</param>
         /// <param name="dropzoneName">the dropzone identifier</param>
         /// <param name="key">the name for the value to store</param>
+        /// <param name="expires">(optional): when the value should no longer be returned.</param>
         /// <param name="value">the value to store for the key name</param>
         /// <returns>varies: see method declaration</returns>
         [HttpPost("reference/set/{dropzoneName}/{key}", Name = "SetReference")]
@@ -258,14 +275,20 @@ namespace BOG.DropZone.Controllers
             [FromHeader] string AccessToken,
             [FromRoute] string dropzoneName,
             [FromRoute] string key,
-            [FromBody] string value)
+            [FromBody] string value,
+            [FromQuery] DateTime? expires)
         {
             var clientIp = _accessor.HttpContext.Connection.RemoteIpAddress.ToString();
-            if (!IsValidatedClient(clientIp, AccessToken, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
+            if (!IsValidatedClient(clientIp, AccessToken, TokenType.Access, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
             {
                 return Unauthorized();
             }
-            var fixedValue = value ?? string.Empty;
+            var fixedValue = new StoredValue
+            {
+                Value = value ?? string.Empty,
+                Expires = expires ?? DateTime.MaxValue
+            };
+
             lock (lockDropZoneInfo)
             {
                 if (!_storage.DropZoneList.ContainsKey(dropzoneName))
@@ -280,9 +303,9 @@ namespace BOG.DropZone.Controllers
                 int sizeOffset = 0;
                 if (dropzone.References.ContainsKey(key))
                 {
-                    sizeOffset = dropzone.References[key].Length;
+                    sizeOffset = dropzone.References[key].Value.Length;
                 }
-                if ((dropzone.Statistics.ReferenceSize - sizeOffset + fixedValue.Length) > dropzone.Statistics.MaxReferenceSize)
+                if ((dropzone.Statistics.ReferenceSize - sizeOffset + fixedValue.Value.Length) > dropzone.Statistics.MaxReferenceSize)
                 {
                     dropzone.Statistics.ReferenceSetsFailedCount++;
                     return StatusCode(429, $"Can't accept: Exceeds maximum reference value size of {dropzone.Statistics.MaxReferenceSize}");
@@ -293,9 +316,9 @@ namespace BOG.DropZone.Controllers
                     return StatusCode(429, $"Can't accept: Exceeds maximum reference count of {dropzone.Statistics.MaxReferencesCount}");
                 }
                 dropzone.Statistics.ReferenceSize -= sizeOffset;
-                dropzone.References.Remove(key, out string ignored);
+                dropzone.References.Remove(key, out StoredValue ignored);
                 dropzone.References.AddOrUpdate(key, fixedValue, (k, o) => fixedValue);
-                dropzone.Statistics.ReferenceSize += fixedValue.Length;
+                dropzone.Statistics.ReferenceSize += fixedValue.Value.Length;
                 dropzone.Statistics.ReferenceCount = dropzone.References.Count();
                 dropzone.Statistics.LastSetReference = DateTime.Now;
                 return StatusCode(200, "Reference accepted");
@@ -325,7 +348,7 @@ namespace BOG.DropZone.Controllers
             [FromRoute] string key)
         {
             var clientIp = _accessor.HttpContext.Connection.RemoteIpAddress.ToString();
-            if (!IsValidatedClient(clientIp, AccessToken, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
+            if (!IsValidatedClient(clientIp, AccessToken, TokenType.Access, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
             {
                 return Unauthorized();
             }
@@ -345,9 +368,15 @@ namespace BOG.DropZone.Controllers
                 {
                     return StatusCode(204);
                 }
+                else if (dropzone.References[key].Expires <= DateTime.Now)
+                {
+                    dropzone.References.Remove(key, out StoredValue ignored);
+                    dropzone.Statistics.ReferenceExpiredCount++;
+                    return StatusCode(204);
+                }
                 else
                 {
-                    result = dropzone.References[key];
+                    result = dropzone.References[key].Value;
                 }
                 dropzone.Statistics.LastGetReference = DateTime.Now;
                 return Ok(result);
@@ -370,11 +399,11 @@ namespace BOG.DropZone.Controllers
         [ProducesResponseType(500)]
         [Produces("application/json")]
         public IActionResult ListReferences(
-            [FromHeader] string AccessToken,
+            [FromHeader] string AccessToken, 
             [FromRoute] string dropzoneName)
         {
             var clientIp = _accessor.HttpContext.Connection.RemoteIpAddress.ToString();
-            if (!IsValidatedClient(clientIp, AccessToken, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
+            if (!IsValidatedClient(clientIp, AccessToken, TokenType.Access, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
             {
                 return Unauthorized();
             }
@@ -389,14 +418,22 @@ namespace BOG.DropZone.Controllers
                     CreateDropZone(dropzoneName);
                 }
                 var dropzone = _storage.DropZoneList[dropzoneName];
-                return Ok(dropzone.References.Keys.ToList());
+                List<string> returnList = new List<string>();
+                if (dropzone.References.Count > 0)
+                {
+                    returnList = _storage.DropZoneList[dropzoneName].References
+                    .Where(o => o.Value.Expires > DateTime.Now)
+                    .Select(o => o.Key).ToList();
+                    returnList.Sort();
+                }
+                return Ok(returnList);
             }
         }
 
         /// <summary>
         /// Clear: drops all payloads and references from a specific drop zone, and resets its statistics.
         /// </summary>
-        /// <param name="AccessToken">Optional: access token value if used.</param>
+        /// <param name="AdminToken">Optional: admin token value if used.</param>
         /// <param name="dropzoneName">the dropzone identifier</param>
         /// <returns>string</returns>
         [HttpGet("clear/{dropzoneName}", Name = "Clear")]
@@ -407,11 +444,11 @@ namespace BOG.DropZone.Controllers
         [ProducesResponseType(500)]
         [Produces("text/plain")]
         public IActionResult Clear(
-            [FromHeader] string AccessToken,
+            [FromHeader] string AdminToken,
             [FromRoute] string dropzoneName)
         {
             var clientIp = _accessor.HttpContext.Connection.RemoteIpAddress.ToString();
-            if (!IsValidatedClient(clientIp, AccessToken, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
+            if (!IsValidatedClient(clientIp, AdminToken, TokenType.Admin, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
             {
                 return Unauthorized();
             }
@@ -428,7 +465,7 @@ namespace BOG.DropZone.Controllers
         /// <summary>
         /// Reset: clear all drop zones and their data.  Essentially a soft boot.
         /// </summary>
-        /// <param name="AccessToken">Optional: access token value if used.</param>
+        /// <param name="AdminToken">Optional: admin token value if used.</param>
         /// <returns>string</returns>
         [HttpGet("reset", Name = "Reset")]
         [RequestSizeLimit(1024)]
@@ -437,11 +474,10 @@ namespace BOG.DropZone.Controllers
         [ProducesResponseType(451)]
         [ProducesResponseType(500)]
         [Produces("text/plain")]
-        public IActionResult Reset(
-            [FromHeader] string AccessToken)
+        public IActionResult Reset([FromHeader] string AdminToken)
         {
             var clientIp = _accessor.HttpContext.Connection.RemoteIpAddress.ToString();
-            if (!IsValidatedClient(clientIp, AccessToken, "*global*", System.Reflection.MethodBase.GetCurrentMethod().Name))
+            if (!IsValidatedClient(clientIp, AdminToken, TokenType.Admin, "*global*", System.Reflection.MethodBase.GetCurrentMethod().Name))
             {
                 return Unauthorized();
             }
@@ -455,7 +491,7 @@ namespace BOG.DropZone.Controllers
         /// <summary>
         /// Shutdown: clear all drop zones and their data
         /// </summary>
-        /// <param name="AccessToken">Optional: access token value if used.</param>
+        /// <param name="AdminToken">Optional: admin token value if used.</param>
         /// <returns>string</returns>
         [HttpGet("shutdown", Name = "Shutdown")]
         [RequestSizeLimit(1024)]
@@ -464,11 +500,10 @@ namespace BOG.DropZone.Controllers
         [ProducesResponseType(451)]
         [ProducesResponseType(500)]
         [Produces("text/plain")]
-        public IActionResult Shutdown(
-            [FromHeader] string AccessToken)
+        public IActionResult Shutdown([FromHeader] string AdminToken)
         {
             var clientIp = _accessor.HttpContext.Connection.RemoteIpAddress.ToString();
-            if (!IsValidatedClient(clientIp, AccessToken, "*global*", System.Reflection.MethodBase.GetCurrentMethod().Name))
+            if (!IsValidatedClient(clientIp, AdminToken, TokenType.Admin, "*global*", System.Reflection.MethodBase.GetCurrentMethod().Name))
             {
                 return Unauthorized();
             }
@@ -496,11 +531,12 @@ namespace BOG.DropZone.Controllers
         //     the maximum allowed attempts within a timeframe (i.e. is in a lockdown period).  This protects 
         //     against brute force attacks, because the attacker can believe that it has not yet discovered the
         //     correct value.
-        private bool IsValidatedClient(string ipAddress, string accessToken, string dropzoneName, string apiMethodName)
+        private bool IsValidatedClient(string ipAddress, string tokenValue, TokenType tokenType, string dropzoneName, string apiMethodName)
         {
             lock (LockClientWatchList)
             {
-                var validAuthToken = string.Compare(accessToken ?? string.Empty, _storage.AccessToken ?? string.Empty, false) == 0;
+                var configuredTokenValue = tokenType == TokenType.Access ? _storage.AccessToken : _storage.AdminToken;
+                var validAuthToken = string.Compare(tokenValue ?? string.Empty, configuredTokenValue ?? string.Empty, false) == 0;
                 var allowAccess = validAuthToken;
                 var clientInfo = _storage.ClientWatchList.Where(t => t.IpAddress == ipAddress).FirstOrDefault();
                 if (clientInfo == null)

@@ -1,20 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using BOG.DropZone.Interface;
+﻿using BOG.DropZone.Interface;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.PlatformAbstractions;
 using Swashbuckle.AspNetCore.Swagger;
+using System;
+using System.IO;
 
 namespace BOG.DropZone
 {
@@ -43,25 +37,25 @@ namespace BOG.DropZone
         /// <param name="services">(injected)</param>
         public void ConfigureServices(IServiceCollection services)
         {
+            // static across controllers and calls.
+            services.AddSingleton<IStorage, MemoryStorage>();
+            services.AddRouting();
+
             services.Configure<CookiePolicyOptions>(options =>
             {
                 // This lambda determines whether user consent for non-essential cookies is needed for a given request.
-                options.CheckConsentNeeded = context => true;
+                options.CheckConsentNeeded = context => false;
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
             services.AddMvc(
                 o => o.InputFormatters.Insert(0, new RawRequestBodyFormatter())
                 ).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
-            //services.AddMvc(o => o.InputFormatters.Insert(0, new RawRequestBodyFormatter()));
             services.AddHttpContextAccessor();
-
-            // static across controllers and calls.
-            services.AddSingleton<IStorage, MemoryStorage>();
 
             // Register the Swagger generator, defining one or more Swagger documents
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new Swashbuckle.AspNetCore.Swagger.Info
+                c.SwaggerDoc("v1", new Info
                 {
                     Version = $"v{this.GetType().Assembly.GetName().Version.ToString()}",
                     Title = "BOG.DropZone API",
@@ -89,6 +83,8 @@ namespace BOG.DropZone
             var storageArea = serviceProvider.GetService<IStorage>();
             storageArea.AccessToken = Configuration.GetValue<string>("AccessToken");
             Console.WriteLine($"AccessToken: {storageArea.AccessToken}");
+            storageArea.AdminToken = Configuration.GetValue<string>("AdminToken");
+            Console.WriteLine($"AdminToken: {storageArea.AdminToken}");
 
             var configValue = Configuration.GetValue<string>("MaxDropzones");
             if (!string.IsNullOrWhiteSpace(configValue))
@@ -117,13 +113,12 @@ namespace BOG.DropZone
             }
             else
             {
-                app.UseHsts();
+                app.UseExceptionHandler("/Home/Error");
             }
 
-            app.UseHttpsRedirection();
-
+            app.UseMiddleware<ExceptionMiddleware>();
             app.UseStaticFiles();
-
+            app.UseCookiePolicy();
             app.UseSwagger();
 
             app.UseSwaggerUI(c =>
@@ -141,7 +136,14 @@ namespace BOG.DropZone
             {
                 routes.MapRoute(
                     name: "default",
-                    template: "{controller}/{action=Index}/{id?}");
+                    template: "{controller}/{action=Index}/{id?}"
+                );
+
+                routes.MapRoute(
+                    name: "root",
+                    template: "",
+                    defaults: new { controller = "Home", action = "Index" }
+                );
             });
         }
     }

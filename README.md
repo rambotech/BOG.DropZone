@@ -66,11 +66,17 @@ namespace BOG.DropZone.Test
 
         static async Task RunAsync()
         {
-            // adjust the port to the port used by BOG.DropZone
-            // var restApi = new RestApiCalls("http://localhost:54771");
-            // var restApi = new RestApiCalls("http://localhost:54771", "YourAccessTokenValue");
-            // var restApi = new RestApiCalls("http://localhost:54771", "optional_password", "optional_salt");
-            // var restApi = new RestApiCalls("http://localhost:54771", "YourAccessTokenValue", "optional_password", "optional_salt");
+            var useConfig = new DropZoneConfig
+            {
+                BaseUrl = "http://localhost:5000",
+                Password = "YourPassword",
+                Salt = "YourSalt",
+                UseEncryption = true,
+                AccessToken = "YourAccessValueHere",
+                AdminToken = "YourAdminValueHere",
+                TimeoutSeconds = 10
+            };
+            RestApiCalls restApi = new RestApiCalls(useConfig);
 
             try
             {

@@ -21,11 +21,11 @@ namespace BOG.DropZone.Storage
         /// <summary>
         /// The payload storage.
         /// </summary>
-        public ConcurrentQueue<string> Payloads { get; set; } = new ConcurrentQueue<string>();
+        public ConcurrentQueue<StoredValue> Payloads { get; set; } = new ConcurrentQueue<StoredValue>();
 
         /// <summary>
         /// The reference storage.
         /// </summary>
-        public ConcurrentDictionary<string, string> References { get; set; } = new ConcurrentDictionary<string, string>();
+        public ConcurrentDictionary<string, StoredValue> References { get; set; } = new ConcurrentDictionary<string, StoredValue>();
     }
 }

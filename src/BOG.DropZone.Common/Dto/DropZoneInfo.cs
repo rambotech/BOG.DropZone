@@ -20,6 +20,12 @@ namespace BOG.DropZone.Common.Dto
         public string Name { get; set; } = string.Empty;
 
         /// <summary>
+        /// The message to display if the data is not to be trusted.
+        /// </summary>
+        [JsonProperty]
+        public string Message { get; set; } = string.Empty;
+
+        /// <summary>
         /// Specifies the maximum payloads this dropzone is allowed to have.
         /// </summary>
         [JsonProperty]
@@ -68,6 +74,12 @@ namespace BOG.DropZone.Common.Dto
         public int PayloadCount { get; set; } = 0;
 
         /// <summary>
+        /// The total count of payloads dropped because of the expiration date.
+        /// </summary>
+        [JsonProperty]
+        public int PayloadExpiredCount { get; set; } = 0;
+
+        /// <summary>
         /// The total size of all references currently stored in the dropzone.
         /// </summary>
         [JsonProperty]
@@ -78,6 +90,12 @@ namespace BOG.DropZone.Common.Dto
         /// </summary>
         [JsonProperty]
         public int ReferenceCount { get; set; } = 0;
+
+        /// <summary>
+        /// The total count of references dropped because of the expiration date.
+        /// </summary>
+        [JsonProperty]
+        public int ReferenceExpiredCount { get; set; } = 0;
 
         /// <summary>
         /// The time a payload was last dropped off.

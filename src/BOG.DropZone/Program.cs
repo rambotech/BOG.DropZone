@@ -29,18 +29,33 @@ namespace BOG.DropZone
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
-        public static IWebHost BuildWebHost(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-                .ConfigureAppConfiguration((hostingContext, config) =>
-                {
-                    config.SetBasePath(Directory.GetCurrentDirectory());
-                    config.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                          .AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: true);
-                    config.AddEnvironmentVariables();
-                    config.AddCommandLine(args);
-                })
-                .UseStartup<Startup>()
-                .UseUrls("http://0.0.0.0:5000", "https://0.0.0.0:5001")
-                .Build();
+        public static IWebHost BuildWebHost(string[] args)
+        {
+            var config = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .AddCommandLine(args)
+           .Build();
+
+            var host = WebHost.CreateDefaultBuilder(args)
+                .UseConfiguration(config);
+
+            var useUrls = new List<string>();
+            var value = config.GetValue<string>("HttpPort") ?? "5000";
+            useUrls.Add($"http://*:{value}");
+
+            value = config.GetValue<string>("HttpsPort");
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                useUrls.Add($"https://*:{value}");
+            }
+
+            host
+                .UseUrls(useUrls.ToArray())
+                .UseStartup<Startup>();
+                
+            return host.Build();
+        }
     }
 }

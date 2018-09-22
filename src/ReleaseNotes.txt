@@ -1,7 +1,19 @@
 Release Notes:
 
+1.8.0 -- 2018.09.22
+* Added UI shell for later work
+* Added separate tokens for operational (AccessToken) and administrative (AdminToken) methods.
+* Added middleware to ensure payload-too-large returns the standard 413 response code.
+* Added an optional query parameter (expires) for SetReference.
+* Added an optional query parameter (expires) to DropoffPayload.
+* Added sort to the returned list of reference key names.
+* Added Mvc route for home page without /Home path specified.
+* Client: Added an optional expiraton parameter for a reference and a payload.
+* Client: Added enumeration InvalidAuthentication to State in Result class for an auth failure specific (401) occurrence.
+* Client: Corrected a problem with an instantiator (DropZoneConfig as argument) not working properly.
+
 1.7.6 -- 2018.09.11
-* Make overload of instantiator with DropZoneConfig object public access.
+* (private -> public) Overload of instantiator with DropZoneConfig object parameter.
 
 1.7.5 -- 2018.09.09
 * Nuget package updates

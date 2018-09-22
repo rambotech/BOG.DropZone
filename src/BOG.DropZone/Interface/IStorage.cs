@@ -10,9 +10,14 @@ namespace BOG.DropZone.Interface
     public interface IStorage
     {
         /// <summary>
-        /// An optional access token value which the client must provide to use any method.
+        /// An optional access token value which the client must provide to use operational methods.
         /// </summary>
         string AccessToken { get; set; }
+
+        /// <summary>
+        /// An optional access token value which the client must provide to use administrative methods.
+        /// </summary>
+        string AdminToken { get; set; }
 
         /// <summary>
         /// The list of dropzone information
@@ -27,7 +32,7 @@ namespace BOG.DropZone.Interface
         /// <summary>
         /// The number of seconds which a lockout endures.
         /// </summary>
-        int LockoutSeconds { get; set; } 
+        int LockoutSeconds { get; set; }
 
         /// <summary>
         /// The list of dropzone information

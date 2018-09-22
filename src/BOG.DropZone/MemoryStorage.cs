@@ -18,12 +18,18 @@ namespace BOG.DropZone
     public class MemoryStorage : IStorage
     {
         Timer stopTimer = new Timer();
-        object lockPoint = new object();
+        readonly object lockPoint = new object();
 
         /// <summary>
         /// If not empty, the header value "AccessToken" from the client must contain this value to use the site.
         /// </summary>
         public string AccessToken { get; set; } = string.Empty;
+
+        /// <summary>
+        /// An optional access token value which the client must provide to use administrative methods.
+        /// </summary>
+        public string AdminToken { get; set; } = string.Empty;
+
 
         /// <summary>
         /// The maximum number of dropzones to allow.
