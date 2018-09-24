@@ -7,7 +7,8 @@ by [BOG.Pathways.Server](https://github.com/rambotech/BOG.Pathways.Server), but 
 optional an access and admin tokens for authentication, and auto-creates a dropzone 
 as needed.
 
-BOG.DropZone is a pull-only approach: no data is pushed to any user.
+BOG.DropZone is a pull-only approach: no data is pushed to any user.  The site 
+has a Swagger interface for testing.
 
 ## How it works
 A drop zone is a named location for one or more applications to put payloads (strings) 
@@ -29,9 +30,11 @@ Also, the server can also use the key/value settings (References) in a dropzone
 to semaphore the clients with state information to manage work flow.  And the 
 clients can do likewise to semaphore the server.
 
+The drop zone supports seven operational actions, and two admin actions.
+
 ### Operational
 
-The drop zone supports seven operational actions, and two admin actions.
+These actions require the access token, if one is defined for the drop zone site.
 
 *Dropoff* :: places a new string (as a payload) onto the queue of other payloads.
 
@@ -45,11 +48,12 @@ The drop zone supports seven operational actions, and two admin actions.
 
 *Get Statistics* :: returns the metrics for the given drop zone.
 
+### Admin
+
+These actions require the admin token, if one is defined for the drop zone site.
+
 *Get Security* :: returns information on client attempts to access the site with an invalid access token value.
 
-NOTE: The reference key "info" is reserved for internal use.  When *Get Reference* is called with this key, a json blob of usage and state statistics for the drop zone is the value.
-
-### Admin
 *Reset* :: wipes out all drop zones, including their payloads and references.
 
 *Shutdown* :: kills the web server operation.  It must be retarted from the command line.
@@ -72,10 +76,12 @@ Build the BOG.DropZone project and run it locally.
 Create a console application, and add a reference to BOG.DropZone.Client from either the project here, or from the Nuget package [here](https://www.nuget.org/packages/BOG.DropZone.Client/).  Copy the code below into the main method.
 
 ```C#
+using BOG.DropZone.Client;
+using BOG.DropZone.Client.Model;
 using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
-using BOG.DropZone.Client;
 
 namespace BOG.DropZone.Test
 {
@@ -102,94 +108,175 @@ namespace BOG.DropZone.Test
 
             try
             {
-                Console.Write("Reset()... ");
-                var result = await restApi.Reset();
-                Console.WriteLine($"{result.StatusCode.ToString()}: {result.HandleAs.ToString()}");
+                Console.WriteLine("CheckHeartbeat()...");
+                var result = await restApi.CheckHeartbeat();
+                DisplayResult(result, 1000);
+                if (result.HandleAs == Result.State.InvalidAuthentication)
+                {
+                    Console.WriteLine("Invalid auth token, testing halted... ");
+                    return;
+                }
 
-                Console.Write("GetReference()... ");
-                result = await restApi.GetReference("CityData", "Ref1");
-                Console.WriteLine($"{result.StatusCode.ToString()}: {result.HandleAs.ToString()}");
-                Console.WriteLine($"has: {result.Content}");
-                Console.WriteLine();
+                Console.WriteLine("Reset()... ");
+                result = await restApi.Reset();
+                DisplayResult(result, 100);
 
-                Console.Write("SetReference()... ");
-                result = await restApi.SetReference("CityData", "Ref1", "test ref 1");
-                Console.WriteLine($"{result.StatusCode.ToString()}: {result.HandleAs.ToString()}");
-                Console.WriteLine();
+                Console.WriteLine("ListReferences()... ");
+                result = await restApi.ListReferences("CityData");
+                DisplayResult(result, 1000);
 
-                Console.Write("GetReference()... ");
-                result = await restApi.GetReference("CityData", "Ref1");
-                Console.WriteLine($"{result.StatusCode.ToString()}: {result.HandleAs.ToString()}");
-                Console.WriteLine($"has: {result.Content}");
-                Console.WriteLine();
+                Console.WriteLine("GetReference()... ");
+                result = await restApi.GetReference("CityData", "Test-Ref01");
+                DisplayResult(result, 1000);
 
-                Console.Write("GetStatistics()... ");
+                Console.WriteLine("ListReferences()... ");
+                result = await restApi.ListReferences("CityData");
+                DisplayResult(result, 1000);
+
+                Console.WriteLine("SetReference()... ");
+                result = await restApi.SetReference("CityData", "Test-Ref01", "test ref 1");
+                DisplayResult(result, 1000);
+
+                Console.WriteLine("ListReferences()... ");
+                result = await restApi.ListReferences("CityData");
+                DisplayResult(result, 1000);
+
+                Console.WriteLine("GetReference()... ");
+                result = await restApi.GetReference("CityData", "Test-Ref01");
+                DisplayResult(result, 1000);
+
+                Console.WriteLine("SetReference()... Perishable");
+                result = await restApi.SetReference("CityData", "Test-Ref02-Perish-5-Sec", "this will go way", DateTime.Now.AddSeconds(5));
+                DisplayResult(result, 1000);
+
+                Console.WriteLine("ListReferences()... shows static and perishable");
+                result = await restApi.ListReferences("CityData");
+                DisplayResult(result, 1000);
+
+                Console.WriteLine("GetReference()... Perishable ... < 1 sec (finds it)");
+                result = await restApi.GetReference("CityData", "Test-Ref02-Perish-5-Sec");
+                DisplayResult(result, 1000);
+
+                Console.WriteLine("Wait 5 seconds for reference to expire...");
+                Thread.Sleep(5000);
+
+                Console.WriteLine("ListReferences()... shows static only... perishable has expired");
+                result = await restApi.ListReferences("CityData");
+                DisplayResult(result, -1);
+
+                Console.WriteLine("GetReference()... Perishable ... > 5 sec (perished)");
+                result = await restApi.GetReference("CityData", "RefTimed-Good");
+                DisplayResult(result, -1);
+
+                Console.WriteLine("SetReference()... BIG...");
+                var bigData = new string('X', 524288);
+                Console.WriteLine($"{bigData.Length}");
+                result = await restApi.SetReference("CityData", "BIG", bigData);
+                DisplayResult(result, 1000);
+
+                Console.WriteLine("GetReference()... BIG...");
+                result = await restApi.GetReference("CityData", "BIG");
+                Console.WriteLine($"{result.Message.Length}");
+                result.Message = string.Empty;
+                DisplayResult(result, 1000);
+
+                Console.WriteLine("SetReference()... HUGE... rejected due to size");
+                var hugeData = new string('X', 41000000);
+                Console.WriteLine($"{hugeData.Length}");
+                result = await restApi.SetReference("CityData", "HUGE", hugeData);
+                DisplayResult(result, 1000);
+
+                Console.WriteLine("GetReference()... HUGE...");
+                result = await restApi.GetReference("CityData", "HUGE");
+                Console.WriteLine($"{result.Message.Length}");
+                result.Message = string.Empty;
+                DisplayResult(result, -1);
+
+                Console.WriteLine("GetStatistics()... ");
                 result = await restApi.GetStatistics("CityData");
-                Console.WriteLine($"{result.StatusCode.ToString()}: {result.HandleAs.ToString()}");
-                Console.WriteLine($"has: {result.Content}");
-                Console.WriteLine();
+                DisplayResult(result, -1);
 
-                Console.Write("GetSecurityInfo()... ");
+                Console.WriteLine("GetSecurityInfo()... ");
                 result = await restApi.GetSecurity();
-                Console.WriteLine($"{result.StatusCode.ToString()}: {result.HandleAs.ToString()}");
-                Console.WriteLine($"has: {result.Content}");
-                Console.WriteLine();
+                DisplayResult(result, -1);
 
                 string[] set = new string[] { "Tallahunda", "Kookamunga", "Whatever" };
 
-                Console.WriteLine("*** Drop off some data ***");
+                Console.WriteLine("*** Drop off some data .. which expires ***");
+                for (int index = 0; index < 5; index++)
+                {
+                    Console.WriteLine($"Add {index}: {set[index % 3]}... ");
+                    result = await restApi.DropOff("CityData", set[index % 3] + $"{index}", DateTime.Now.AddSeconds(3 + index));
+                    DisplayResult(result, 0);
+                }
+
+                Console.WriteLine("Wait 5 for reference to expire...");
+                Thread.Sleep(5000);
+
+                Console.WriteLine("*** Pickup some data .. some of which has expired ***");
+                for (int index = 0; index < 5; index++)
+                {
+                    var dropZoneName = "CityData";
+                    Console.WriteLine($"Retrieve {index} from {dropZoneName}: ");
+                    result = await restApi.Pickup(dropZoneName);
+                    DisplayResult(result, 0);
+                }
+
+                Console.WriteLine("*** Clear ***");
+                result = await restApi.Clear("CityData");
+                DisplayResult(result, -1);
+
+                Console.WriteLine("*** Drop off some data.. places 501 items when 500 is the max ***");
                 for (int index = 0; index < 501; index++)
                 {
-                    Console.Write($"Add {index}: {set[index % 3]}... ");
-                    // result = await restApi.DropOff("CityData", set[index % 3]);
-                    result = await restApi.DropOff("CityData", bigData);
-                    Console.WriteLine($"{result.StatusCode.ToString()}: {result.HandleAs.ToString()}");
-                    Console.WriteLine($"has: {result.Content}");
-                    Console.WriteLine();
+                    Console.WriteLine($"Add {index}: {set[index % 3]}... ");
+                    result = await restApi.DropOff("CityData", set[index % 3]);
+                    DisplayResult(result, index < 5 ? 1000 : 0);
                 }
                 Console.WriteLine("GetStatistics()...");
                 result = await restApi.GetStatistics("CityData");
-                Console.WriteLine($"{result.StatusCode.ToString()}: {result.HandleAs.ToString()}");
-                Console.WriteLine($"has: {result.Content}");
-                Console.WriteLine();
+                DisplayResult(result, -1);
 
                 Console.WriteLine("*** Pickup some data ***");
                 for (int index = 0; index < 502; index++)
                 {
-                    var dropZoneName = index == 6 ? "MysteryPath" : "CityData";
+                    var dropZoneName = index == 2 ? "MysteryPath" : "CityData";
                     Console.WriteLine($"Retrieve {index} from {dropZoneName}: ");
                     result = await restApi.Pickup(dropZoneName);
-                    Console.WriteLine($"{result.StatusCode.ToString()}: {result.HandleAs.ToString()}");
-                    if (result.HandleAs == Client.Model.Result.State.OK)
-                    {
-                        Console.WriteLine($"has: {result.Content.Length}");
-                    }
-                    Console.WriteLine();
+                    DisplayResult(result, index == 2 ? -1 : (index < 5 ? 1000 : 0));
                 }
 
                 Console.WriteLine("*** List references ***");
                 result = await restApi.ListReferences("CityData");
-                Console.WriteLine($"{result.StatusCode.ToString()}: {result.HandleAs.ToString()}");
-                Console.WriteLine();
+                DisplayResult(result, 1000);
 
                 Console.WriteLine("Overload references...");
-                for (int index = 0; index < 51; index++)
+                for (int index = 0; index < 48; index++)
                 {
-                    Console.Write($"SetReference(Ref-{index.ToString()})... ");
-                    result = await restApi.SetReference("CityData", $"Ref-{index.ToString()}", $"test ref {index}");
-                    Console.WriteLine($"{result.StatusCode.ToString()}: {result.HandleAs.ToString()}");
-                    Console.WriteLine();
+                    Console.WriteLine($"SetReference(Ref-{BOG.SwissArmyKnife.Formatting.RJLZ(index, 2)}... ");
+                    result = await restApi.SetReference("CityData", $"Ref-{BOG.SwissArmyKnife.Formatting.RJLZ(index, 2)}", $"test ref {index}");
+                    DisplayResult(result, 0);
                 }
 
                 Console.WriteLine("*** List references after overload ***");
                 result = await restApi.ListReferences("CityData");
-                Console.WriteLine($"{result.StatusCode.ToString()}: {result.HandleAs.ToString()}");
-                Console.WriteLine($"has: {result.Content}");
-                Console.WriteLine();
+                DisplayResult(result, 2000);
 
-                //await restApi.Reset();
+                Console.WriteLine("GetStatistics()... ");
+                result = await restApi.GetStatistics("CityData");
+                DisplayResult(result, -1);
 
-                //await restApi.Shutdown();
+                Console.WriteLine("*** Reset ***");
+                result = await restApi.Reset();
+                DisplayResult(result, 2000);
+
+                Console.WriteLine("*** Shutdown ***");
+                result = await restApi.Shutdown();
+                DisplayResult(result, 2000);
+
+                Console.WriteLine("*** Shutdown (with no answer) ***");
+                result = await restApi.Shutdown();
+                DisplayResult(result, 2000);
             }
             catch (Exception err)
             {
@@ -198,6 +285,46 @@ namespace BOG.DropZone.Test
 
             Console.WriteLine("Done");
             Console.ReadLine();
+        }
+
+        static void DisplayResult(Result result, int waitMS)
+        {
+            Console.WriteLine(Serializer<Result>.ToJson(result));
+            Console.WriteLine();
+            switch (waitMS)
+            {
+                case -1:
+                    Console.WriteLine("Press ENTER to clear");
+                    Console.ReadLine();
+                    break;
+
+                case 0:
+                    break;
+
+                default:
+                    System.Threading.Thread.Sleep(waitMS);
+                    break;
+            }
+        }
+
+        static void DisplayString(string result, int waitMS)
+        {
+            Console.WriteLine(result);
+            Console.WriteLine();
+            switch (waitMS)
+            {
+                case -1:
+                    Console.WriteLine("Press ENTER to clear");
+                    Console.ReadLine();
+                    break;
+
+                case 0:
+                    break;
+
+                default:
+                    System.Threading.Thread.Sleep(waitMS);
+                    break;
+            }
         }
     }
 }
