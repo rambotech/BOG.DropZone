@@ -1,14 +1,49 @@
 # BOG.DropZone
 ![alt text](https://github.com/rambotech/BOG.DropZone/blob/master/assets/DropZone.png "They just keep coming and going, and going and coming!")
 
-A very simple volatile aspnetcore webapi site for inter-application dropoff and pickup of payloads.  It is inspired by [BOG.Pathways.Server](https://github.com/rambotech/BOG.Pathways.Server), but uses an optional access token for authentication, and auto-creates a dropzone as needed.
+A very simple volatile aspnetcore webapi site for inter-application dropoff and 
+pickup of payloads (queue), and key/value pair storage (references).  It is inspired 
+by [BOG.Pathways.Server](https://github.com/rambotech/BOG.Pathways.Server), but uses 
+optional an access and admin tokens for authentication, and auto-creates a dropzone 
+as needed.
+
+BOG.DropZone is a pull-only approach: no data is pushed to any user.
 
 ## How it works
-A drop zone is a named location for one or more applications to put payloads (strings) into it, and one or more other applications to remove them from it.  The name designates the role and type of traffic for sender's and receivers.  Many drop zones can be created to faciliate many different types of data transfers.
+A drop zone is a named location for one or more applications to put payloads (strings) 
+into it, and one or more other applications to remove them from it.  Many drop zones 
+can be created to faciliate many different types of data transfers.
 
-**Important**: one payload from a sender will go to ONLY one receiver.  Observer patterns are not supported.
+**Important**: one payload from a sender will go to ONLY one receiver. Observer patterns 
+are not supported.  Both payloads and references support an optional expiration date.
 
-A drop zone also has a set of key/value pairs as a dictionary.  Unlike payloads, they are not removed when read.  They can be used to hold static reference content, or state.
+```mermaid
+graph TB
+s1((Server))-->dq(DropZone: Questions);
+da(DropZone: Answers)-->s1;
+dq-->c1((Client));
+dq-->c2((Client));
+dq-->c3((Client));
+c1-->da;
+c2-->da;
+c3-->da;
+style s1 fill:#afa,stroke:#777,stroke-width:4px
+style c1 fill:#afa,stroke:#777,stroke-width:4px
+style c2 fill:#afa,stroke:#777,stroke-width:4px
+style c3 fill:#afa,stroke:#777,stroke-width:4px
+style dq fill:#ccf,stroke:#777,stroke-width:4px,stroke-dasharray:5
+style da fill:#ccf,stroke:#777,stroke-width:4px,stroke-dasharray:5
+```
+
+In the example above, a server posts work items (payloads) into the dropzone 
+named Queries, and the clients poll the dropzone named Questions to retrieve them
+(one-to-many). The clients process the work items, then post the resulting items
+(payloads) to the dropzone named Answers.  The server polls the dropzone named
+Answers for those payloads to collect the processed work.
+
+Also, the server can also use the key/value settings (References) in a dropzone
+to semaphore the clients with state information to manage work flow.  And the 
+clients can do likewise to semaphore the server.
 
 ### Operational
 
@@ -43,9 +78,12 @@ The drop zone is intended to be cheap to install and run, and is designed for mu
 
 Also, like its inspiration project (BOG.Pathways.Server), it makes no guarantees of delivery and the sender and receiver take all responsibility for resending missing or dropped work.  BOG.DropZone was designed for simplicity, and as such is a good tool for coordinating data among various processes.  If you need guaranteed delivery, look at another project.
 
-If you need any level of security or anti-tampering, check out the SecureGram class in [BOG.SwissArmyKnife](https://www.nuget.org/packages/BOG.SwissArmyKnife/).  It's source repo is a sister project in my repo collection here.
+The project BOG.DropZone.Client is for applications using BOG.DropZone, and contains support
+for encryption.
 
 ## Example usage
+
+Build the BOG.DropZone project and run it locally.
 
 Create a console application, and add a reference to BOG.DropZone.Client from either the project here, or from the Nuget package [here](https://www.nuget.org/packages/BOG.DropZone.Client/).  Copy the code below into the main method.
 
