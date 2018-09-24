@@ -17,23 +17,7 @@ can be created to faciliate many different types of data transfers.
 **Important**: one payload from a sender will go to ONLY one receiver. Observer patterns 
 are not supported.  Both payloads and references support an optional expiration date.
 
-```mermaid
-graph TB
-s1((Server))-->dq(DropZone: Questions);
-da(DropZone: Answers)-->s1;
-dq-->c1((Client));
-dq-->c2((Client));
-dq-->c3((Client));
-c1-->da;
-c2-->da;
-c3-->da;
-style s1 fill:#afa,stroke:#777,stroke-width:4px
-style c1 fill:#afa,stroke:#777,stroke-width:4px
-style c2 fill:#afa,stroke:#777,stroke-width:4px
-style c3 fill:#afa,stroke:#777,stroke-width:4px
-style dq fill:#ccf,stroke:#777,stroke-width:4px,stroke-dasharray:5
-style da fill:#ccf,stroke:#777,stroke-width:4px,stroke-dasharray:5
-```
+![alt text](https://github.com/rambotech/BOG.DropZone/blob/master/assets/flow.png)
 
 In the example above, a server posts work items (payloads) into the dropzone 
 named Queries, and the clients poll the dropzone named Questions to retrieve them
