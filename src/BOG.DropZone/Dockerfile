@@ -1,16 +1,19 @@
-FROM microsoft/aspnetcore-build:2.0 AS build-env
+FROM microsoft/dotnet:2.1-aspnetcore-runtime AS base
 WORKDIR /app
+EXPOSE 80
 
-# Copy csproj and restore as distinct layers
-COPY *.csproj ./
-RUN dotnet restore
+FROM microsoft/dotnet:2.1-sdk AS build
+WORKDIR /src
+COPY ["BOG.DropZone/BOG.DropZone.csproj", "BOG.DropZone/"]
+RUN dotnet restore "BOG.DropZone/BOG.DropZone.csproj"
+COPY . .
+WORKDIR "/src/BOG.DropZone"
+RUN dotnet build "BOG.DropZone.csproj" -c Release -o /app
 
-# Copy everything else and build
-COPY . ./
-RUN dotnet publish -c Release -o out
+FROM build AS publish
+RUN dotnet publish "BOG.DropZone.csproj" -c Release -o /app
 
-# Build runtime image
-FROM microsoft/aspnetcore:2.0
+FROM base AS final
 WORKDIR /app
-COPY --from=build-env /app/out .
+COPY --from=publish /app .
 ENTRYPOINT ["dotnet", "BOG.DropZone.dll"]

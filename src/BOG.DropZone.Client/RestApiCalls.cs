@@ -46,6 +46,7 @@ namespace BOG.DropZone.Client
             _DropZoneConfig = new DropZoneConfig
             {
                 BaseUrl = config.BaseUrl,
+                ZoneName = config.ZoneName,
                 AccessToken = config.AccessToken,
                 AdminToken = config.AdminToken,
                 Password = config.Password,
@@ -183,26 +184,24 @@ namespace BOG.DropZone.Client
         /// <summary>
         /// Place a payload into a drop zone's queue.
         /// </summary>
-        /// <param name="dropzoneName">The name of the drop zone</param>
         /// <param name="payload">The content to queue as a string value</param>
         /// <returns>
         /// Result: Content-Type = string, no payload
         /// </returns>
-        public async Task<Result> DropOff(string dropzoneName, string data)
+        public async Task<Result> DropOff(string data)
         {
-            return await DropOff(dropzoneName, data, DateTime.MaxValue);
+            return await DropOff(data, DateTime.MaxValue);
         }
 
         /// <summary>
         /// Place a payload into a drop zone's queue.
         /// </summary>
-        /// <param name="dropzoneName">The name of the drop zone</param>
         /// <param name="payload">The content to queue as a string value</param>
         /// <param name="expires">A perish time when the payload should be discarded</param>
         /// <returns>
         /// Result: Content-Type = string, no payload
         /// </returns>
-        public async Task<Result> DropOff(string dropzoneName, string data, DateTime expires)
+        public async Task<Result> DropOff(string data, DateTime expires)
         {
             var result = new Result
             {
@@ -212,7 +211,7 @@ namespace BOG.DropZone.Client
             var datagram = BuildPayloadGram(data);
             try
             {
-                var builder = new UriBuilder(_DropZoneConfig.BaseUrl + $"/api/payload/dropoff/{dropzoneName}");
+                var builder = new UriBuilder(_DropZoneConfig.BaseUrl + $"/api/payload/dropoff/{_DropZoneConfig.ZoneName}");
                 if (expires != null)
                 {
                     var query = HttpUtility.ParseQueryString(builder.Query);
@@ -275,11 +274,10 @@ namespace BOG.DropZone.Client
         /// <summary>
         /// Retrieve an available payload from the specified drop zone.
         /// </summary>
-        /// <param name="dropzoneName">The name of the drop zone</param>
         /// <returns>
         /// Result: Content-Type = string (user-defined content), success has payload
         /// </returns>
-        public async Task<Result> Pickup(string dropzoneName)
+        public async Task<Result> Pickup()
         {
             var result = new Result
             {
@@ -288,7 +286,7 @@ namespace BOG.DropZone.Client
             };
             try
             {
-                var response = await _Client.GetAsync(_DropZoneConfig.BaseUrl + $"/api/payload/pickup/{dropzoneName}", HttpCompletionOption.ResponseContentRead);
+                var response = await _Client.GetAsync(_DropZoneConfig.BaseUrl + $"/api/payload/pickup/{_DropZoneConfig.ZoneName}", HttpCompletionOption.ResponseContentRead);
                 result.StatusCode = response.StatusCode;
                 switch (response.StatusCode)
                 {
@@ -352,11 +350,10 @@ namespace BOG.DropZone.Client
         /// <summary>
         /// Returns the statistics for the specified dropzone.
         /// </summary>
-        /// <param name="dropzoneName">The name of the drop zone</param>
         /// <returns>
         /// Result: Content-Type = System.Collections.Generic.List<BOG.DropZone.Common.DropZoneInfo>
         /// </returns>
-        public async Task<Result> GetStatistics(string dropzoneName)
+        public async Task<Result> GetStatistics()
         {
             var result = new Result
             {
@@ -365,7 +362,7 @@ namespace BOG.DropZone.Client
             };
             try
             {
-                var response = await _Client.GetAsync(_DropZoneConfig.BaseUrl + $"/api/payload/statistics/{dropzoneName}", HttpCompletionOption.ResponseContentRead);
+                var response = await _Client.GetAsync(_DropZoneConfig.BaseUrl + $"/api/payload/statistics/{_DropZoneConfig.ZoneName}", HttpCompletionOption.ResponseContentRead);
                 result.StatusCode = response.StatusCode;
                 switch (response.StatusCode)
                 {
@@ -459,28 +456,26 @@ namespace BOG.DropZone.Client
         /// <summary>
         /// Create/Update a reference into a drop zone's key/value set.
         /// </summary>
-        /// <param name="dropzoneName">The name of the drop zone</param>
         /// <param name="key">The string to identify this key</param>
         /// <param name="value">The value for the key</param>
         /// <returns>
         /// Result: Content-Type = string, no payload
         /// </returns>
-        public async Task<Result> SetReference(string dropzoneName, string key, string value)
+        public async Task<Result> SetReference(string key, string value)
         {
-            return await SetReference(dropzoneName, key, value, DateTime.MaxValue);
+            return await SetReference(key, value, DateTime.MaxValue);
         }
 
         /// <summary>
         /// Create/Update a reference into a drop zone's key/value set.
         /// </summary>
-        /// <param name="dropzoneName">The name of the drop zone</param>
         /// <param name="key">The string to identify this key</param>
         /// <param name="value">The value for the key</param>
         /// <param name="expires">(Optional) A perish time when the reference should be discarded</param>
         /// <returns>
         /// Result: Content-Type = string, no payload
         /// </returns>
-        public async Task<Result> SetReference(string dropzoneName, string key, string value, DateTime expires)
+        public async Task<Result> SetReference(string key, string value, DateTime expires)
         {
             var result = new Result
             {
@@ -491,7 +486,7 @@ namespace BOG.DropZone.Client
             var l = datagram.Length;
             try
             {
-                var builder = new UriBuilder(_DropZoneConfig.BaseUrl + $"/api/reference/set/{dropzoneName}/{key}");
+                var builder = new UriBuilder(_DropZoneConfig.BaseUrl + $"/api/reference/set/{_DropZoneConfig.ZoneName}/{key}");
                 if (expires != DateTime.MaxValue)
                 {
                     var query = HttpUtility.ParseQueryString(builder.Query);
@@ -544,12 +539,11 @@ namespace BOG.DropZone.Client
         /// <summary>
         /// Retrieve a value from the key/value pair set in the drop zone.
         /// </summary>
-        /// <param name="dropzoneName">The name of the drop zone</param>
         /// <param name="key">The key for the value to retrieve</param>
         /// <returns>
         /// Result: Content-Type = string (user-defined content), success has payload
         /// </returns>
-        public async Task<Result> GetReference(string dropzoneName, string key)
+        public async Task<Result> GetReference(string key)
         {
             var result = new Result
             {
@@ -558,7 +552,7 @@ namespace BOG.DropZone.Client
             };
             try
             {
-                var response = await _Client.GetAsync(_DropZoneConfig.BaseUrl + $"/api/reference/get/{dropzoneName}/{key}", HttpCompletionOption.ResponseContentRead);
+                var response = await _Client.GetAsync(_DropZoneConfig.BaseUrl + $"/api/reference/get/{_DropZoneConfig.ZoneName}/{key}", HttpCompletionOption.ResponseContentRead);
                 result.StatusCode = response.StatusCode;
                 switch (response.StatusCode)
                 {
@@ -618,11 +612,10 @@ namespace BOG.DropZone.Client
         /// <summary>
         /// Returns a list of key name in the reference key/value set.
         /// </summary>
-        /// <param name="dropzoneName">The name of the drop zone</param>
         /// <returns>
         /// Result: Content-Type = string (List<string></string>), success has payload
         /// </returns>
-        public async Task<Result> ListReferences(string dropzoneName)
+        public async Task<Result> ListReferences()
         {
             var result = new Result
             {
@@ -631,7 +624,7 @@ namespace BOG.DropZone.Client
             };
             try
             {
-                var response = await _Client.GetAsync(_DropZoneConfig.BaseUrl + $"/api/reference/list/{dropzoneName}", HttpCompletionOption.ResponseContentRead);
+                var response = await _Client.GetAsync(_DropZoneConfig.BaseUrl + $"/api/reference/list/{_DropZoneConfig.ZoneName}", HttpCompletionOption.ResponseContentRead);
                 result.StatusCode = response.StatusCode;
                 switch (response.StatusCode)
                 {
@@ -676,9 +669,8 @@ namespace BOG.DropZone.Client
         /// <summary>
         /// Clears out all payloads, references and statistics for a sigle dropzone.
         /// </summary>
-        /// <param name="dropzoneName">The name of the drop zone</param>
         /// <returns></returns>
-        public async Task<Result> Clear(string dropzoneName)
+        public async Task<Result> Clear()
         {
             var result = new Result
             {
@@ -687,7 +679,7 @@ namespace BOG.DropZone.Client
             };
             try
             {
-                var response = await _Client.GetAsync(_DropZoneConfig.BaseUrl + $"/api/clear/{dropzoneName}", HttpCompletionOption.ResponseContentRead);
+                var response = await _Client.GetAsync(_DropZoneConfig.BaseUrl + $"/api/clear/{_DropZoneConfig.ZoneName}", HttpCompletionOption.ResponseContentRead);
                 result.StatusCode = response.StatusCode;
                 switch (response.StatusCode)
                 {

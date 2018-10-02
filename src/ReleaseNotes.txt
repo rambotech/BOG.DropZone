@@ -1,5 +1,11 @@
 Release Notes:
 
+1.8.1 -- 2018.10.02
+* Client: Added ZoneName to DropZoneConfig class.
+* Client: Removed DropZone name as an argument from methods.  Facilitates filtering
+*         of multiple sites with the same dropzone name.
+* General: Update Dockerfile to use .NET Core 2.1 image base.
+
 1.8.0 -- 2018.09.22
 * Added UI shell for later work
 * Added separate tokens for operational (AccessToken) and administrative (AdminToken) methods.

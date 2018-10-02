@@ -3,6 +3,7 @@
     public class DropZoneConfig
     {
         public string BaseUrl { get; set; } = null;
+        public string ZoneName { get; set; } = null;
         public string AccessToken { get; set; } = null;
         public string AdminToken { get; set; } = null;
         public string Password { get; set; } = null;
