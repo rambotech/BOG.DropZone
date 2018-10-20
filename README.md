@@ -73,7 +73,7 @@ for encryption.
 
 Build the BOG.DropZone project and run it locally.
 
-Create a console application, and add a reference to BOG.DropZone.Client from either the project here, or v1.8.1 from the Nuget package repository [here](https://www.nuget.org/packages/BOG.DropZone.Client/).  Copy the code below into the main method.
+Create a console application, and add a reference to BOG.DropZone.Client from either the project here, or v1.8.1 from the Nuget package repository [here](https://www.nuget.org/packages/BOG.DropZone.Client/).  Replace the content of Program.cs with the code below.
 
 ```C#
 using BOG.DropZone.Client;

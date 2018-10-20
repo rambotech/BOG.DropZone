@@ -1,5 +1,8 @@
 Release Notes:
 
+1.8.2 -- 2018.10.19
+* All: security update for Microsoft.AspNetCore.All
+
 1.8.1 -- 2018.10.02
 * Client: Added ZoneName to DropZoneConfig class.
 * Client: Removed DropZone name as an argument from methods.  Facilitates filtering
