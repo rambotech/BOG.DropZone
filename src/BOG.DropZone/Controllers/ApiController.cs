@@ -52,7 +52,6 @@ namespace BOG.DropZone.Controllers
         [RequestSizeLimit(1024)]
         [ProducesResponseType(200, Type = typeof(string))]
         [ProducesResponseType(401)]
-        [ProducesResponseType(451)]
         [ProducesResponseType(500)]
         [Produces("text/plain")]
         public IActionResult Heartbeat([FromHeader] string AccessToken)
@@ -75,10 +74,9 @@ namespace BOG.DropZone.Controllers
         /// <returns>varies: see method declaration</returns>
         [HttpPost("payload/dropoff/{dropzoneName}", Name = "DropoffPayload")]
         [RequestSizeLimit(5242880)]
-        [ProducesResponseType(200, Type = typeof(string))]
+        [ProducesResponseType(201, Type = typeof(string))]
         [ProducesResponseType(400, Type = typeof(string))]
         [ProducesResponseType(401)]
-        [ProducesResponseType(451)]
         [ProducesResponseType(429, Type = typeof(string))]
         [ProducesResponseType(500)]
         [Produces("text/plain")]
@@ -123,7 +121,7 @@ namespace BOG.DropZone.Controllers
                 dropzone.Statistics.PayloadCount = dropzone.Payloads.Count();
                 dropzone.Statistics.LastDropoff = DateTime.Now;
 
-                return StatusCode(200, "Payload accepted");
+                return StatusCode(201, "Payload accepted");
             }
         }
 
@@ -141,7 +139,6 @@ namespace BOG.DropZone.Controllers
         [ProducesResponseType(400, Type = typeof(string))]
         [ProducesResponseType(401)]
         [ProducesResponseType(451)]
-        [ProducesResponseType(410, Type = typeof(string))]
         [ProducesResponseType(429, Type = typeof(string))]
         [ProducesResponseType(500)]
         public IActionResult PickupPayload(
@@ -166,15 +163,24 @@ namespace BOG.DropZone.Controllers
                 var dropzone = _storage.DropZoneList[dropzoneName];
                 StoredValue payload = null;
                 bool payloadAvailable = false;
+                int retriesRemaining = 3;
                 while (dropzone.Payloads.Count > 0 && !payloadAvailable)
                 {
                     if (!dropzone.Payloads.TryDequeue(out payload))
                     {
-                        return StatusCode(410, $"Dropzone exists with payloads, but failed to acquire a payload");
+                        if (retriesRemaining > 0)
+                        {
+                            retriesRemaining--;
+                            System.Threading.Thread.Sleep(50);
+                            continue;
+                        }
+                        return StatusCode(500, $"Dropzone exists with payloads, but failed to acquire a payload after three attempts.");
                     }
                     if (payload.Expires < DateTime.Now)
                     {
                         dropzone.Statistics.PayloadExpiredCount++;
+                        dropzone.Statistics.PayloadSize -= payload.Value.Length;
+                        dropzone.Statistics.PayloadCount = dropzone.Payloads.Count();
                         continue;
                     }
                     dropzone.Statistics.PayloadSize -= payload.Value.Length;
@@ -267,7 +273,7 @@ namespace BOG.DropZone.Controllers
         [ProducesResponseType(400, Type = typeof(string))]
         [ProducesResponseType(401)]
         [ProducesResponseType(451)]
-        [ProducesResponseType(200, Type = typeof(string))]
+        [ProducesResponseType(201, Type = typeof(string))]
         [ProducesResponseType(429, Type = typeof(string))]
         [ProducesResponseType(500)]
         [Produces("text/plain")]
@@ -321,7 +327,7 @@ namespace BOG.DropZone.Controllers
                 dropzone.Statistics.ReferenceSize += fixedValue.Value.Length;
                 dropzone.Statistics.ReferenceCount = dropzone.References.Count();
                 dropzone.Statistics.LastSetReference = DateTime.Now;
-                return StatusCode(200, "Reference accepted");
+                return StatusCode(201, "Reference accepted");
             }
         }
 

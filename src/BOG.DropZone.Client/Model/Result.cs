@@ -82,6 +82,6 @@ namespace BOG.DropZone.Client.Model
         public string Content { get; set; } = null;
 
         [JsonProperty]
-        public string ContentType { get; set; } = null;
+        public string CastType { get; set; } = null;
     }
 }

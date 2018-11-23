@@ -1,12 +1,23 @@
 Release Notes:
 
+1.9.0 -- 2018.11.19 -- Breaking change
+* API: Dropoff and SetReference now return 201 (Created) when successful: previously they returned 200 (OK).
+* Client: Adjusted for 201 changes above to return HandleAs.OK.
+* Client: Introduce new DataGramException for errors related to cryptography.
+* Client: Introduce new enum value DataCompromised for indicating a corrupted datagram was received.
+* Client: When 200 (OK) or 201 (Created) is returned by the API (HandleAs.OK), the content property contains the response body.
+* Client: For exceptions, the exception property is hydrated with the details.
+* Client: Standardize message and content property return pattern across dropzone methods.
+* Client: Message is now hydrated with the server response status text, if provided, and when the status code response is not a 4xx or 5xx value.
+* Client: Result has a new property CastType, which contains the C# class namespace to use to cast the Content property value as a C# object.
+    When empty or missing, the content should be cast as a string.  Only GetStatistics and GetSecurityInfo currently use a non-string cast.
+
 1.8.2 -- 2018.10.19
 * All: security update for Microsoft.AspNetCore.All
 
 1.8.1 -- 2018.10.02
 * Client: Added ZoneName to DropZoneConfig class.
-* Client: Removed DropZone name as an argument from methods.  Facilitates filtering
-*         of multiple sites with the same dropzone name.
+* Client: Removed DropZone name as an argument from methods.  Facilitates filtering of multiple sites with the same dropzone name.
 * General: Update Dockerfile to use .NET Core 2.1 image base.
 
 1.8.0 -- 2018.09.22

@@ -4,6 +4,7 @@ using BOG.DropZone.Common.Dto;
 using BOG.SwissArmyKnife;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -71,64 +72,79 @@ namespace BOG.DropZone.Client
 
         private string BuildPayloadGram(string payload)
         {
-            return Serializer<PayloadGram>.ToJson(new PayloadGram
+            try
             {
-                IsEncrypted = _DropZoneConfig.UseEncryption,
-                Length = _DropZoneConfig.UseEncryption
-                    ? _Cipher.Encrypt(
-                        string.Format("{0},{1},{2}",
-                            MakeRandomCharacters(3, 5),
-                            payload.Length,
-                            MakeRandomCharacters(4, 7)),
+                return Serializer<PayloadGram>.ToJson(new PayloadGram
+                {
+                    IsEncrypted = _DropZoneConfig.UseEncryption,
+                    Length = _DropZoneConfig.UseEncryption
+                        ? _Cipher.Encrypt(
+                            string.Format("{0},{1},{2}",
+                                MakeRandomCharacters(3, 5),
+                                payload.Length,
+                                MakeRandomCharacters(4, 7)),
+                                _DropZoneConfig.Password,
+                                _DropZoneConfig.Salt,
+                                Base64FormattingOptions.None)
+                        : payload.Length.ToString(),
+                    Payload = _DropZoneConfig.UseEncryption
+                        ? _Cipher.Encrypt(
+                                payload,
+                                _DropZoneConfig.Password,
+                                _DropZoneConfig.Salt,
+                                Base64FormattingOptions.None)
+                        : payload,
+                    HashValidation = _DropZoneConfig.UseEncryption
+                        ? _Cipher.Encrypt(
+                            Hasher.GetHashFromStringContent(payload, Encoding.UTF8, Hasher.HashMethod.SHA256),
                             _DropZoneConfig.Password,
                             _DropZoneConfig.Salt,
                             Base64FormattingOptions.None)
-                    : payload.Length.ToString(),
-                Payload = _DropZoneConfig.UseEncryption
-                    ? _Cipher.Encrypt(
-                            payload,
-                            _DropZoneConfig.Password,
-                            _DropZoneConfig.Salt,
-                            Base64FormattingOptions.None)
-                    : payload,
-                HashValidation = _DropZoneConfig.UseEncryption
-                    ? _Cipher.Encrypt(
-                        Hasher.GetHashFromStringContent(payload, Encoding.UTF8, Hasher.HashMethod.SHA256),
-                        _DropZoneConfig.Password,
-                        _DropZoneConfig.Salt,
-                        Base64FormattingOptions.None)
-                    : Hasher.GetHashFromStringContent(payload, Encoding.UTF8, Hasher.HashMethod.SHA256)
-            });
+                        : Hasher.GetHashFromStringContent(payload, Encoding.UTF8, Hasher.HashMethod.SHA256)
+                });
+            }
+            catch (Exception err)
+            {
+                throw new ArgumentOutOfRangeException("Failure to build datagram from payload", err);
+            }
         }
+
 
         private string ExtractPayloadFromGram(string payloadGram)
         {
-            var gram = Serializer<PayloadGram>.FromJson(payloadGram);
-            var originalPayload = gram.Payload;
-            var originalPayloadHash = gram.HashValidation;
-            int originalPayloadLength = -1;
-            if (gram.IsEncrypted)
+            try
             {
-                originalPayload = _Cipher.Decrypt(gram.Payload, _DropZoneConfig.Password, _DropZoneConfig.Salt);
-                originalPayloadHash = _Cipher.Decrypt(gram.HashValidation, _DropZoneConfig.Password, _DropZoneConfig.Salt);
-                var payloadLength = _Cipher.Decrypt(gram.Length, _DropZoneConfig.Password, _DropZoneConfig.Salt);
-                int.TryParse(payloadLength.Split(new char[] { ',' })[1], out originalPayloadLength);
+                var gram = Serializer<PayloadGram>.FromJson(payloadGram);
+                var originalPayload = gram.Payload;
+                var originalPayloadHash = gram.HashValidation;
+                int originalPayloadLength = -1;
+                if (gram.IsEncrypted)
+                {
+                    originalPayload = _Cipher.Decrypt(gram.Payload, _DropZoneConfig.Password, _DropZoneConfig.Salt);
+                    originalPayloadHash = _Cipher.Decrypt(gram.HashValidation, _DropZoneConfig.Password, _DropZoneConfig.Salt);
+                    var payloadLength = _Cipher.Decrypt(gram.Length, _DropZoneConfig.Password, _DropZoneConfig.Salt);
+                    int.TryParse(payloadLength.Split(new char[] { ',' })[1], out originalPayloadLength);
+                }
+                else
+                {
+                    int.TryParse(gram.Length, out originalPayloadLength);
+                }
+                if (originalPayloadLength != originalPayload.Length)
+                {
+                    throw new ArgumentOutOfRangeException($"Expected length of {originalPayload.Length}, but got {originalPayloadLength}");
+                }
+                if (string.Compare(
+                    Hasher.GetHashFromStringContent(originalPayload, Encoding.UTF8, Hasher.HashMethod.SHA256),
+                    originalPayloadHash, false) != 0)
+                {
+                    throw new ArgumentOutOfRangeException($"Expected hash validation value of {gram.HashValidation}, but got {originalPayloadHash}");
+                }
+                return originalPayload;
             }
-            else
+            catch (Exception err)
             {
-                int.TryParse(gram.Length, out originalPayloadLength);
+                throw new ArgumentOutOfRangeException("Failure to unpack payload from datagram", err);
             }
-            if (originalPayloadLength != originalPayload.Length)
-            {
-                throw new ArgumentOutOfRangeException($"Expected length of {originalPayload.Length}, but got {originalPayloadLength}");
-            }
-            if (string.Compare(
-                Hasher.GetHashFromStringContent(originalPayload, Encoding.UTF8, Hasher.HashMethod.SHA256),
-                originalPayloadHash, false) != 0)
-            {
-                throw new ArgumentOutOfRangeException($"Expected hash validation value of {gram.HashValidation}, but got {originalPayloadHash}");
-            }
-            return originalPayload;
         }
         #endregion
 
@@ -142,13 +158,13 @@ namespace BOG.DropZone.Client
         {
             var result = new Result
             {
-                HandleAs = Result.State.OK,
-                ContentType = "System.String"
+                HandleAs = Result.State.OK
             };
             try
             {
                 var response = await _Client.GetAsync(_DropZoneConfig.BaseUrl + $"/api/heartbeat", HttpCompletionOption.ResponseContentRead);
                 result.StatusCode = response.StatusCode;
+                result.Message = response.ReasonPhrase;
                 switch (response.StatusCode)
                 {
                     case HttpStatusCode.OK:
@@ -157,29 +173,26 @@ namespace BOG.DropZone.Client
 
                     case HttpStatusCode.Unauthorized:
                         result.HandleAs = Result.State.InvalidAuthentication;
-                        result.Content = await response.Content.ReadAsStringAsync();
                         break;
 
                     default:
                         result.HandleAs = Result.State.UnexpectedResponse;
-                        result.Message = response.ReasonPhrase;
                         break;
                 }
             }
-            catch (HttpRequestException httpEx)
+            catch (HttpRequestException errHttp)
             {
-                result.HandleAs = Result.State.Fatal;
-                result.Message = httpEx.Message;
+                result.HandleAs = Result.State.ConnectionFailed;
+                result.Exception = errHttp;
             }
-            catch (Exception ex)
+            catch (Exception exFatal)
             {
                 result.HandleAs = Result.State.Fatal;
-                result.Exception = ex;
+                result.Exception = exFatal;
             }
 
             return result;
         }
-
 
         /// <summary>
         /// Place a payload into a drop zone's queue.
@@ -205,12 +218,11 @@ namespace BOG.DropZone.Client
         {
             var result = new Result
             {
-                HandleAs = Result.State.OK,
-                ContentType = "System.String"
+                HandleAs = Result.State.OK
             };
-            var datagram = BuildPayloadGram(data);
             try
             {
+                var datagram = BuildPayloadGram(data);
                 var builder = new UriBuilder(_DropZoneConfig.BaseUrl + $"/api/payload/dropoff/{_DropZoneConfig.ZoneName}");
                 if (expires != null)
                 {
@@ -224,50 +236,45 @@ namespace BOG.DropZone.Client
                         Encoding.UTF8,
                         "text/plain"));
                 result.StatusCode = response.StatusCode;
+                result.Message = response.ReasonPhrase;
                 switch (response.StatusCode)
                 {
-                    case HttpStatusCode.OK:
+                    case HttpStatusCode.Created:
                         result.Content = await response.Content.ReadAsStringAsync();
                         break;
 
                     case HttpStatusCode.Unauthorized:
                         result.HandleAs = Result.State.InvalidAuthentication;
-                        result.Content = await response.Content.ReadAsStringAsync();
                         break;
 
                     case HttpStatusCode.BadRequest:
                         result.HandleAs = Result.State.UnexpectedResponse;
-                        result.Message = response.ReasonPhrase;
                         break;
 
                     case HttpStatusCode.Conflict:
                         result.HandleAs = Result.State.OverLimit;
-                        result.Message = response.ReasonPhrase;
-                        break;
-
-                    case HttpStatusCode.InternalServerError:
-                        result.HandleAs = Result.State.ServerError;
-                        result.Message = response.ReasonPhrase;
                         break;
 
                     default:
                         result.HandleAs = Result.State.UnexpectedResponse;
-                        result.Message = response.ReasonPhrase;
                         break;
-
                 }
             }
-            catch (HttpRequestException httpEx)
+            catch (DataGramException errDataGram)
+            {
+                result.HandleAs = Result.State.DataCompromised;
+                result.Exception = errDataGram;
+            }
+            catch (HttpRequestException errHttp)
             {
                 result.HandleAs = Result.State.ConnectionFailed;
-                result.Message = httpEx.Message;
+                result.Exception = errHttp;
             }
-            catch (Exception ex)
+            catch (Exception exFatal)
             {
                 result.HandleAs = Result.State.Fatal;
-                result.Exception = ex;
+                result.Exception = exFatal;
             }
-
             return result;
         }
 
@@ -281,30 +288,21 @@ namespace BOG.DropZone.Client
         {
             var result = new Result
             {
-                HandleAs = Result.State.OK,
-                ContentType = "System.String"
+                HandleAs = Result.State.OK
             };
             try
             {
                 var response = await _Client.GetAsync(_DropZoneConfig.BaseUrl + $"/api/payload/pickup/{_DropZoneConfig.ZoneName}", HttpCompletionOption.ResponseContentRead);
                 result.StatusCode = response.StatusCode;
+                result.Message = response.ReasonPhrase;
                 switch (response.StatusCode)
                 {
                     case HttpStatusCode.OK:
-                        try
-                        {
-                            result.Message = ExtractPayloadFromGram(await response.Content.ReadAsStringAsync());
-                        }
-                        catch (ArgumentOutOfRangeException err)
-                        {
-                            result.HandleAs = Result.State.DataCompromised;
-                            result.Message = err.Message;
-                        }
+                        result.Content = ExtractPayloadFromGram(await response.Content.ReadAsStringAsync());
                         break;
 
                     case HttpStatusCode.Unauthorized:
                         result.HandleAs = Result.State.InvalidAuthentication;
-                        result.Content = await response.Content.ReadAsStringAsync();
                         break;
 
                     case HttpStatusCode.BadRequest:
@@ -318,7 +316,6 @@ namespace BOG.DropZone.Client
                         break;
 
                     case HttpStatusCode.NoContent:
-                    case HttpStatusCode.Gone:
                         result.HandleAs = Result.State.NoDataAvailable;
                         break;
 
@@ -334,15 +331,21 @@ namespace BOG.DropZone.Client
 
                 }
             }
-            catch (HttpRequestException httpEx)
+            catch (DataGramException errDataGram)
+            {
+                result.HandleAs = Result.State.DataCompromised;
+                result.Message = errDataGram.Message;
+                result.Exception = errDataGram.InnerException;
+            }
+            catch (HttpRequestException errHttp)
             {
                 result.HandleAs = Result.State.ConnectionFailed;
-                result.Message = httpEx.Message;
+                result.Exception = errHttp;
             }
-            catch (Exception ex)
+            catch (Exception exFatal)
             {
                 result.HandleAs = Result.State.Fatal;
-                result.Exception = ex;
+                result.Exception = exFatal;
             }
             return result;
         }
@@ -357,40 +360,39 @@ namespace BOG.DropZone.Client
         {
             var result = new Result
             {
-                HandleAs = Result.State.OK,
-                ContentType = "BOG.DropZone.Common.DropZoneInfo"
+                HandleAs = Result.State.OK
             };
             try
             {
                 var response = await _Client.GetAsync(_DropZoneConfig.BaseUrl + $"/api/payload/statistics/{_DropZoneConfig.ZoneName}", HttpCompletionOption.ResponseContentRead);
                 result.StatusCode = response.StatusCode;
+                result.Message = response.ReasonPhrase;
                 switch (response.StatusCode)
                 {
                     case HttpStatusCode.OK:
                         result.Content = await response.Content.ReadAsStringAsync();
+                        result.CastType = "BOG.DropZone.Common.DropZoneInfo";
                         break;
 
                     case HttpStatusCode.Unauthorized:
                         result.HandleAs = Result.State.InvalidAuthentication;
-                        result.Content = await response.Content.ReadAsStringAsync();
                         break;
 
                     default:
                         result.HandleAs = Result.State.UnexpectedResponse;
-                        result.Message = response.ReasonPhrase;
                         break;
 
                 }
             }
-            catch (HttpRequestException httpEx)
+            catch (HttpRequestException errHttp)
             {
                 result.HandleAs = Result.State.ConnectionFailed;
-                result.Message = httpEx.Message;
+                result.Exception = errHttp;
             }
-            catch (Exception ex)
+            catch (Exception exFatal)
             {
                 result.HandleAs = Result.State.Fatal;
-                result.Exception = ex;
+                result.Exception = exFatal;
             }
             return result;
         }
@@ -405,50 +407,43 @@ namespace BOG.DropZone.Client
         {
             var result = new Result
             {
-                HandleAs = Result.State.OK,
-                ContentType = "System.Collections.Generic.List<BOG.DropZone.Common.ClientWatch>"
+                HandleAs = Result.State.OK
             };
             try
             {
                 var response = await _Client.GetAsync(_DropZoneConfig.BaseUrl + $"/api/securityinfo", HttpCompletionOption.ResponseContentRead);
                 result.StatusCode = response.StatusCode;
+                result.Message = response.ReasonPhrase;
                 switch (response.StatusCode)
                 {
                     case HttpStatusCode.OK:
                         result.Content = await response.Content.ReadAsStringAsync();
+                        result.CastType = "System.Collections.Generic.List<BOG.DropZone.Common.ClientWatch>";
                         break;
 
                     case HttpStatusCode.Unauthorized:
                         result.HandleAs = Result.State.InvalidAuthentication;
-                        result.Content = await response.Content.ReadAsStringAsync();
-                        break;
-
-                    case HttpStatusCode.Conflict:
-                        result.HandleAs = Result.State.OverLimit;
-                        result.Message = response.ReasonPhrase;
                         break;
 
                     case HttpStatusCode.InternalServerError:
                         result.HandleAs = Result.State.ServerError;
-                        result.Message = response.ReasonPhrase;
                         break;
 
                     default:
                         result.HandleAs = Result.State.UnexpectedResponse;
-                        result.Message = response.ReasonPhrase;
                         break;
 
                 }
             }
-            catch (HttpRequestException httpEx)
+            catch (HttpRequestException errHttp)
             {
                 result.HandleAs = Result.State.ConnectionFailed;
-                result.Message = httpEx.Message;
+                result.Exception = errHttp;
             }
-            catch (Exception ex)
+            catch (Exception exFatal)
             {
                 result.HandleAs = Result.State.Fatal;
-                result.Exception = ex;
+                result.Exception = exFatal;
             }
             return result;
         }
@@ -479,13 +474,12 @@ namespace BOG.DropZone.Client
         {
             var result = new Result
             {
-                HandleAs = Result.State.OK,
-                ContentType = "System.String"
+                HandleAs = Result.State.OK
             };
-            var datagram = BuildPayloadGram(value);
-            var l = datagram.Length;
             try
             {
+                var datagram = BuildPayloadGram(value);
+                var l = datagram.Length;
                 var builder = new UriBuilder(_DropZoneConfig.BaseUrl + $"/api/reference/set/{_DropZoneConfig.ZoneName}/{key}");
                 if (expires != DateTime.MaxValue)
                 {
@@ -493,45 +487,48 @@ namespace BOG.DropZone.Client
                     query["expires"] = expires.ToString();
                     builder.Query = query.ToString();
                 }
-                var response = await _Client.PostAsync(builder.ToString(),
-                    new StringContent(datagram, Encoding.UTF8, "text/plain"));
+                var response = await _Client.PostAsync(builder.ToString(), new StringContent(datagram, Encoding.UTF8, "text/plain"));
                 result.StatusCode = response.StatusCode;
+                result.Message = response.ReasonPhrase;
+
                 switch (response.StatusCode)
                 {
-                    case HttpStatusCode.OK:
+                    case HttpStatusCode.Created:
                         result.Content = await response.Content.ReadAsStringAsync();
                         break;
 
                     case HttpStatusCode.Unauthorized:
                         result.HandleAs = Result.State.InvalidAuthentication;
-                        result.Content = await response.Content.ReadAsStringAsync();
                         break;
 
                     case HttpStatusCode.Conflict:
                         result.HandleAs = Result.State.OverLimit;
-                        result.Message = response.ReasonPhrase;
                         break;
 
                     case HttpStatusCode.InternalServerError:
                         result.HandleAs = Result.State.ServerError;
-                        result.Message = response.ReasonPhrase;
                         break;
 
                     default:
                         result.HandleAs = Result.State.UnexpectedResponse;
-                        result.Message = response.ReasonPhrase;
                         break;
                 }
             }
-            catch (HttpRequestException httpEx)
+            catch (DataGramException errDataGram)
+            {
+                result.HandleAs = Result.State.DataCompromised;
+                result.Message = errDataGram.Message;
+                result.Exception = errDataGram.InnerException;
+            }
+            catch (HttpRequestException errHttp)
             {
                 result.HandleAs = Result.State.ConnectionFailed;
-                result.Message = httpEx.Message;
+                result.Exception = errHttp;
             }
-            catch (Exception ex)
+            catch (Exception exFatal)
             {
                 result.HandleAs = Result.State.Fatal;
-                result.Exception = ex;
+                result.Exception = exFatal;
             }
             return result;
         }
@@ -547,64 +544,57 @@ namespace BOG.DropZone.Client
         {
             var result = new Result
             {
-                HandleAs = Result.State.OK,
-                ContentType = "System.String"
+                HandleAs = Result.State.OK
             };
             try
             {
                 var response = await _Client.GetAsync(_DropZoneConfig.BaseUrl + $"/api/reference/get/{_DropZoneConfig.ZoneName}/{key}", HttpCompletionOption.ResponseContentRead);
                 result.StatusCode = response.StatusCode;
+                result.Message = response.ReasonPhrase;
+
                 switch (response.StatusCode)
                 {
                     case HttpStatusCode.OK:
-                        try
-                        {
-                            var body = await response.Content.ReadAsStringAsync();
-                            result.Message = body.Length == 0 ? string.Empty : ExtractPayloadFromGram(body);
-                        }
-                        catch (ArgumentOutOfRangeException err)
-                        {
-                            result.HandleAs = Result.State.DataCompromised;
-                            result.Message = err.Message;
-                        }
+                        result.Content = ExtractPayloadFromGram(await response.Content.ReadAsStringAsync());
                         break;
 
                     case HttpStatusCode.Unauthorized:
                         result.HandleAs = Result.State.InvalidAuthentication;
-                        result.Content = await response.Content.ReadAsStringAsync();
                         break;
 
                     case HttpStatusCode.Conflict:
                         result.HandleAs = Result.State.OverLimit;
-                        result.Message = response.ReasonPhrase;
                         break;
 
                     case HttpStatusCode.NoContent:
                         result.HandleAs = Result.State.NoDataAvailable;
-                        result.Message = response.ReasonPhrase;
                         break;
 
                     case HttpStatusCode.InternalServerError:
                         result.HandleAs = Result.State.ServerError;
-                        result.Message = response.ReasonPhrase;
                         break;
 
                     default:
                         result.HandleAs = Result.State.UnexpectedResponse;
-                        result.Message = response.ReasonPhrase;
                         break;
 
                 }
             }
-            catch (HttpRequestException httpEx)
+            catch (DataGramException errDataGram)
+            {
+                result.HandleAs = Result.State.DataCompromised;
+                result.Message = errDataGram.Message;
+                result.Exception = errDataGram.InnerException;
+            }
+            catch (HttpRequestException errHttp)
             {
                 result.HandleAs = Result.State.ConnectionFailed;
-                result.Message = httpEx.Message;
+                result.Exception = errHttp;
             }
-            catch (Exception ex)
+            catch (Exception exFatal)
             {
                 result.HandleAs = Result.State.Fatal;
-                result.Exception = ex;
+                result.Exception = exFatal;
             }
             return result;
         }
@@ -619,49 +609,47 @@ namespace BOG.DropZone.Client
         {
             var result = new Result
             {
-                HandleAs = Result.State.OK,
-                ContentType = "System.Collections.Generic.List<System.String>"
+                HandleAs = Result.State.OK
             };
             try
             {
                 var response = await _Client.GetAsync(_DropZoneConfig.BaseUrl + $"/api/reference/list/{_DropZoneConfig.ZoneName}", HttpCompletionOption.ResponseContentRead);
                 result.StatusCode = response.StatusCode;
+                result.Message = response.ReasonPhrase;
+
                 switch (response.StatusCode)
                 {
                     case HttpStatusCode.OK:
                         result.Content = await response.Content.ReadAsStringAsync();
+                        result.CastType = "System.Collections.Generic.List<System.String>";
                         break;
 
                     case HttpStatusCode.Unauthorized:
                         result.HandleAs = Result.State.InvalidAuthentication;
-                        result.Content = await response.Content.ReadAsStringAsync();
                         break;
 
                     case HttpStatusCode.Conflict:
                         result.HandleAs = Result.State.OverLimit;
-                        result.Message = response.ReasonPhrase;
                         break;
 
                     case HttpStatusCode.InternalServerError:
                         result.HandleAs = Result.State.ServerError;
-                        result.Message = response.ReasonPhrase;
                         break;
 
                     default:
                         result.HandleAs = Result.State.UnexpectedResponse;
-                        result.Message = response.ReasonPhrase;
                         break;
                 }
             }
-            catch (HttpRequestException httpEx)
+            catch (HttpRequestException errHttp)
             {
                 result.HandleAs = Result.State.ConnectionFailed;
-                result.Message = httpEx.Message;
+                result.Exception = errHttp;
             }
-            catch (Exception ex)
+            catch (Exception exFatal)
             {
                 result.HandleAs = Result.State.Fatal;
-                result.Exception = ex;
+                result.Exception = exFatal;
             }
             return result;
         }
@@ -674,13 +662,14 @@ namespace BOG.DropZone.Client
         {
             var result = new Result
             {
-                HandleAs = Result.State.OK,
-                ContentType = "System.String"
+                HandleAs = Result.State.OK
             };
             try
             {
                 var response = await _Client.GetAsync(_DropZoneConfig.BaseUrl + $"/api/clear/{_DropZoneConfig.ZoneName}", HttpCompletionOption.ResponseContentRead);
                 result.StatusCode = response.StatusCode;
+                result.Message = response.ReasonPhrase;
+
                 switch (response.StatusCode)
                 {
                     case HttpStatusCode.OK:
@@ -689,30 +678,26 @@ namespace BOG.DropZone.Client
 
                     case HttpStatusCode.Unauthorized:
                         result.HandleAs = Result.State.InvalidAuthentication;
-                        result.Content = await response.Content.ReadAsStringAsync();
                         break;
 
                     case HttpStatusCode.InternalServerError:
                         result.HandleAs = Result.State.ServerError;
-                        result.Message = response.ReasonPhrase;
                         break;
 
                     default:
                         result.HandleAs = Result.State.UnexpectedResponse;
-                        result.Message = response.ReasonPhrase;
                         break;
-
                 }
             }
-            catch (HttpRequestException httpEx)
+            catch (HttpRequestException errHttp)
             {
                 result.HandleAs = Result.State.ConnectionFailed;
-                result.Message = httpEx.Message;
+                result.Exception = errHttp;
             }
-            catch (Exception ex)
+            catch (Exception exFatal)
             {
                 result.HandleAs = Result.State.Fatal;
-                result.Exception = ex;
+                result.Exception = exFatal;
             }
             return result;
         }
@@ -725,13 +710,14 @@ namespace BOG.DropZone.Client
         {
             var result = new Result
             {
-                HandleAs = Result.State.OK,
-                ContentType = "System.String"
+                HandleAs = Result.State.OK
             };
             try
             {
                 var response = await _Client.GetAsync(_DropZoneConfig.BaseUrl + $"/api/reset", HttpCompletionOption.ResponseContentRead);
                 result.StatusCode = response.StatusCode;
+                result.Message = response.ReasonPhrase;
+
                 switch (response.StatusCode)
                 {
                     case HttpStatusCode.OK:
@@ -740,30 +726,26 @@ namespace BOG.DropZone.Client
 
                     case HttpStatusCode.Unauthorized:
                         result.HandleAs = Result.State.InvalidAuthentication;
-                        result.Content = await response.Content.ReadAsStringAsync();
                         break;
 
                     case HttpStatusCode.InternalServerError:
                         result.HandleAs = Result.State.ServerError;
-                        result.Message = response.ReasonPhrase;
                         break;
 
                     default:
                         result.HandleAs = Result.State.UnexpectedResponse;
-                        result.Message = response.ReasonPhrase;
                         break;
-
                 }
             }
-            catch (HttpRequestException httpEx)
+            catch (HttpRequestException errHttp)
             {
                 result.HandleAs = Result.State.ConnectionFailed;
-                result.Message = httpEx.Message;
+                result.Exception = errHttp;
             }
-            catch (Exception ex)
+            catch (Exception exFatal)
             {
                 result.HandleAs = Result.State.Fatal;
-                result.Exception = ex;
+                result.Exception = exFatal;
             }
             return result;
         }
@@ -777,13 +759,14 @@ namespace BOG.DropZone.Client
         {
             var result = new Result
             {
-                HandleAs = Result.State.OK,
-                ContentType = "System.String"
+                HandleAs = Result.State.OK
             };
             try
             {
                 var response = await _Client.GetAsync(_DropZoneConfig.BaseUrl + $"/api/shutdown", HttpCompletionOption.ResponseContentRead);
                 result.StatusCode = response.StatusCode;
+                result.Message = response.ReasonPhrase;
+
                 switch (response.StatusCode)
                 {
                     case HttpStatusCode.OK:
@@ -792,34 +775,26 @@ namespace BOG.DropZone.Client
 
                     case HttpStatusCode.Unauthorized:
                         result.HandleAs = Result.State.InvalidAuthentication;
-                        result.Content = await response.Content.ReadAsStringAsync();
-                        break;
-
-                    case HttpStatusCode.Conflict:
-                        result.HandleAs = Result.State.OverLimit;
-                        result.Message = response.ReasonPhrase;
                         break;
 
                     case HttpStatusCode.InternalServerError:
                         result.HandleAs = Result.State.ServerError;
-                        result.Message = response.ReasonPhrase;
                         break;
 
                     default:
                         result.HandleAs = Result.State.UnexpectedResponse;
-                        result.Message = response.ReasonPhrase;
                         break;
                 }
             }
-            catch (HttpRequestException httpEx)
+            catch (HttpRequestException errHttp)
             {
                 result.HandleAs = Result.State.ConnectionFailed;
-                result.Message = httpEx.Message;
+                result.Exception = errHttp;
             }
-            catch (Exception ex)
+            catch (Exception exFatal)
             {
                 result.HandleAs = Result.State.Fatal;
-                result.Exception = ex;
+                result.Exception = exFatal;
             }
             return result;
         }
