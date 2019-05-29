@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.PlatformAbstractions;
+using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Swagger;
 using System;
 using System.IO;
@@ -49,7 +50,12 @@ namespace BOG.DropZone
             });
             services.AddMvc(
                 o => o.InputFormatters.Insert(0, new RawRequestBodyFormatter())
-                ).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+                )
+                .AddJsonOptions(options =>
+                {
+                    options.SerializerSettings.Formatting = Formatting.Indented;
+                })
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
             services.AddHttpContextAccessor();
 
             // Register the Swagger generator, defining one or more Swagger documents
