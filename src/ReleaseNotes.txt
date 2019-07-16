@@ -1,5 +1,14 @@
 Release Notes:
 
+1.9.2 -- 2019.07.15
+* Endpoint /api/heartbeat now returns the application's name and version fingerprint in a JSON response body.
+* Raise request body max size on payload set and reference set to 100Mb (Kestrel level setting). 
+  The properties MaxPayloadSize / MaxReferenceSize on the dropzone determine whether it is too large to add to the dropzone.
+* Added a console testing application from another solution: good for demonstrating usage.
+* Refactored the way the solution is organized.
+
+1.9.1 -- 2019.05.29 -- Maintenance release
+
 1.9.0 -- 2018.11.19 -- Breaking change
 * API: Dropoff and SetReference now return 201 (Created) when successful: previously they returned 200 (OK).
 * Client: Adjusted for 201 changes above to return HandleAs.OK.

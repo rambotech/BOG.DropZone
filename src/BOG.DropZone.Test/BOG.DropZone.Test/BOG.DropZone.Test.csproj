@@ -1,10 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <Authors>John J Schultz</Authors>
-    <Company>Bits of Genius</Company>
-    <Description>A client for calling the BOG.DropZone API, which supports optional encryption.</Description>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/rambotech/BOG.DropZone</PackageProjectUrl>
     <PackageLicenseUrl></PackageLicenseUrl>
     <RepositoryUrl>https://github.com/rambotech/BOG.DropZone</RepositoryUrl>
@@ -14,11 +13,11 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageIconUrl>https://raw.githubusercontent.com/rambotech/BOG.DropZone/master/assets/parachute.ico</PackageIconUrl>
-    <Version>1.9.2</Version>
+    <Version>1.9.2.0</Version>
     <AssemblyVersion>1.9.2.0</AssemblyVersion>
     <FileVersion>1.9.2.0</FileVersion>
     <Copyright>(c) 2017-2019, John J Schultz</Copyright>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Description>A console app to test and serve as an example of usage for BOG.DropZone.Client.</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,7 +26,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BOG.DropZone.Common\BOG.DropZone.Common.csproj" />
+    <ProjectReference Include="..\..\BOG.DropZone.Client\BOG.DropZone.Client.csproj" />
+    <ProjectReference Include="..\..\BOG.DropZone.Common\BOG.DropZone.Common.csproj" />
   </ItemGroup>
 
 </Project>

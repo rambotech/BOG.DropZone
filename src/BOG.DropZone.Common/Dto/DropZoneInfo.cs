@@ -35,7 +35,7 @@ namespace BOG.DropZone.Common.Dto
         /// Specifies the maximum total size of all payload content the dropzone can store.
         /// </summary>
         [JsonProperty]
-        public Int64 MaxPayloadSize { get; set; } = 1048L * 1024 * 01024;
+        public Int64 MaxPayloadSize { get; set; } = 1048L * 1024 * 1024;
 
         /// <summary>
         /// The number of payload dropoffs denied due to count or size limits triggered.
