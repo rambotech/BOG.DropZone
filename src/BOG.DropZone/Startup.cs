@@ -65,7 +65,7 @@ namespace BOG.DropZone
                 {
                     Version = $"v{this.GetType().Assembly.GetName().Version.ToString()}",
                     Title = "BOG.DropZone API",
-                    Description = "A non-secure, volatile drop-off and pickup location for quick, inter-application data transfer",
+                    Description = "A non-secure, volatile drop-off and pickup location for quick, inter-application data handoff",
                     TermsOfService = "None",
                     Contact = new Contact { Name = "John J Schultz", Email = "", Url = "https://github.com/rambotech" },
                     License = new License { Name = "MIT", Url = "https://opensource.org/licenses/MIT" }
@@ -87,8 +87,10 @@ namespace BOG.DropZone
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, IServiceProvider serviceProvider)
         {
             var storageArea = serviceProvider.GetService<IStorage>();
+
             storageArea.AccessToken = Configuration.GetValue<string>("AccessToken");
             Console.WriteLine($"AccessToken: {storageArea.AccessToken}");
+
             storageArea.AdminToken = Configuration.GetValue<string>("AdminToken");
             Console.WriteLine($"AdminToken: {storageArea.AdminToken}");
 

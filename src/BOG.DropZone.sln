@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27428.2037
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29102.190
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BOG.DropZone", "BOG.DropZone\BOG.DropZone.csproj", "{D3B5FB0B-E3A2-4926-AB50-2218FD314A8F}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -10,7 +10,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BOG.DropZone", "BOG.DropZon
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BOG.DropZone.Client", "BOG.DropZone.Client\BOG.DropZone.Client.csproj", "{E045EF4B-328F-4AEB-AB5E-F78ACD569336}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{1960AC6A-324C-4458-80F7-199C48181DD1}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_SolutionItems", "_SolutionItems", "{1960AC6A-324C-4458-80F7-199C48181DD1}"
 	ProjectSection(SolutionItems) = preProject
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
@@ -30,6 +30,18 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Assets", "Assets", "{60624F
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BOG.DropZone.Common", "BOG.DropZone.Common\BOG.DropZone.Common.csproj", "{511E973C-212B-4D2E-826F-8C8E8886E6D2}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BOG.DropZone.Test", "BOG.DropZone.Test\BOG.DropZone.Test\BOG.DropZone.Test.csproj", "{AA948FE2-67AB-44B6-B8FE-8AA214E3E1E2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Testing", "Testing", "{016AD6A9-5FDB-4392-8494-BF030F86FFA4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "App", "App", "{19548F2B-113C-4F78-9907-D9AE7BF11B6E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Console", "Console", "{45E022BF-6854-4CB4-BBBD-16E7697BE021}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Website", "Website", "{D7AF1693-C1BA-49DF-90A8-CFF5E0D3F372}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Nuget", "Nuget", "{2D915F45-AD84-47F3-8CD0-88B9D453233C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,12 +60,23 @@ Global
 		{511E973C-212B-4D2E-826F-8C8E8886E6D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{511E973C-212B-4D2E-826F-8C8E8886E6D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{511E973C-212B-4D2E-826F-8C8E8886E6D2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AA948FE2-67AB-44B6-B8FE-8AA214E3E1E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AA948FE2-67AB-44B6-B8FE-8AA214E3E1E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AA948FE2-67AB-44B6-B8FE-8AA214E3E1E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AA948FE2-67AB-44B6-B8FE-8AA214E3E1E2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{D3B5FB0B-E3A2-4926-AB50-2218FD314A8F} = {D7AF1693-C1BA-49DF-90A8-CFF5E0D3F372}
+		{E045EF4B-328F-4AEB-AB5E-F78ACD569336} = {2D915F45-AD84-47F3-8CD0-88B9D453233C}
 		{60624F85-40AD-42A9-B367-1D902907A858} = {1960AC6A-324C-4458-80F7-199C48181DD1}
+		{511E973C-212B-4D2E-826F-8C8E8886E6D2} = {2D915F45-AD84-47F3-8CD0-88B9D453233C}
+		{AA948FE2-67AB-44B6-B8FE-8AA214E3E1E2} = {45E022BF-6854-4CB4-BBBD-16E7697BE021}
+		{016AD6A9-5FDB-4392-8494-BF030F86FFA4} = {19548F2B-113C-4F78-9907-D9AE7BF11B6E}
+		{45E022BF-6854-4CB4-BBBD-16E7697BE021} = {016AD6A9-5FDB-4392-8494-BF030F86FFA4}
+		{D7AF1693-C1BA-49DF-90A8-CFF5E0D3F372} = {19548F2B-113C-4F78-9907-D9AE7BF11B6E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D09B7B87-8148-438D-9E25-C109693457C0}

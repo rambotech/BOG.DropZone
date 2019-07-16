@@ -1,8 +1,23 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.2</TargetFramework>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/rambotech/BOG.DropZone</PackageProjectUrl>
+    <PackageLicenseUrl></PackageLicenseUrl>
+    <RepositoryUrl>https://github.com/rambotech/BOG.DropZone</RepositoryUrl>
+    <RepositoryType>GIT</RepositoryType>
+    <PackageTags>RestAPI aspnetcore netstandard2</PackageTags>
+    <PackageReleaseNotes></PackageReleaseNotes>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageIconUrl>https://raw.githubusercontent.com/rambotech/BOG.DropZone/master/assets/parachute.ico</PackageIconUrl>
+    <Version>1.9.2.0</Version>
+    <AssemblyVersion>1.9.2.0</AssemblyVersion>
+    <FileVersion>1.9.2.0</FileVersion>
+    <Copyright>(c) 2017-2019, John J Schultz</Copyright>
+    <Description>A console app to test and serve as an example of usage for BOG.DropZone.Client.</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,12 +26,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="BOG.DropZone.Client">
-      <HintPath>..\..\..\Public\BOG.DropZone\src\BOG.DropZone.Client\bin\Debug\netstandard2.0\BOG.DropZone.Client.dll</HintPath>
-    </Reference>
-    <Reference Include="BOG.DropZone.Common">
-      <HintPath>..\..\..\Public\BOG.DropZone\src\BOG.DropZone.Common\bin\Debug\netstandard2.0\BOG.DropZone.Common.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\..\BOG.DropZone.Client\BOG.DropZone.Client.csproj" />
+    <ProjectReference Include="..\..\BOG.DropZone.Common\BOG.DropZone.Common.csproj" />
   </ItemGroup>
 
 </Project>

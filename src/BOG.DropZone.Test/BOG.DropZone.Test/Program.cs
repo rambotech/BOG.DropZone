@@ -10,7 +10,7 @@ namespace BOG.DropZone.Test
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             RunAsync().GetAwaiter().GetResult();
         }
