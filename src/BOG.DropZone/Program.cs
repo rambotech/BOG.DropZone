@@ -38,7 +38,8 @@ namespace BOG.DropZone
                 .AddCommandLine(args)
            .Build();
 
-            var host = WebHost.CreateDefaultBuilder(args)
+            var host = WebHost
+                .CreateDefaultBuilder(args)
                 .UseConfiguration(config);
 
             var useUrls = new List<string>();
