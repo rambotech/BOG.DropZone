@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BOG.SwissArmyKnife" Version="1.5.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="BOG.DropZone.Client">
+      <HintPath>..\..\..\Public\BOG.DropZone\src\BOG.DropZone.Client\bin\Debug\netstandard2.0\BOG.DropZone.Client.dll</HintPath>
+    </Reference>
+    <Reference Include="BOG.DropZone.Common">
+      <HintPath>..\..\..\Public\BOG.DropZone\src\BOG.DropZone.Common\bin\Debug\netstandard2.0\BOG.DropZone.Common.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
