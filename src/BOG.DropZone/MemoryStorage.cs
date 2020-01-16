@@ -17,7 +17,7 @@ namespace BOG.DropZone
     /// </summary>
     public class MemoryStorage : IStorage
     {
-        Timer stopTimer = new Timer();
+        readonly Timer stopTimer = new Timer();
         readonly object lockPoint = new object();
 
         /// <summary>
@@ -30,6 +30,10 @@ namespace BOG.DropZone
         /// </summary>
         public string AdminToken { get; set; } = string.Empty;
 
+        /// <summary>
+        /// An optional path to persist payloads and references as files. If it is empty, payloads are only persisted in memory.
+        /// </summary>
+        public string PersistencePath { get; set; } = string.Empty;
 
         /// <summary>
         /// The maximum number of dropzones to allow.

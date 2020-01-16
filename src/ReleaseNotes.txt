@@ -1,5 +1,9 @@
 Release Notes:
 
+2.0.0 -- 2020.01.08
+* Update target framework to .NET Core 3.1
+* 
+
 1.9.2 -- 2019.07.15
 * Endpoint /api/heartbeat now returns the application's name and version fingerprint in a JSON response body.
 * Raise request body max size on payload set and reference set to 100Mb (Kestrel level setting). 

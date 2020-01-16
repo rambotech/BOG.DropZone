@@ -10,6 +10,8 @@ using Newtonsoft.Json;
 using Swashbuckle.AspNetCore.Swagger;
 using System;
 using System.IO;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace BOG.DropZone
 {
@@ -40,6 +42,7 @@ namespace BOG.DropZone
         {
             // static across controllers and calls.
             services.AddSingleton<IStorage, MemoryStorage>();
+            services.AddSingleton<IAssemblyVersion, AssemblyVersion>();
             services.AddRouting();
 
             services.Configure<CookiePolicyOptions>(options =>
@@ -48,33 +51,37 @@ namespace BOG.DropZone
                 options.CheckConsentNeeded = context => false;
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
-            services.AddMvc(
-                o => o.InputFormatters.Insert(0, new RawRequestBodyFormatter())
-                )
+            services.AddMvc(options => 
+                {
+                  options.InputFormatters.Insert(0, new RawRequestBodyFormatter());
+                  options.EnableEndpointRouting = false;
+                })
                 .AddJsonOptions(options =>
                 {
-                    options.SerializerSettings.Formatting = Formatting.Indented;
+                    options.JsonSerializerOptions.WriteIndented = true;
+                    options.JsonSerializerOptions.IgnoreNullValues = true;
+                    options.JsonSerializerOptions.IgnoreReadOnlyProperties = false;
+                    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
                 })
-                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+                .SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
+            
             services.AddHttpContextAccessor();
 
             // Register the Swagger generator, defining one or more Swagger documents
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new Info
+                c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
                 {
                     Version = $"v{this.GetType().Assembly.GetName().Version.ToString()}",
                     Title = "BOG.DropZone API",
                     Description = "A non-secure, volatile drop-off and pickup location for quick, inter-application data handoff",
-                    TermsOfService = "None",
-                    Contact = new Contact { Name = "John J Schultz", Email = "", Url = "https://github.com/rambotech" },
-                    License = new License { Name = "MIT", Url = "https://opensource.org/licenses/MIT" }
+                    Contact = new Microsoft.OpenApi.Models.OpenApiContact { Name = "John J Schultz", Email = "", Url = new Uri("https://github.com/rambotech") },
+                    License = new Microsoft.OpenApi.Models.OpenApiLicense { Name = "MIT", Url = new Uri("https://opensource.org/licenses/MIT") }
                 });
                 // Set the comments path for the Swagger JSON and UI.
                 var xmlPath = Path.Combine(PlatformServices.Default.Application.ApplicationBasePath, "BOG.DropZone.xml");
                 c.IncludeXmlComments(xmlPath);
-                c.DescribeAllEnumsAsStrings();
-                c.DescribeStringEnumsInCamelCase();
             });
         }
 
@@ -84,7 +91,7 @@ namespace BOG.DropZone
         /// <param name="app">(injected)</param>
         /// <param name="env">(injected)</param>
         /// <param name="serviceProvider">(injected)</param>
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, IServiceProvider serviceProvider)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IServiceProvider serviceProvider)
         {
             var storageArea = serviceProvider.GetService<IStorage>();
 
@@ -93,6 +100,9 @@ namespace BOG.DropZone
 
             storageArea.AdminToken = Configuration.GetValue<string>("AdminToken");
             Console.WriteLine($"AdminToken: {storageArea.AdminToken}");
+
+            storageArea.PersistencePath = Configuration.GetValue<string>("PersistencePath");
+            Console.WriteLine($"PersistencePath: {storageArea.PersistencePath}");
 
             var configValue = Configuration.GetValue<string>("MaxDropzones");
             if (!string.IsNullOrWhiteSpace(configValue))
@@ -115,7 +125,7 @@ namespace BOG.DropZone
             }
             Console.WriteLine($"LockoutSeconds: {storageArea.LockoutSeconds}");
 
-            if (env.IsDevelopment())
+            if (env.EnvironmentName == "development")
             {
                 app.UseDeveloperExceptionPage();
             }

@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <RuntimeIdentifiers>win10-x64</RuntimeIdentifiers>
     <RuntimeIdentifiers>linux-x64</RuntimeIdentifiers>
     <RuntimeIdentifiers>linux-arm</RuntimeIdentifiers>
-    <Version>1.9.3</Version>
-    <AssemblyVersion>1.9.3.0</AssemblyVersion>
+    <Version>2.0.0</Version>
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -19,11 +19,11 @@
 
   <PropertyGroup>
     <PublishWithAspNetCoreTargetManifest>false</PublishWithAspNetCoreTargetManifest>
-    <FileVersion>1.9.3.0</FileVersion>
+    <FileVersion>2.0.0.0</FileVersion>
     <Authors>John J Schultz</Authors>
     <Company />
     <Description>A standalone interapplication communication point</Description>
-    <Copyright>(c) 2017-2019, John J Schultz</Copyright>
+    <Copyright>(c) 2017-2020, John J Schultz</Copyright>
     <PackageProjectUrl>https://github.com/rambotech/BOG.DropZone</PackageProjectUrl>
     <PackageIconUrl>https://raw.githubusercontent.com/rambotech/BOG.DropZone/master/assets/parachute.ico</PackageIconUrl>
     <RepositoryUrl>https://github.com/rambotech/BOG.DropZone</RepositoryUrl>
@@ -33,15 +33,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BOG.SwissArmyKnife" Version="1.5.2" />
+    <PackageReference Include="BOG.SwissArmyKnife" Version="1.5.6" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.7" />
-    <PackageReference Include="Microsoft.AspNetCore.All" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="2.2.4" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="2.2.0" />
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.2.3" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="4.0.1" />
-    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="4.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="3.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="3.1.1" />
+    <PackageReference Include="Microsoft.Extensions.PlatformAbstractions" Version="1.1.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.1.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="5.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -51,6 +52,15 @@
   <ItemGroup>
     <ProjectReference Include="..\BOG.DropZone.Client\BOG.DropZone.Client.csproj" />
     <ProjectReference Include="..\BOG.DropZone.Common\BOG.DropZone.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="start_me.bat">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="start_me.sh">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
