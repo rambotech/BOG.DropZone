@@ -1,14 +1,15 @@
+[![Build status](https://api.travis-ci.org/rambotech/BOG.DropZone.svg?branch=master)](https://travis-ci.org/rambotech/BOG.DropZone)
+
+https://api.travis-ci.org/rambotech/BOG.DropZone.svg?branch=master
+
 # BOG.DropZone
 ![alt text](https://github.com/rambotech/BOG.DropZone/blob/master/assets/DropZone.png "They just keep coming and going, and going and coming!")
 
-A very simple volatile aspnetcore webapi site for inter-application dropoff and 
-pickup of payloads (queue), and key/value pair storage (references).  It is inspired 
-by [BOG.Pathways.Server](https://github.com/rambotech/BOG.Pathways.Server), but uses 
-optional an access and admin tokens for authentication, and auto-creates a dropzone 
-as needed.
+A very simple volatile aspnetcore webapi site for inter-application dropoff and pickup of payloads (queue), and key/value pair storage (references).
+It is inspired by [BOG.Pathways.Server](https://github.com/rambotech/BOG.Pathways.Server), but uses optional an access and admin tokens for
+authentication, and auto-creates a dropzone as needed.
 
-BOG.DropZone is a pull-only approach: no data is pushed to any user.  The site 
-has a Swagger interface for testing.
+BOG.DropZone is a pull-only approach: no data is pushed to any user.  The site has a Swagger interface for testing.
 
 ## How it works
 A drop zone is a named location for one or more applications to put payloads (strings) 
