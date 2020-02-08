@@ -1,6 +1,7 @@
 [![Build status](https://api.travis-ci.org/rambotech/BOG.DropZone.svg?branch=master)](https://travis-ci.org/rambotech/BOG.DropZone)
 
-https://api.travis-ci.org/rambotech/BOG.DropZone.svg?branch=master
+[![Nuget](https://img.shields.io/nuget/v/BOG.DropZone.Client)](https://www.nuget.org/packages/BOG.DropZone.Client/) BOG.DropZone.Client
+[![Nuget](https://img.shields.io/nuget/v/BOG.DropZone.Client)](https://www.nuget.org/packages/BOG.DropZone.Common/) BOG.DropZone.Common
 
 # BOG.DropZone
 ![alt text](https://github.com/rambotech/BOG.DropZone/blob/master/assets/DropZone.png "They just keep coming and going, and going and coming!")
