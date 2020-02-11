@@ -1,8 +1,0 @@
-language: csharp
-solution: BOG.DropZone.sln
-mono: none
-dotnet: 3.1.101
-install:
-- nuget restore -source "https://www.nuget.org/api/v2" ./BOG.DropZone.sln
-script:
-- dotnet restore
