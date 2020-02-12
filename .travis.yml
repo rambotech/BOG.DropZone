@@ -4,5 +4,4 @@ mono: none
 dotnet: 3.1
 install:
 script:
-- dotnet restore
-- dotnet build
+- dotnet build ./src/BOG.DropZone.sln
