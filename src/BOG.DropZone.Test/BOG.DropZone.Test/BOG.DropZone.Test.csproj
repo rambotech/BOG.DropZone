@@ -18,7 +18,7 @@
     <FileVersion>1.9.3.0</FileVersion>
     <Copyright>(c) 2017-2020, John J Schultz</Copyright>
     <Description>A console app to test and serve as an example of usage for BOG.DropZone.Client.</Description>
-    <PackageIcon>parachute.ico</PackageIcon>
+    <PackageIcon>parachute.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,7 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\..\assets\parachute.ico">
+    <None Include="..\..\..\assets\parachute.png">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>

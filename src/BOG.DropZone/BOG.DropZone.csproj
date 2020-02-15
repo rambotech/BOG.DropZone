@@ -30,7 +30,7 @@
     <RepositoryType>Git</RepositoryType>
     <PackageTags>Rest api queue key value</PackageTags>
     <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
-    <PackageIcon>parachute.ico</PackageIcon>
+    <PackageIcon>parachute.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -62,7 +62,7 @@
     <None Update="start_me.sh">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="..\..\assets\parachute.ico">
+    <None Include="..\..\assets\parachute.png">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>

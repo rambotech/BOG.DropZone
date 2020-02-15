@@ -20,7 +20,7 @@
     <FileVersion>1.9.4.0</FileVersion>
     <Copyright>(c) 2017-2020, John J Schultz</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageIcon>parachute.ico</PackageIcon>
+    <PackageIcon>parachute.png</PackageIcon>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -38,6 +38,10 @@
 
   <ItemGroup>
     <None Include="..\..\assets\parachute.ico">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+    <None Include="..\..\assets\parachute.png">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
