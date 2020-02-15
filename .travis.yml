@@ -4,5 +4,5 @@ mono: none
 dotnet: 3.1
 script:
 - dotnet build -c release ./src/BOG.DropZone.sln
-- dotnet nuget push --api-key $NUGET_API_KEY --source $NUGET_SOURCE ./src/BOG.DropZone.Client/bin/Release/BOG.DropZone.Common.*.nupkg -Source $Source
-- dotnet nuget push --api-key $NUGET_API_KEY --source $NUGET_SOURCE ./src/BOG.DropZone.Client/bin/Release/BOG.DropZone.Client.*.nupkg -Source $Source
+- dotnet nuget push --api-key $NUGET_API_KEY --source $NUGET_SOURCE ./src/BOG.DropZone.Client/bin/Release/BOG.DropZone.Common.*.nupkg
+- dotnet nuget push --api-key $NUGET_API_KEY --source $NUGET_SOURCE ./src/BOG.DropZone.Client/bin/Release/BOG.DropZone.Client.*.nupkg
