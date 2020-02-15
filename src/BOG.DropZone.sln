@@ -27,6 +27,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Assets", "Assets", "{60624F
 		..\assets\DropZone.png = ..\assets\DropZone.png
 		..\assets\flow.png = ..\assets\flow.png
 		..\assets\parachute.ico = ..\assets\parachute.ico
+		..\assets\parachute.png = ..\assets\parachute.png
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BOG.DropZone.Common", "BOG.DropZone.Common\BOG.DropZone.Common.csproj", "{511E973C-212B-4D2E-826F-8C8E8886E6D2}"

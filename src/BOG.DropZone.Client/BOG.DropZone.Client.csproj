@@ -7,7 +7,8 @@
     <Description>A client for calling the BOG.DropZone API, which supports optional encryption.</Description>
     <PackageProjectUrl>https://github.com/rambotech/BOG.DropZone</PackageProjectUrl>
     <PackageLicenseUrl></PackageLicenseUrl>
-    <RepositoryUrl>https://github.com/rambotech/BOG.DropZone</RepositoryUrl>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<RepositoryUrl>https://github.com/rambotech/BOG.DropZone</RepositoryUrl>
     <RepositoryType>GIT</RepositoryType>
     <PackageTags>RestAPI aspnetcore netstandard2</PackageTags>
     <PackageReleaseNotes></PackageReleaseNotes>
