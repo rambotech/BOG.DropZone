@@ -15,7 +15,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_SolutionItems", "_Solution
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
 		..\.travis.yml = ..\.travis.yml
-		..\deploy.sh = ..\deploy.sh
 		..\LICENSE = ..\LICENSE
 		..\md-styles.css = ..\md-styles.css
 		..\md-template.html = ..\md-template.html
