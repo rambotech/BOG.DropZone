@@ -25,11 +25,12 @@
     <Description>A standalone interapplication communication point</Description>
     <Copyright>(c) 2017-2020, John J Schultz</Copyright>
     <PackageProjectUrl>https://github.com/rambotech/BOG.DropZone</PackageProjectUrl>
-    <PackageIconUrl>https://raw.githubusercontent.com/rambotech/BOG.DropZone/master/assets/parachute.ico</PackageIconUrl>
+    <PackageIconUrl></PackageIconUrl>
     <RepositoryUrl>https://github.com/rambotech/BOG.DropZone</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageTags>Rest api queue key value</PackageTags>
     <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
+    <PackageIcon>parachute.ico</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -60,6 +61,10 @@
     </None>
     <None Update="start_me.sh">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\assets\parachute.ico">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
     </None>
   </ItemGroup>
 
