@@ -1,8 +1,12 @@
 Release Notes:
 
-2.0.0 -- 2020.01.08
+1.9.4 -- 2020.02.15
+* Add Travis CI build stuff
+* Inadvertently assigned v2.0.0 in last push, should have been 1.9.3
+
+1.9.3 -- 2020.01.08
 * Update target framework to .NET Core 3.1
-* 
+* inadvertently assigned v2.0.0
 
 1.9.2 -- 2019.07.15
 * Endpoint /api/heartbeat now returns the application's name and version fingerprint in a JSON response body.
