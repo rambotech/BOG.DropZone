@@ -2,4 +2,4 @@ language: csharp
 solution: ./src/BOG.DropZone.sln
 mono: none
 dotnet: 3.1
-script: ./deploy.sh
+script: chmod +x ./deploy.sh && ./deploy.sh $NUGET_API_KEY $NUGET_SOURCE $TRAVIS_PULL_REQUEST
