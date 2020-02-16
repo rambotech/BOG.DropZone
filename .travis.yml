@@ -4,4 +4,4 @@ mono: none
 dotnet: 3.1
 script:
 - chmod +x ./deploy.sh 
-- ./deploy.sh $NUGET_API_KEY $NUGET_SOURCE $TRAVIS_PULL_REQUEST
+- ./deploy.sh
