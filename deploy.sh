@@ -5,7 +5,7 @@ pwd
 
 echo $NUGET_API_KEY == hidden
 echo $NUGET_SOURCE == ${NUGET_SOURCE} 
-echo $TRAVIS_PULL_REQUEST == ${$TRAVIS_PULL_REQUEST}
+echo $TRAVIS_PULL_REQUEST == ${TRAVIS_PULL_REQUEST}
 
 dotnet build -c $BUILD_CONFIG ./src/BOG.DropZone.sln
 
