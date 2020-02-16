@@ -1,6 +1,8 @@
 #!/bin/bash
 set -ev
 
+pwd
+
 dotnet build -c $BUILD_CONFIG ./src/BOG.DropZone.sln
 
 if [ "${TRAVIS_PULL_REQUEST}" = "false" ] && [ "${TRAVIS_BRANCH}" = "master" ]; then
