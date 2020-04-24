@@ -1,4 +1,7 @@
 ﻿using BOG.DropZone.Interface;
+using Certes;
+using FluffySpoon.AspNet.LetsEncrypt;
+using FluffySpoon.AspNet.LetsEncrypt.Certes;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -15,154 +18,181 @@ using System.Text.Json.Serialization;
 
 namespace BOG.DropZone
 {
-    /// <summary>
-    /// 
-    /// </summary>
-    public class Startup
-    {
-        /// <summary>
-        /// The entry point for startup.
-        /// </summary>
-        /// <param name="configuration"></param>
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
+	/// <summary>
+	/// 
+	/// </summary>
+	public class Startup
+	{
+		/// <summary>
+		/// The entry point for startup.
+		/// </summary>
+		/// <param name="configuration"></param>
+		public Startup(IConfiguration configuration)
+		{
+			Configuration = configuration;
+		}
 
-        /// <summary>
-        /// The Configuration object.
-        /// </summary>
-        public IConfiguration Configuration { get; }
+		/// <summary>
+		/// The Configuration object.
+		/// </summary>
+		public IConfiguration Configuration { get; }
 
-        /// <summary>
-        /// This method gets called by the runtime. Use this method to add services to the container.
-        /// </summary>
-        /// <param name="services">(injected)</param>
-        public void ConfigureServices(IServiceCollection services)
-        {
-            // static across controllers and calls.
-            services.AddSingleton<IStorage, MemoryStorage>();
-            services.AddSingleton<IAssemblyVersion, AssemblyVersion>();
-            services.AddRouting();
+		/// <summary>
+		/// This method gets called by the runtime. Use this method to add services to the container.
+		/// </summary>
+		/// <param name="services">(injected)</param>
+		public void ConfigureServices(IServiceCollection services)
+		{
+			// static across controllers and calls.
+			services.AddSingleton<IStorage, MemoryStorage>();
+			services.AddSingleton<IAssemblyVersion, AssemblyVersion>();
+			services.AddRouting();
 
-            services.Configure<CookiePolicyOptions>(options =>
-            {
-                // This lambda determines whether user consent for non-essential cookies is needed for a given request.
-                options.CheckConsentNeeded = context => false;
-                options.MinimumSameSitePolicy = SameSiteMode.None;
-            });
-            services.AddMvc(options => 
-                {
-                  options.InputFormatters.Insert(0, new RawRequestBodyFormatter());
-                  options.EnableEndpointRouting = false;
-                })
-                .AddJsonOptions(options =>
-                {
-                    options.JsonSerializerOptions.WriteIndented = true;
-                    options.JsonSerializerOptions.IgnoreNullValues = true;
-                    options.JsonSerializerOptions.IgnoreReadOnlyProperties = false;
-                    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-                    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-                })
-                .SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
-            
-            services.AddHttpContextAccessor();
+			services.Configure<CookiePolicyOptions>(options =>
+			{
+				// This lambda determines whether user consent for non-essential cookies is needed for a given request.
+				options.CheckConsentNeeded = context => false;
+				options.MinimumSameSitePolicy = SameSiteMode.None;
+			});
+			services.AddMvc(options =>
+				{
+					options.InputFormatters.Insert(0, new RawRequestBodyFormatter());
+					options.EnableEndpointRouting = false;
+				})
+				.AddJsonOptions(options =>
+				{
+					options.JsonSerializerOptions.WriteIndented = true;
+					options.JsonSerializerOptions.IgnoreNullValues = true;
+					options.JsonSerializerOptions.IgnoreReadOnlyProperties = false;
+					options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+					options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+				})
+				.SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
 
-            // Register the Swagger generator, defining one or more Swagger documents
-            services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
-                {
-                    Version = $"v{this.GetType().Assembly.GetName().Version.ToString()}",
-                    Title = "BOG.DropZone API",
-                    Description = "A non-secure, volatile drop-off and pickup location for quick, inter-application data handoff",
-                    Contact = new Microsoft.OpenApi.Models.OpenApiContact { Name = "John J Schultz", Email = "", Url = new Uri("https://github.com/rambotech") },
-                    License = new Microsoft.OpenApi.Models.OpenApiLicense { Name = "MIT", Url = new Uri("https://opensource.org/licenses/MIT") }
-                });
-                // Set the comments path for the Swagger JSON and UI.
-                var xmlPath = Path.Combine(PlatformServices.Default.Application.ApplicationBasePath, "BOG.DropZone.xml");
-                c.IncludeXmlComments(xmlPath);
-            });
-        }
+			services.AddHttpContextAccessor();
 
-        /// <summary>
-        /// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        /// </summary>
-        /// <param name="app">(injected)</param>
-        /// <param name="env">(injected)</param>
-        /// <param name="serviceProvider">(injected)</param>
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IServiceProvider serviceProvider)
-        {
-            var storageArea = serviceProvider.GetService<IStorage>();
+			// Register the Swagger generator, defining one or more Swagger documents
+			services.AddSwaggerGen(c =>
+			{
+				c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+				{
+					Version = $"v{this.GetType().Assembly.GetName().Version}",
+					Title = "BOG.DropZone API",
+					Description = "A non-secure, volatile drop-off and pickup location for quick, inter-application data handoff",
+					Contact = new Microsoft.OpenApi.Models.OpenApiContact { Name = "John J Schultz", Email = "", Url = new Uri("https://github.com/rambotech") },
+					License = new Microsoft.OpenApi.Models.OpenApiLicense { Name = "MIT", Url = new Uri("https://opensource.org/licenses/MIT") }
+				});
+				// Set the comments path for the Swagger JSON and UI.
+				var xmlPath = Path.Combine(PlatformServices.Default.Application.ApplicationBasePath, "BOG.DropZone.xml");
+				c.IncludeXmlComments(xmlPath);
+			});
 
-            storageArea.AccessToken = Configuration.GetValue<string>("AccessToken");
-            Console.WriteLine($"AccessToken: {storageArea.AccessToken}");
+			var valueHttp = Configuration.GetValue<int>("HttpPort", 5000);
+			var valueHttps = Configuration.GetValue<int>("HttpsPort", 0); 
+			var useLetsEncrypt = Configuration.GetValue<bool>("UseLetsEncrypt");
+			if (valueHttp == 80 && valueHttps == 443 && useLetsEncrypt)
+			{
+				// Register Let's Encrypt for SSL.
+				var letEncryptOptions = new LetsEncryptOptions
+				{
+					Email = Configuration.GetValue<string>("LetsEncrypt:Email"),
+					UseStaging = Configuration.GetValue<bool>("LetsEncrypt:UseStaging", true),
+					Domains = Configuration.GetValue<string[]>("LetsEncrypt:Domains"),
+					TimeUntilExpiryBeforeRenewal = TimeSpan.FromDays(Configuration.GetValue<double>("LetsEncrypt:TimeUntilExpiryBeforeRenewal", 30)),
+					TimeAfterIssueDateBeforeRenewal = TimeSpan.FromDays(Configuration.GetValue<double>("LetsEncrypt:DaysAfterIssueDateBeforeRenewal", 7)),
+					CertificateSigningRequest = new CsrInfo
+					{
+						CountryName = Configuration.GetValue<string>("LetsEncrypt:CertificateSigningRequest:CountryName"),
+						Locality = Configuration.GetValue<string>("LetsEncrypt:CertificateSigningRequest:Locality"),
+						Organization = Configuration.GetValue<string>("LetsEncrypt:CertificateSigningRequest:Organization"),
+						OrganizationUnit = Configuration.GetValue<string>("LetsEncrypt:CertificateSigningRequest:OrganizationUnit"),
+						State = Configuration.GetValue<string>("LetsEncrypt:CertificateSigningRequest:State")
+					}
+				};
+				services.AddFluffySpoonLetsEncrypt(letEncryptOptions);
+				services.AddFluffySpoonLetsEncryptFileCertificatePersistence();
+				services.AddFluffySpoonLetsEncryptMemoryChallengePersistence();
+			}
+		}
 
-            storageArea.AdminToken = Configuration.GetValue<string>("AdminToken");
-            Console.WriteLine($"AdminToken: {storageArea.AdminToken}");
+		/// <summary>
+		/// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+		/// </summary>
+		/// <param name="app">(injected)</param>
+		/// <param name="env">(injected)</param>
+		/// <param name="serviceProvider">(injected)</param>
+		public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IServiceProvider serviceProvider)
+		{
+			var storageArea = serviceProvider.GetService<IStorage>();
 
-            storageArea.PersistencePath = Configuration.GetValue<string>("PersistencePath");
-            Console.WriteLine($"PersistencePath: {storageArea.PersistencePath}");
+			storageArea.AccessToken = Configuration.GetValue<string>("AccessToken");
+			Console.WriteLine($"AccessToken: {storageArea.AccessToken}");
 
-            var configValue = Configuration.GetValue<string>("MaxDropzones");
-            if (!string.IsNullOrWhiteSpace(configValue))
-            {
-                storageArea.MaxDropzones = int.Parse(configValue);
-            }
-            Console.WriteLine($"MaxDropzones: {storageArea.MaxDropzones}");
+			storageArea.AdminToken = Configuration.GetValue<string>("AdminToken");
+			Console.WriteLine($"AdminToken: {storageArea.AdminToken}");
 
-            configValue = Configuration.GetValue<string>("MaximumFailedAttemptsBeforeLockout");
-            if (!string.IsNullOrWhiteSpace(configValue))
-            {
-                storageArea.MaximumFailedAttemptsBeforeLockout = int.Parse(configValue);
-            }
-            Console.WriteLine($"MaximumFailedAttemptsBeforeLockout: {storageArea.MaximumFailedAttemptsBeforeLockout}");
+			storageArea.PersistencePath = Configuration.GetValue<string>("PersistencePath");
+			Console.WriteLine($"PersistencePath: {storageArea.PersistencePath}");
 
-            configValue = Configuration.GetValue<string>("LockoutSeconds");
-            if (!string.IsNullOrWhiteSpace(configValue))
-            {
-                storageArea.LockoutSeconds = int.Parse(configValue);
-            }
-            Console.WriteLine($"LockoutSeconds: {storageArea.LockoutSeconds}");
+			var configValue = Configuration.GetValue<string>("MaxDropzones");
+			if (!string.IsNullOrWhiteSpace(configValue))
+			{
+				storageArea.MaxDropzones = int.Parse(configValue);
+			}
+			Console.WriteLine($"MaxDropzones: {storageArea.MaxDropzones}");
 
-            if (env.EnvironmentName == "development")
-            {
-                app.UseDeveloperExceptionPage();
-            }
-            else
-            {
-                app.UseExceptionHandler("/Home/Error");
-            }
+			configValue = Configuration.GetValue<string>("MaximumFailedAttemptsBeforeLockout");
+			if (!string.IsNullOrWhiteSpace(configValue))
+			{
+				storageArea.MaximumFailedAttemptsBeforeLockout = int.Parse(configValue);
+			}
+			Console.WriteLine($"MaximumFailedAttemptsBeforeLockout: {storageArea.MaximumFailedAttemptsBeforeLockout}");
 
-            app.UseMiddleware<ExceptionMiddleware>();
-            app.UseStaticFiles();
-            app.UseCookiePolicy();
-            app.UseSwagger();
+			configValue = Configuration.GetValue<string>("LockoutSeconds");
+			if (!string.IsNullOrWhiteSpace(configValue))
+			{
+				storageArea.LockoutSeconds = int.Parse(configValue);
+			}
+			Console.WriteLine($"LockoutSeconds: {storageArea.LockoutSeconds}");
 
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "BOG.DropZone Server API v1");
-            });
+			if (env.EnvironmentName == "development")
+			{
+				app.UseDeveloperExceptionPage();
+			}
+			else
+			{
+				app.UseExceptionHandler("/Home/Error");
+			}
 
-            app.Use((context, next) =>
-            {
-                context.Response.Headers.Add("X-Server-App", "BOG.DropZone");
-                return next();
-            });
+			app.UseMiddleware<ExceptionMiddleware>();
+			app.UseStaticFiles();
+			app.UseCookiePolicy();
+			app.UseSwagger();
 
-            app.UseMvc(routes =>
-            {
-                routes.MapRoute(
-                    name: "default",
-                    template: "{controller}/{action=Index}/{id?}"
-                );
+			app.UseSwaggerUI(c =>
+			{
+				c.SwaggerEndpoint("/swagger/v1/swagger.json", "BOG.DropZone Server API v1");
+			});
 
-                routes.MapRoute(
-                    name: "root",
-                    template: "",
-                    defaults: new { controller = "Home", action = "Index" }
-                );
-            });
-        }
-    }
+			app.Use((context, next) =>
+			{
+				context.Response.Headers.Add("X-Server-App", $"BOG.DropZone v{new AssemblyVersion().Version}");
+				return next();
+			});
+
+			app.UseMvc(routes =>
+			{
+				routes.MapRoute(
+					name: "default",
+					template: "{controller}/{action=Index}/{id?}"
+				);
+
+				routes.MapRoute(
+					name: "root",
+					template: "",
+					defaults: new { controller = "Home", action = "Index" }
+				);
+			});
+		}
+	}
 }
