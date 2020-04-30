@@ -9,7 +9,8 @@
   },
   "profiles": {
     "BOG.DropZone": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "--AccessToken YourAccessTokenValueHere --AdminToken YourAdminTokenValueHere --httpPort 5000 --HttpsPort 0 --UseLetsEncrypt false"
     }
   }
 }

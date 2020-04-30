@@ -9,8 +9,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.PlatformAbstractions;
-using Newtonsoft.Json;
-using Swashbuckle.AspNetCore.Swagger;
 using System;
 using System.IO;
 using System.Text.Json;
