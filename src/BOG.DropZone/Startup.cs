@@ -1,7 +1,5 @@
 ﻿using BOG.DropZone.Interface;
-using Certes;
-using FluffySpoon.AspNet.LetsEncrypt;
-using FluffySpoon.AspNet.LetsEncrypt.Certes;
+//using Certes;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -69,6 +67,8 @@ namespace BOG.DropZone
 
 			services.AddHttpContextAccessor();
 
+			services.AddLettuceEncrypt();
+
 			// Register the Swagger generator, defining one or more Swagger documents
 			services.AddSwaggerGen(c =>
 			{
@@ -91,25 +91,15 @@ namespace BOG.DropZone
 			if (valueHttp == 80 && valueHttps == 443 && useLetsEncrypt)
 			{
 				// Register Let's Encrypt for SSL.
-				var letEncryptOptions = new LetsEncryptOptions
+				var lettuceEncryptOptions = new LettuceEncrypt.LettuceEncryptOptions
 				{
-					Email = Configuration.GetValue<string>("LetsEncrypt:Email"),
-					UseStaging = Configuration.GetValue<bool>("LetsEncrypt:UseStaging", true),
-					Domains = Configuration.GetValue<string[]>("LetsEncrypt:Domains"),
-					TimeUntilExpiryBeforeRenewal = TimeSpan.FromDays(Configuration.GetValue<double>("LetsEncrypt:TimeUntilExpiryBeforeRenewal", 30)),
-					TimeAfterIssueDateBeforeRenewal = TimeSpan.FromDays(Configuration.GetValue<double>("LetsEncrypt:DaysAfterIssueDateBeforeRenewal", 7)),
-					CertificateSigningRequest = new CsrInfo
-					{
-						CountryName = Configuration.GetValue<string>("LetsEncrypt:CertificateSigningRequest:CountryName"),
-						Locality = Configuration.GetValue<string>("LetsEncrypt:CertificateSigningRequest:Locality"),
-						Organization = Configuration.GetValue<string>("LetsEncrypt:CertificateSigningRequest:Organization"),
-						OrganizationUnit = Configuration.GetValue<string>("LetsEncrypt:CertificateSigningRequest:OrganizationUnit"),
-						State = Configuration.GetValue<string>("LetsEncrypt:CertificateSigningRequest:State")
-					}
+					AcceptTermsOfService = Configuration.GetValue<bool>("LettuceEncrypt:AcceptTermsOfService"),
+					EmailAddress = Configuration.GetValue<string>("LettuceEncrypt:EmailAddress"),
+					DomainNames = Configuration.GetValue<string[]>("LettuceEncrypt:Domains"),
+					RenewalCheckPeriod = TimeSpan.FromHours(Configuration.GetValue<double>("LettuceEncrypt:RenewalCheckPeriodHours", 6)),
+					RenewDaysInAdvance = TimeSpan.FromDays(Configuration.GetValue<double>("LettuceEncrypt:RenewDaysInAdvance", 2)),
+					UseStagingServer = Configuration.GetValue<bool>("LettuceEncrypt:UseStagingServer")
 				};
-				services.AddFluffySpoonLetsEncrypt(letEncryptOptions);
-				services.AddFluffySpoonLetsEncryptFileCertificatePersistence();
-				services.AddFluffySpoonLetsEncryptMemoryChallengePersistence();
 			}
 		}
 

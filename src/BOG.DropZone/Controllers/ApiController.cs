@@ -76,7 +76,6 @@ namespace BOG.DropZone.Controllers
 		/// <param name="expires">(optional): when the value should no longer be returned.</param>
 		/// <returns>varies: see method declaration</returns>
 		[HttpPost("payload/dropoff/{dropzoneName}", Name = "DropoffPayload")]
-		[RequestSizeLimit(100_000_000)]
 		[ProducesResponseType(201, Type = typeof(string))]
 		[ProducesResponseType(400, Type = typeof(string))]
 		[ProducesResponseType(401)]
@@ -272,7 +271,6 @@ namespace BOG.DropZone.Controllers
 		/// <param name="value">the value to store for the key name</param>
 		/// <returns>varies: see method declaration</returns>
 		[HttpPost("reference/set/{dropzoneName}/{key}", Name = "SetReference")]
-		[RequestSizeLimit(100_000_000)]
 		[ProducesResponseType(400, Type = typeof(string))]
 		[ProducesResponseType(401)]
 		[ProducesResponseType(451)]
@@ -342,7 +340,7 @@ namespace BOG.DropZone.Controllers
 		/// <param name="key">the name identifying the value to retrieve</param>
 		/// <returns>string which is the reference value (always text/plain)</returns>
 		[HttpGet("reference/get/{dropzoneName}/{key}", Name = "GetReference")]
-		[RequestSizeLimit(5242880)]
+		[RequestSizeLimit(1024)]
 		[ProducesResponseType(400, Type = typeof(string))]
 		[ProducesResponseType(401)]
 		[ProducesResponseType(451)]
