@@ -20,6 +20,12 @@ namespace BOG.DropZone.Common.Dto
         public string Name { get; set; } = string.Empty;
 
         /// <summary>
+        /// The list of recipient queues in the dropzone (* = global access)
+        /// </summary>
+        [JsonProperty]
+        public List<string> Recipients { get; set; } = new List<string>();
+
+        /// <summary>
         /// The message to display if the data is not to be trusted.
         /// </summary>
         [JsonProperty]

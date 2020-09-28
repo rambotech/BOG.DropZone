@@ -19,9 +19,9 @@ namespace BOG.DropZone.Storage
         public DropZoneInfo Statistics { get; set; } = new DropZoneInfo();
 
         /// <summary>
-        /// The payload storage.
+        /// The payload storage. Key is empty or null for any, otherwise the optional identifier on the DropOffPayload or PickUpPayload endpoints.
         /// </summary>
-        public ConcurrentQueue<StoredValue> Payloads { get; set; } = new ConcurrentQueue<StoredValue>();
+        public ConcurrentDictionary<string, ConcurrentQueue<StoredValue>> Payloads { get; set; } = new ConcurrentDictionary<string, ConcurrentQueue<StoredValue>>();
 
         /// <summary>
         /// The reference storage.

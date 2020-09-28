@@ -1,7 +1,7 @@
 Release Notes:
 
-1.9.5 -- 2020.04.30
-* Preliminary add of support for LetsEncrypt
+2.0.0 -- 2020.09.28
+* Debut of global or targeted recipient for payloads within a dropzone.
 
 1.9.4 -- 2020.02.15
 * Add Travis CI build stuff

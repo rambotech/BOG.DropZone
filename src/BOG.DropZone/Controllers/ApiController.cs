@@ -47,7 +47,8 @@ namespace BOG.DropZone.Controllers
 		/// Heartbeat check for clients.  No authorization header required.
 		/// </summary>
 		/// <returns>200 to confirm the API is active.</returns>
-		[HttpGet("heartbeat", Name = "Heartbeat")]
+		[Route("heartbeat", Name = "Heartbeat")]
+		[HttpGet]
 		[RequestSizeLimit(1024)]
 		[ProducesResponseType(200, Type = typeof(string))]
 		[ProducesResponseType(500)]
@@ -73,9 +74,10 @@ namespace BOG.DropZone.Controllers
 		/// <param name="AccessToken">Optional: access token value if used.</param>
 		/// <param name="dropzoneName">the dropzone identifier</param>
 		/// <param name="payload">the content to transfer</param>
+		/// <param name="recipient">* for everyone, or a specific identifier for the intended recipient of the payload.</param>
 		/// <param name="expires">(optional): when the value should no longer be returned.</param>
 		/// <returns>varies: see method declaration</returns>
-		[HttpPost("payload/dropoff/{dropzoneName}", Name = "DropoffPayload")]
+		[HttpPost("payload/dropoff/{dropzoneName}/{recipient}", Name = "DropoffPayload")]
 		[ProducesResponseType(201, Type = typeof(string))]
 		[ProducesResponseType(400, Type = typeof(string))]
 		[ProducesResponseType(401)]
@@ -84,10 +86,12 @@ namespace BOG.DropZone.Controllers
 		[Produces("text/plain")]
 		public IActionResult DropoffPayload(
 				[FromHeader] string AccessToken,
-				[FromRoute] string dropzoneName,
 				[FromBody] string payload,
+				[FromRoute] string dropzoneName,
+				[FromRoute] string recipient,
 				[FromQuery] DateTime? expires)
 		{
+			var recipientKey = string.IsNullOrWhiteSpace(recipient) ? "*" : recipient;
 			var clientIp = _Accessor.HttpContext.Connection.RemoteIpAddress.ToString();
 			if (!IsValidatedClient(clientIp, AccessToken, TokenType.Access, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
 			{
@@ -109,13 +113,27 @@ namespace BOG.DropZone.Controllers
 					dropzone.Statistics.PayloadDropOffsFailedCount++;
 					return StatusCode(429, $"Can't accept: Exceeds maximum payload size of {dropzone.Statistics.MaxPayloadSize}");
 				}
-				if (dropzone.Payloads.Count >= dropzone.Statistics.MaxPayloadCount)
+				var dropzonePayloadCounts = 0;
+				// calculate existing size used by the payloads for each recipient.
+				foreach (var key in dropzone.Payloads.Keys)
 				{
-					dropzone.Statistics.PayloadDropOffsFailedCount++;
-					return StatusCode(429, $"Can't accept: Exceeds maximum payload count of {dropzone.Statistics.MaxPayloadCount}");
+					dropzonePayloadCounts += dropzone.Payloads[key].Count;
+					if (dropzone.Payloads.Count >= dropzone.Statistics.MaxPayloadCount)
+					{
+						dropzone.Statistics.PayloadDropOffsFailedCount++;
+						return StatusCode(429, $"Can't accept: Exceeds maximum payload count of {dropzone.Statistics.MaxPayloadCount}");
+					}
 				}
 				dropzone.Statistics.PayloadSize += payload.Length;
-				dropzone.Payloads.Enqueue(new StoredValue
+				if (!dropzone.Payloads.ContainsKey(recipientKey))
+				{
+					if (dropzone.Payloads.TryAdd(recipientKey, new System.Collections.Concurrent.ConcurrentQueue<StoredValue>()))
+					{
+						return StatusCode(500, $"Failure to add a queue for recipient {recipient} in the dropzone");
+					}
+					dropzone.Statistics.Recipients.Add(recipient);
+				}
+				dropzone.Payloads[recipientKey].Enqueue(new StoredValue
 				{
 					Value = payload,
 					Expires = expires ?? DateTime.MaxValue
@@ -132,8 +150,9 @@ namespace BOG.DropZone.Controllers
 		/// </summary>
 		/// <param name="AccessToken">Optional: access token value if used.</param>
 		/// <param name="dropzoneName">the dropzone identifier</param>
+		/// <param name="recipient">* for everyone, or a specific identifier for the intended recipient of the payload.</param>
 		/// <returns>the data to transfer</returns>
-		[HttpGet("payload/pickup/{dropzoneName}", Name = "PickupPayload")]
+		[HttpGet("payload/pickup/{dropzoneName}/{recipient}", Name = "PickupPayload")]
 		[RequestSizeLimit(1024)]
 		[Produces("text/plain")]
 		[ProducesResponseType(200, Type = typeof(string))]
@@ -145,8 +164,10 @@ namespace BOG.DropZone.Controllers
 		[ProducesResponseType(500)]
 		public IActionResult PickupPayload(
 				[FromHeader] string AccessToken,
-				[FromRoute] string dropzoneName)
+				[FromRoute] string dropzoneName,
+				[FromRoute] string recipient)
 		{
+			var recipientKey = string.IsNullOrWhiteSpace(recipient) ? "*" : recipient;
 			var clientIp = _Accessor.HttpContext.Connection.RemoteIpAddress.ToString();
 			if (!IsValidatedClient(clientIp, AccessToken, TokenType.Access, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
 			{
@@ -164,11 +185,12 @@ namespace BOG.DropZone.Controllers
 				}
 				var dropzone = _Storage.DropZoneList[dropzoneName];
 				StoredValue payload = null;
+				bool recipientKeyIsKnown = dropzone.Payloads.ContainsKey(recipientKey);
 				bool payloadAvailable = false;
 				int retriesRemaining = 3;
-				while (dropzone.Payloads.Count > 0 && !payloadAvailable)
+				while (recipientKeyIsKnown && dropzone.Payloads[recipientKey].Count > 0 && !payloadAvailable)
 				{
-					if (!dropzone.Payloads.TryDequeue(out payload))
+					if (!dropzone.Payloads[recipientKey].TryDequeue(out payload))
 					{
 						if (retriesRemaining > 0)
 						{

@@ -39,7 +39,7 @@ The drop zone supports seven operational actions, and two admin actions.
 
 These actions require the access token, if one is defined for the drop zone site.
 
-*Dropoff* :: places a new string (as a payload) onto the queue of other payloads.
+*Dropoff* :: places a new string (as a payload) onto the queue of other payloads.  The recipient can be specific, or global.
 
 *Pickup* :: removes a string payload from the queue and provides it to the calling client.
 

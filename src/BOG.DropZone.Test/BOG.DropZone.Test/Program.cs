@@ -17,32 +17,47 @@ namespace BOG.DropZone.Test
 
 		static async Task RunAsync()
 		{
-			int testIndex = 0;
-
-			// Add your own test location to this array, and set the testIndex value to run against that location.
-			DropZoneConfig[] dropZoneConfigs = new DropZoneConfig[]
+			RestApiCalls restApiUpdate = new RestApiCalls(new DropZoneConfig
 			{
-				new DropZoneConfig
-				{
-					//BaseUrl = "http://167.99.54.94:5000",
-                    BaseUrl = "http://localhost:5000",
-                    ZoneName = "CityData",
-					Password = "YourPassword",
-					Salt = "YourSalt",
-					UseEncryption = false,
-					//AccessToken = "dzo-68cd8f48e1c14f4c819d4af3cadc0ce4",
-					//AdminToken = "dza-9c5746a5c1754ecab8ba04b8c2000463",
-                    AccessToken = "YourAccessValueHere",
-					AdminToken = "YourAdminValueHere ",
-					TimeoutSeconds = 10
-				}
-			};
-			RestApiCalls restApi = new RestApiCalls(dropZoneConfigs[testIndex]);
+				BaseUrl = "http://localhost:5000",
+				ZoneName = "Update",
+				Recipient = "*",
+				Password = "",
+				Salt = "",
+				UseEncryption = false,
+				AccessToken = "Your-Access-Token",
+				AdminToken = "Your-Admin-Token",
+				TimeoutSeconds = 10
+			});
+			RestApiCalls restApiQuestion = new RestApiCalls(new DropZoneConfig
+			{
+				BaseUrl = "http://localhost:5000",
+				ZoneName = "Question",
+				Recipient = "*",
+				Password = "",
+				Salt = "",
+				UseEncryption = false,
+				AccessToken = "Your-Access-Token",
+				AdminToken = "Your-Admin-Token",
+				TimeoutSeconds = 10
+			});
+			RestApiCalls restApiAnswer = new RestApiCalls(new DropZoneConfig
+			{
+				BaseUrl = "http://localhost:5000",
+				ZoneName = "Answer",
+				Recipient = "*",
+				Password = "",
+				Salt = "",
+				UseEncryption = false,
+				AccessToken = "Your-Access-Token",
+				AdminToken = "Your-Admin-Token",
+				TimeoutSeconds = 10
+			});
 
 			try
 			{
 				Console.WriteLine("CheckHeartbeat()...");
-				Result result = await restApi.CheckHeartbeat();
+				Result result = await restApiUpdate.CheckHeartbeat();
 				DisplayResult(result, 1000);
 				if (result.HandleAs == Result.State.InvalidAuthentication)
 				{
@@ -212,7 +227,7 @@ namespace BOG.DropZone.Test
 			}
 			catch (Exception err)
 			{
-				Console.WriteLine($"Untrapped: {err.Message.ToString()}");
+				Console.WriteLine($"Untrapped: {err.Message}");
 			}
 
 			Console.WriteLine("Done");
