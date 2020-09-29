@@ -8,8 +8,14 @@ using Newtonsoft.Json;
 
 namespace BOG.DropZone.Test
 {
+	public class Payload
+	{
+		public string Recipient { get; set; }
+	}
+
 	class Program
 	{
+
 		static void Main()
 		{
 			RunAsync().GetAwaiter().GetResult();
@@ -17,7 +23,25 @@ namespace BOG.DropZone.Test
 
 		static async Task RunAsync()
 		{
-			RestApiCalls restApiUpdate = new RestApiCalls(new DropZoneConfig
+			const string Access = "YourAccessTokenValueHere";
+			const string Admin = "YourAdminTokenValueHere";
+
+			var updateMaster = new DropZoneConfig
+			{
+				BaseUrl = "http://localhost:5000",
+				ZoneName = "Update",
+				Recipient = "Master",
+				Password = "",
+				Salt = "",
+				UseEncryption = false,
+				AccessToken = Access,
+				AdminToken = Admin,
+				TimeoutSeconds = 10
+			};
+
+			var restApiUpdateMaster = new RestApiCalls(updateMaster);
+
+			var updateWorker = new DropZoneConfig
 			{
 				BaseUrl = "http://localhost:5000",
 				ZoneName = "Update",
@@ -25,11 +49,14 @@ namespace BOG.DropZone.Test
 				Password = "",
 				Salt = "",
 				UseEncryption = false,
-				AccessToken = "Your-Access-Token",
-				AdminToken = "Your-Admin-Token",
+				AccessToken = Access,
+				AdminToken = Admin,
 				TimeoutSeconds = 10
-			});
-			RestApiCalls restApiQuestion = new RestApiCalls(new DropZoneConfig
+			};
+
+			var restApiUpdateWorker = new RestApiCalls(updateWorker);
+
+			var questionMaster = new DropZoneConfig
 			{
 				BaseUrl = "http://localhost:5000",
 				ZoneName = "Question",
@@ -37,11 +64,29 @@ namespace BOG.DropZone.Test
 				Password = "",
 				Salt = "",
 				UseEncryption = false,
-				AccessToken = "Your-Access-Token",
-				AdminToken = "Your-Admin-Token",
+				AccessToken = Access,
+				AdminToken = Admin,
 				TimeoutSeconds = 10
-			});
-			RestApiCalls restApiAnswer = new RestApiCalls(new DropZoneConfig
+			};
+
+			var restApiQuestionMaster = new RestApiCalls(questionMaster);
+
+			var questionWorker = new DropZoneConfig
+			{
+				BaseUrl = "http://localhost:5000",
+				ZoneName = "Question",
+				Recipient = "*",
+				Password = "",
+				Salt = "",
+				UseEncryption = false,
+				AccessToken = Access,
+				AdminToken = Admin,
+				TimeoutSeconds = 10
+			};
+
+			var restApiQuestionWorker = new RestApiCalls(questionWorker);
+
+			var answerMaster = new DropZoneConfig
 			{
 				BaseUrl = "http://localhost:5000",
 				ZoneName = "Answer",
@@ -49,15 +94,32 @@ namespace BOG.DropZone.Test
 				Password = "",
 				Salt = "",
 				UseEncryption = false,
-				AccessToken = "Your-Access-Token",
-				AdminToken = "Your-Admin-Token",
+				AccessToken = Access,
+				AdminToken = Admin,
 				TimeoutSeconds = 10
-			});
+			};
+
+			var restApiAnswerMaster = new RestApiCalls(answerMaster);
+
+			var answerWorker = new DropZoneConfig
+			{
+				BaseUrl = "http://localhost:5000",
+				ZoneName = "Answer",
+				Recipient = "*",
+				Password = "",
+				Salt = "",
+				UseEncryption = false,
+				AccessToken = Access,
+				AdminToken = Admin,
+				TimeoutSeconds = 10
+			};
+
+			var restApiAnswerWorker = new RestApiCalls(answerWorker);
 
 			try
 			{
 				Console.WriteLine("CheckHeartbeat()...");
-				Result result = await restApiUpdate.CheckHeartbeat();
+				Result result = await restApiUpdateMaster.CheckHeartbeat();
 				DisplayResult(result, 1000);
 				if (result.HandleAs == Result.State.InvalidAuthentication)
 				{
@@ -66,64 +128,64 @@ namespace BOG.DropZone.Test
 				}
 
 				Console.WriteLine("Reset()... ");
-				result = await restApi.Reset();
+				result = await restApiUpdateMaster.Reset();
 				DisplayResult(result, 100);
 
 				Console.WriteLine("ListReferences()... ");
-				result = await restApi.ListReferences();
+				result = await restApiUpdateMaster.ListReferences();
 				DisplayResult(result, -1);
 
 				Console.WriteLine("GetReference()... ");
-				result = await restApi.GetReference("Test-Ref01");
+				result = await restApiUpdateMaster.GetReference("Test-Ref01");
 				DisplayResult(result, 1000);
 
 				Console.WriteLine("ListReferences()... ");
-				result = await restApi.ListReferences();
+				result = await restApiUpdateMaster.ListReferences();
 				DisplayResult(result, -1);
 
 				Console.WriteLine("SetReference()... ");
-				result = await restApi.SetReference("Test-Ref01", "test ref 1");
+				result = await restApiUpdateMaster.SetReference("Test-Ref01", "test ref 1");
 				DisplayResult(result, 1000);
 
 				Console.WriteLine("ListReferences()... ");
-				result = await restApi.ListReferences();
+				result = await restApiUpdateMaster.ListReferences();
 				DisplayResult(result, -1);
 
 				Console.WriteLine("GetReference()... ");
-				result = await restApi.GetReference("Test-Ref01");
+				result = await restApiUpdateMaster.GetReference("Test-Ref01");
 				DisplayResult(result, 1000);
 
 				Console.WriteLine("SetReference()... Perishable");
-				result = await restApi.SetReference("Test-Ref02-Perish-5-Sec", "this will go way", DateTime.Now.AddSeconds(5));
+				result = await restApiUpdateMaster.SetReference("Test-Ref02-Perish-5-Sec", "this will go way", DateTime.Now.AddSeconds(5));
 				DisplayResult(result, 1000);
 
 				Console.WriteLine("ListReferences()... shows static and perishable");
-				result = await restApi.ListReferences();
+				result = await restApiUpdateMaster.ListReferences();
 				DisplayResult(result, -1);
 
 				Console.WriteLine("GetReference()... Perishable ... < 1 sec (finds it)");
-				result = await restApi.GetReference("Test-Ref02-Perish-5-Sec");
+				result = await restApiUpdateMaster.GetReference("Test-Ref02-Perish-5-Sec");
 				DisplayResult(result, 1000);
 
 				Console.WriteLine("Wait 5 seconds for reference to expire...");
 				Thread.Sleep(5000);
 
 				Console.WriteLine("ListReferences()... shows static only... perishable has expired");
-				result = await restApi.ListReferences();
+				result = await restApiUpdateMaster.ListReferences();
 				DisplayResult(result, -1);
 
 				Console.WriteLine("GetReference()... Perishable ... > 5 sec (perished)");
-				result = await restApi.GetReference("RefTimed-Good");
+				result = await restApiUpdateMaster.GetReference("RefTimed-Good");
 				DisplayResult(result, -1);
 
 				Console.WriteLine("SetReference()... BIG...");
 				var bigData = new string('X', 524288);
 				Console.WriteLine($"{bigData.Length}");
-				result = await restApi.SetReference("BIG", bigData);
+				result = await restApiUpdateMaster.SetReference("BIG", bigData);
 				DisplayResult(result, 1000);
 
 				Console.WriteLine("GetReference()... BIG...");
-				result = await restApi.GetReference("BIG");
+				result = await restApiUpdateMaster.GetReference("BIG");
 				Console.WriteLine($"{result.Message.Length}");
 				result.Message = string.Empty;
 				DisplayResult(result, 1000);
@@ -131,20 +193,20 @@ namespace BOG.DropZone.Test
 				Console.WriteLine("SetReference()... HUGE... rejected due to size");
 				var hugeData = new string('X', 41000000);
 				Console.WriteLine($"{hugeData.Length}");
-				result = await restApi.SetReference("HUGE", hugeData);
+				result = await restApiUpdateMaster.SetReference("HUGE", hugeData);
 				DisplayResult(result, 1000);
 
 				Console.WriteLine("GetReference()... HUGE...");
-				result = await restApi.GetReference("HUGE");
+				result = await restApiUpdateMaster.GetReference("HUGE");
 				Console.WriteLine($"{result.Message.Length}");
 				result.Message = string.Empty;
 				DisplayResult(result, -1);
 
 				Console.WriteLine("GetStatistics()... ");
-				result = await restApi.GetStatistics();
+				result = await restApiUpdateMaster.GetStatistics();
 				DisplayResult(result, -1);
 				Console.WriteLine("GetSecurityInfo()... ");
-				result = await restApi.GetSecurity();
+				result = await restApiUpdateMaster.GetSecurity();
 				DisplayResult(result, -1);
 
 				string[] set = new string[] { "Tallahunda", "Kookamunga", "Whatever" };
@@ -153,7 +215,7 @@ namespace BOG.DropZone.Test
 				for (int index = 0; index < 5; index++)
 				{
 					Console.WriteLine($"Add {index}: {set[index % 3]}... ");
-					result = await restApi.DropOff(set[index % 3] + $"{index}", DateTime.Now.AddSeconds(3 + index));
+					result = await restApiUpdateMaster.DropOff(set[index % 3] + $"{index}", DateTime.Now.AddSeconds(3 + index));
 					DisplayResult(result, 0);
 				}
 
@@ -163,13 +225,13 @@ namespace BOG.DropZone.Test
 				Console.WriteLine("*** Pickup some data .. some of which has expired ***");
 				for (int index = 0; index < 5; index++)
 				{
-					Console.WriteLine($"Retrieve {index} from {dropZoneConfigs[testIndex].ZoneName}: ");
-					result = await restApi.Pickup();
+					Console.WriteLine($"Retrieve {index} from {set[index % 3]}: ");
+					result = await restApiUpdateMaster.Pickup();
 					DisplayResult(result, 0);
 				}
 
 				Console.WriteLine("*** Clear ***");
-				result = await restApi.Clear();
+				result = await restApiUpdateMaster.Clear();
 				DisplayResult(result, -1);
 
 				Console.WriteLine("*** Drop off some data.. places 501 items when 500 is the max ***");
@@ -177,52 +239,52 @@ namespace BOG.DropZone.Test
 				for (int index = 0; index < 101; index++)
 				{
 					Console.WriteLine($"Add {index}: {set[index % 3]}... ");
-					result = await restApi.DropOff(set[index % 3]);
+					result = await restApiUpdateMaster.DropOff(set[index % 3]);
 					DisplayResult(result, index < 5 ? 1000 : 0);
 				}
 				Console.WriteLine("GetStatistics()...");
-				result = await restApi.GetStatistics();
+				result = await restApiUpdateMaster.GetStatistics();
 				DisplayResult(result, -1);
 
 				Console.WriteLine("*** Pickup some data ***");
 				//for (int index = 0; index < 502; index++)
 				for (int index = 0; index < 102; index++)
 				{
-					Console.WriteLine($"Retrieve {index} from {dropZoneConfigs[testIndex].ZoneName}: ");
-					result = await restApi.Pickup();
+					Console.WriteLine($"Retrieve {index} from {set[index % 3]}: ");
+					result = await restApiUpdateMaster.Pickup();
 					DisplayResult(result, index == 2 ? -1 : (index < 5 ? 1000 : 0));
 				}
 
 				Console.WriteLine("*** List references ***");
-				result = await restApi.ListReferences();
+				result = await restApiUpdateMaster.ListReferences();
 				DisplayResult(result, -1);
 
 				Console.WriteLine("Overload references...");
 				for (int index = 0; index < 48; index++)
 				{
 					Console.WriteLine($"SetReference(Ref-{BOG.SwissArmyKnife.Formatting.RJLZ(index, 2)}... ");
-					result = await restApi.SetReference($"Ref-{BOG.SwissArmyKnife.Formatting.RJLZ(index, 2)}", $"test ref {index}");
+					result = await restApiUpdateMaster.SetReference($"Ref-{BOG.SwissArmyKnife.Formatting.RJLZ(index, 2)}", $"test ref {index}");
 					DisplayResult(result, 0);
 				}
 
 				Console.WriteLine("*** List references after overload ***");
-				result = await restApi.ListReferences();
+				result = await restApiUpdateMaster.ListReferences();
 				DisplayResult(result, -1);
 
 				Console.WriteLine("GetStatistics()... ");
-				result = await restApi.GetStatistics();
+				result = await restApiUpdateMaster.GetStatistics();
 				DisplayResult(result, -1);
 
 				Console.WriteLine("*** Reset ***");
-				result = await restApi.Reset();
+				result = await restApiUpdateMaster.Reset();
 				DisplayResult(result, 2000);
 
 				Console.WriteLine("*** Shutdown ***");
-				result = await restApi.Shutdown();
+				result = await restApiUpdateMaster.Shutdown();
 				DisplayResult(result, 2000);
 
 				Console.WriteLine("*** Shutdown (with no answer) ***");
-				result = await restApi.Shutdown();
+				result = await restApiUpdateMaster.Shutdown();
 				DisplayResult(result, 2000);
 			}
 			catch (Exception err)
@@ -306,5 +368,4 @@ namespace BOG.DropZone.Test
 			Formatting = Formatting.Indented
 		};
 	}
-
 }
