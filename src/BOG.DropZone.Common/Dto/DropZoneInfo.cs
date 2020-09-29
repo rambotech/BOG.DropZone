@@ -20,10 +20,10 @@ namespace BOG.DropZone.Common.Dto
         public string Name { get; set; } = string.Empty;
 
         /// <summary>
-        /// The list of recipient queues in the dropzone (* = global access)
+        /// The list of recipient queues in the dropzone (* = global access), with the queued payload count for each.
         /// </summary>
         [JsonProperty]
-        public List<string> Recipients { get; set; } = new List<string>();
+        public Dictionary<string, int> Recipients { get; set; } = new Dictionary<string, int>();
 
         /// <summary>
         /// The message to display if the data is not to be trusted.

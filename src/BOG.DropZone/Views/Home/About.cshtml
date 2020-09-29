@@ -1,7 +1,18 @@
 ﻿@{
-    ViewData["Title"] = "About";
+		ViewData["Title"] = "About";
 }
-<h2>@ViewData["Title"]</h2>
-<h3>@ViewData["Message"]</h3>
 
-<p>Use this area to provide additional information.</p>
+<h2>@ViewData["Title"]</h2>
+<h3>@ViewData["Application"]</h3>
+<h3>@ViewData["Version"]</h3>
+
+<p>This is a pull-only broker between two applications, acting as a data stopover. It was designed with simplicity in mind. It assumes the following:</p>
+
+<ul>
+		<li>The broker makes no guarantee of delivery.  All applications assume all responsibility to handle any data loss or retry needed.</li>
+		<li>The date security needs are low, i.e. secure http by itself (without login management) is adequate for its purpose.</li>
+		<li>The application uses an admin and access token to limit user functionality.</li>
+</ul>
+
+<p>This project is open source at <a href="https://github.com/rambotech/BOG.DropZone" target="_blank">GitHub</a>, with examples.</p>
+

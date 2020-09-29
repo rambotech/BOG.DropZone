@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using BOG.DropZone.Models;
 using System.Diagnostics;
+using BOG.DropZone.Interface;
 
 namespace BOG.DropZone.Controllers
 {
@@ -13,6 +14,17 @@ namespace BOG.DropZone.Controllers
 	/// </summary>
 	public class HomeController : Controller
 	{
+		private readonly IAssemblyVersion _AssemblyVersion;
+
+		/// <summary>
+		/// Instantiated via injection
+		/// </summary>
+		/// <param name="assemblyVersion">(injected)</param>
+		public HomeController(IAssemblyVersion assemblyVersion)
+		{
+			_AssemblyVersion = assemblyVersion;
+		}
+
 		/// <summary>
 		/// Index page view
 		/// </summary>
@@ -23,21 +35,13 @@ namespace BOG.DropZone.Controllers
 		}
 
 		/// <summary>
-		/// Set Tokens page view
-		/// </summary>
-		/// <returns></returns>
-		public IActionResult SetToken()
-		{
-			return View();
-		}
-
-		/// <summary>
 		/// About page view
 		/// </summary>
 		/// <returns></returns>
 		public IActionResult About()
 		{
-			ViewData["Message"] = "Your application description page.";
+			ViewData["Application"] = _AssemblyVersion.Name;
+			ViewData["Version"] = _AssemblyVersion.Version;
 
 			return View();
 		}

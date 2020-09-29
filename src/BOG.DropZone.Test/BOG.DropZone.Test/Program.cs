@@ -8,9 +8,14 @@ using Newtonsoft.Json;
 
 namespace BOG.DropZone.Test
 {
-	public class Payload
+	public class WorkerComm
 	{
-		public string Recipient { get; set; }
+
+		public string RecipientID { get; set; }
+		/// <summary>
+		/// 
+		/// </summary>
+		public string Message { get; set; }
 	}
 
 	class Program
@@ -26,11 +31,10 @@ namespace BOG.DropZone.Test
 			const string Access = "YourAccessTokenValueHere";
 			const string Admin = "YourAdminTokenValueHere";
 
-			var updateMaster = new DropZoneConfig
+			var zone = new DropZoneConfig
 			{
 				BaseUrl = "http://localhost:5000",
 				ZoneName = "Update",
-				Recipient = "Master",
 				Password = "",
 				Salt = "",
 				UseEncryption = false,
@@ -39,97 +43,28 @@ namespace BOG.DropZone.Test
 				TimeoutSeconds = 10
 			};
 
-			var restApiUpdateMaster = new RestApiCalls(updateMaster);
+			var restApiUpdateMaster = new RestApiCalls(zone);
 
-			var updateWorker = new DropZoneConfig
-			{
-				BaseUrl = "http://localhost:5000",
-				ZoneName = "Update",
-				Recipient = "*",
-				Password = "",
-				Salt = "",
-				UseEncryption = false,
-				AccessToken = Access,
-				AdminToken = Admin,
-				TimeoutSeconds = 10
-			};
-
-			var restApiUpdateWorker = new RestApiCalls(updateWorker);
-
-			var questionMaster = new DropZoneConfig
-			{
-				BaseUrl = "http://localhost:5000",
-				ZoneName = "Question",
-				Recipient = "*",
-				Password = "",
-				Salt = "",
-				UseEncryption = false,
-				AccessToken = Access,
-				AdminToken = Admin,
-				TimeoutSeconds = 10
-			};
-
-			var restApiQuestionMaster = new RestApiCalls(questionMaster);
-
-			var questionWorker = new DropZoneConfig
-			{
-				BaseUrl = "http://localhost:5000",
-				ZoneName = "Question",
-				Recipient = "*",
-				Password = "",
-				Salt = "",
-				UseEncryption = false,
-				AccessToken = Access,
-				AdminToken = Admin,
-				TimeoutSeconds = 10
-			};
-
-			var restApiQuestionWorker = new RestApiCalls(questionWorker);
-
-			var answerMaster = new DropZoneConfig
-			{
-				BaseUrl = "http://localhost:5000",
-				ZoneName = "Answer",
-				Recipient = "*",
-				Password = "",
-				Salt = "",
-				UseEncryption = false,
-				AccessToken = Access,
-				AdminToken = Admin,
-				TimeoutSeconds = 10
-			};
-
-			var restApiAnswerMaster = new RestApiCalls(answerMaster);
-
-			var answerWorker = new DropZoneConfig
-			{
-				BaseUrl = "http://localhost:5000",
-				ZoneName = "Answer",
-				Recipient = "*",
-				Password = "",
-				Salt = "",
-				UseEncryption = false,
-				AccessToken = Access,
-				AdminToken = Admin,
-				TimeoutSeconds = 10
-			};
-
-			var restApiAnswerWorker = new RestApiCalls(answerWorker);
 
 			try
 			{
 				Console.WriteLine("CheckHeartbeat()...");
 				Result result = await restApiUpdateMaster.CheckHeartbeat();
-				DisplayResult(result, 1000);
+				DisplayResult(result, 100);
 				if (result.HandleAs == Result.State.InvalidAuthentication)
 				{
 					Console.WriteLine("Invalid auth token, testing halted... ");
 					return;
 				}
 
-				Console.WriteLine("Reset()... ");
+				Console.WriteLine("Reset()...");
 				result = await restApiUpdateMaster.Reset();
 				DisplayResult(result, 100);
+				if (result.HandleAs == Result.State.InvalidAuthentication)
+				{
+					Console.WriteLine("Invalid admin token, testing halted... ");
+					return;
+				}
 
 				Console.WriteLine("ListReferences()... ");
 				result = await restApiUpdateMaster.ListReferences();
@@ -208,6 +143,38 @@ namespace BOG.DropZone.Test
 				Console.WriteLine("GetSecurityInfo()... ");
 				result = await restApiUpdateMaster.GetSecurity();
 				DisplayResult(result, -1);
+
+				// Payloads and recipients
+
+				// Test a payload with and without a specific recipient
+
+				Console.WriteLine("*** Drop off to global (1) and to a specific recipient (1)");
+				Console.WriteLine($"Add \"Global payload\" for global queue in the zone ... ");
+				result = await restApiUpdateMaster.DropOff("Global payload");
+				DisplayResult(result, 0);
+
+				var recipient = "Tim";
+				Console.WriteLine($"Add \"Tim's payload\" for {recipient} queue in the zone ... ");
+				result = await restApiUpdateMaster.DropOff("Tim's payload", recipient);
+				DisplayResult(result, 0);
+
+				Console.WriteLine($"Retrieve payload for recipient {recipient} ...");
+				result = await restApiUpdateMaster.Pickup(recipient);
+				DisplayResult(result, 0);
+
+				Console.WriteLine($"Retrieve payload for recipient {recipient} ... should have nothing");
+				result = await restApiUpdateMaster.Pickup(recipient);
+				DisplayResult(result, 0);
+
+				Console.WriteLine($"Retrieve payload for global use ...");
+				result = await restApiUpdateMaster.Pickup("*");
+				DisplayResult(result, 0);
+
+				Console.WriteLine($"Retrieve payload for global use ... should have nothing");
+				result = await restApiUpdateMaster.Pickup("*");
+				DisplayResult(result, -1);
+
+				// Other payloads tests.
 
 				string[] set = new string[] { "Tallahunda", "Kookamunga", "Whatever" };
 

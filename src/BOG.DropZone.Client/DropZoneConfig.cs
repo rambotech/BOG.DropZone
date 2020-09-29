@@ -14,10 +14,6 @@
 		/// </summary>
 		public string ZoneName { get; set; } = null;
 		/// <summary>
-		/// The unique recipient value for the queue, to isolate inbound payloads only for this client.  Default is "*" for global.
-		/// </summary>
-		public string Recipient { get; set; } = "*";
-		/// <summary>
 		/// The token value for non-admin access (read / write, create zone, drop zone).
 		/// </summary>
 		public string AccessToken { get; set; } = null;

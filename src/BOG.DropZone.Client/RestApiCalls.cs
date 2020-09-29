@@ -48,7 +48,6 @@ namespace BOG.DropZone.Client
 			{
 				BaseUrl = config.BaseUrl,
 				ZoneName = config.ZoneName,
-				Recipient = string.IsNullOrWhiteSpace(config.Recipient) ? "*" : config.Recipient,
 				AccessToken = config.AccessToken,
 				AdminToken = config.AdminToken,
 				Password = config.Password,
@@ -204,7 +203,7 @@ namespace BOG.DropZone.Client
 		/// </returns>
 		public async Task<Result> DropOff(string data)
 		{
-			return await DropOff(data, DateTime.MaxValue, _DropZoneConfig.Recipient);
+			return await DropOff(data, DateTime.MaxValue, null);
 		}
 
 		/// <summary>
@@ -217,7 +216,7 @@ namespace BOG.DropZone.Client
 		/// </returns>
 		public async Task<Result> DropOff(string data, DateTime expires)
 		{
-			return await DropOff(data, expires, _DropZoneConfig.Recipient);
+			return await DropOff(data, expires, null);
 		}
 
 		/// <summary>
@@ -234,7 +233,7 @@ namespace BOG.DropZone.Client
 		}
 
 		/// <summary>
-		/// Place a payload into a drop zone's queue.
+		/// Place a payload into a drop zone's queue. Note: Use text/plain for the content-type.
 		/// </summary>
 		/// <param name="payload">The content to queue as a string value</param>
 		/// <param name="expires">A perish time when the payload should be discarded</param>
@@ -252,7 +251,18 @@ namespace BOG.DropZone.Client
 			{
 				var datagram = BuildPayloadGram(data);
 				var thisRecipient = string.IsNullOrWhiteSpace(recipient) ? "*" : recipient;
-				var builder = new UriBuilder(_DropZoneConfig.BaseUrl + $"/api/payload/pickup/{_DropZoneConfig.ZoneName}/{thisRecipient}");
+				var url = string.Format("{0}/{1}{2}",
+					_DropZoneConfig.BaseUrl,
+					"api/payload/dropoff",
+					System.Web.HttpUtility.UrlEncode(_DropZoneConfig.ZoneName)
+				);
+				var builder = new UriBuilder(url);
+				if (thisRecipient != "*")
+				{
+					var query = HttpUtility.ParseQueryString(builder.Query);
+					query["recipient"] = thisRecipient;
+					builder.Query = query.ToString();
+				}
 				if (expires != null)
 				{
 					var query = HttpUtility.ParseQueryString(builder.Query);
@@ -313,7 +323,21 @@ namespace BOG.DropZone.Client
 		/// <returns>
 		/// Result: Content-Type = string (user-defined content), success has payload
 		/// </returns>
+		/// <returns></returns>
 		public async Task<Result> Pickup()
+		{
+			return await Pickup(null);
+		}
+
+		/// <summary>
+		/// Retrieve an available payload from the specified drop zone, for a specific recipient.
+		/// </summary>
+		/// <param name="recipient">optional: use null if not intended for a specific recipient</param>
+		/// <returns>
+		/// Result: Content-Type = string (user-defined content), success has payload
+		/// </returns>
+		/// <returns></returns>
+		public async Task<Result> Pickup(string recipient)
 		{
 			var result = new Result
 			{
@@ -321,12 +345,20 @@ namespace BOG.DropZone.Client
 			};
 			try
 			{
-				string uri = _DropZoneConfig.BaseUrl + $"/api/payload/pickup/{_DropZoneConfig.ZoneName}";
-				if (_DropZoneConfig.Recipient != "*")
+				var thisRecipient = string.IsNullOrWhiteSpace(recipient) ? "*" : recipient;
+				var url = string.Format("{0}/{1}{2}",
+					_DropZoneConfig.BaseUrl,
+					"api/payload/pickup",
+					System.Web.HttpUtility.UrlEncode(_DropZoneConfig.ZoneName)
+				);
+				var builder = new UriBuilder(url);
+				if (thisRecipient != "*")
 				{
-					uri += $"/{_DropZoneConfig.Recipient}";
+					var query = HttpUtility.ParseQueryString(builder.Query);
+					query["recipient"] = thisRecipient;
+					builder.Query = query.ToString();
 				}
-				var response = await _Client.GetAsync(uri);
+				var response = await _Client.GetAsync(builder.ToString());
 				result.StatusCode = response.StatusCode;
 				result.Message = response.ReasonPhrase;
 				switch (response.StatusCode)
