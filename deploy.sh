@@ -8,11 +8,6 @@ echo NUGET_SOURCE == ${NUGET_SOURCE}
 echo TRAVIS_PULL_REQUEST == ${TRAVIS_PULL_REQUEST}
 echo BUILD_CONFIG == ${BUILD_CONFIG}
 
-if [ "${BUILD_CONFIG}" = "release" ]; then
-		BUILD_DIR="Release"
-else
-		BUILD_DIR=$BUILD_CONFIG
-fi
 echo BUILD_DIR == ${BUILD_DIR}
 
 dotnet build -c $BUILD_CONFIG ./src/BOG.DropZone
