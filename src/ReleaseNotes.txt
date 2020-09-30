@@ -1,5 +1,8 @@
 Release Notes:
 
+2.0.1 -- 2020.09.30
+* Version alignment with nuget projects
+
 2.0.0 -- 2020.09.28
 * Debut of global queue or targeted recipient queue for payloads within a dropzone.
 * Some cleanup of the UI so it is not a default microsoft template.
