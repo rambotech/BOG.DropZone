@@ -1,7 +1,8 @@
 Release Notes:
 
 2.0.0 -- 2020.09.28
-* Debut of global or targeted recipient for payloads within a dropzone.
+* Debut of global queue or targeted recipient queue for payloads within a dropzone.
+* Some cleanup of the UI so it is not a default microsoft template.
 
 1.9.4 -- 2020.02.15
 * Add Travis CI build stuff

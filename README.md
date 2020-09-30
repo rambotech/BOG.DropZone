@@ -21,10 +21,29 @@ can be created to faciliate many different types of data transfers.
 **Important**: one payload from a sender will go to ONLY one receiver. Observer patterns 
 are not supported.  Both payloads and references support an optional expiration date.
 
+**Change to v2.0**: Prior to v2.0, all payloads were enqueued into the same single queue, 
+and the payloads were dequeued on a first-come, first-server basis, regardless of the request 
+for pickup.
+
+*v2.0* now supports multiple queues for a targeted audience defined by the applications.  If 
+no recipient is specified, the behavior is to queue the payload in a general area (as before).
+The payloads in the general queue are dequeued and given to a caller picking up from the dropzone 
+with no recipient specified.
+
+*If a recipient is specified for a payload when it is dropped off, it is only dequeued and given 
+to callers during a pickup call when the caller also specifies that recipient.*  The recipient is 
+specified on as an optional recipient query argument if using the endpoint.  The RestApiCalls 
+client assembly for C# (available on Nuget) now has an optional argument on the Dropoff() and 
+Pickup() methods for this.
+
+Note that this change to allow routing does not change the one payload to one receiver rule: it 
+only allows a choice of any receiver, or one or a subset of receivers who can pick it up. The 
+applications will have to manage discovery and knowledge of the receivers.
+
 ![alt text](https://github.com/rambotech/BOG.DropZone/blob/master/assets/flow.png)
 
 In the example above, a server posts work items (payloads) into the dropzone 
-named Queries, and the clients poll the dropzone named Questions to retrieve them
+named Questions, and the clients poll the dropzone named Questions to retrieve them
 (one-to-many). The clients process the work items, then post the resulting items
 (payloads) to the dropzone named Answers.  The server polls the dropzone named
 Answers for those payloads to collect the processed work.
@@ -55,28 +74,29 @@ These actions require the access token, if one is defined for the drop zone site
 
 These actions require the admin token, if one is defined for the drop zone site.
 
-*Get Security* :: returns information on client attempts to access the site with an invalid access token value.
+*Get Security Info* :: returns information on client attempts to access the site with an invalid access token value.
 
 *Reset* :: wipes out all drop zones, including their payloads and references.
 
-*Shutdown* :: kills the web server operation.  It must be retarted from the command line.
+*Shutdown* :: stops the web server operation.  It must be retarted from the command line.
 
 ## Why only strings
 The drop zone is only concerned with a payload, not what is inside it.  The content is known to both the sender and receiver, so it can be cast by them.
 
 ## Best Practice
-The drop zone is intended to be cheap to install and run, and is designed for multiple web servers to spread load and provide redundancy.  As such, it is good for distributing work among various agents without the overhead and frustration of extensive security and routing.
+The drop zone is intended to be cheap to install and run, and can run on multiple web servers to spread out the load and provide redundancy. There is no intercommunication among drop zones.
 
-Also, like its inspiration project (BOG.Pathways.Server), it makes no guarantees of delivery and the sender and receiver take all responsibility for resending missing or dropped work.  BOG.DropZone was designed for simplicity, and as such is a good tool for coordinating data among various processes.  If you need guaranteed delivery, look at another project.
+Also, like its inspiration project (BOG.Pathways.Server), it makes no guarantees of delivery and the sender and receiver take all responsibility for resending missing or dropped work.  BOG.DropZone was designed for simplicity, and as such is a good tool for coordinating data among various processes. If you need guaranteed delivery, look at another project.
 
-The project BOG.DropZone.Client is for applications using BOG.DropZone, and contains support
-for encryption.
+The project BOG.DropZone.Client (written in .NET Standard) is for .NET applications using BOG.DropZone, and contains support for encryption of payloads.
 
 ## Example usage
 
 Build the BOG.DropZone project and run it locally.
 
 Create a console application, and add a reference to BOG.DropZone.Client from either the project here, or v1.8.1 from the Nuget package repository [here](https://www.nuget.org/packages/BOG.DropZone.Client/).  Replace the content of Program.cs with the code below.
+
+*Note: This was written to demostrate v1 which did not support recipients, but you can add the optional **recipient** parameter to **Dropoff()** and **Pickup()**  *
 
 ```C#
 using BOG.DropZone.Client;
