@@ -203,7 +203,7 @@ namespace BOG.DropZone.Client
 		/// </returns>
 		public async Task<Result> DropOff(string data)
 		{
-			return await DropOff(data, DateTime.MaxValue, null);
+			return await DropOff(data, default, null);
 		}
 
 		/// <summary>
@@ -229,7 +229,7 @@ namespace BOG.DropZone.Client
 		/// </returns>
 		public async Task<Result> DropOff(string data, string recipient)
 		{
-			return await DropOff(data, DateTime.MaxValue, recipient);
+			return await DropOff(data, default, recipient);
 		}
 
 		/// <summary>
@@ -251,7 +251,7 @@ namespace BOG.DropZone.Client
 			{
 				var datagram = BuildPayloadGram(data);
 				var thisRecipient = string.IsNullOrWhiteSpace(recipient) ? "*" : recipient;
-				var url = string.Format("{0}/{1}{2}",
+				var url = string.Format("{0}/{1}/{2}",
 					_DropZoneConfig.BaseUrl,
 					"api/payload/dropoff",
 					System.Web.HttpUtility.UrlEncode(_DropZoneConfig.ZoneName)
@@ -263,7 +263,7 @@ namespace BOG.DropZone.Client
 					query["recipient"] = thisRecipient;
 					builder.Query = query.ToString();
 				}
-				if (expires != null)
+				if (expires != default)
 				{
 					var query = HttpUtility.ParseQueryString(builder.Query);
 					query["expires"] = expires.ToString();
@@ -346,7 +346,7 @@ namespace BOG.DropZone.Client
 			try
 			{
 				var thisRecipient = string.IsNullOrWhiteSpace(recipient) ? "*" : recipient;
-				var url = string.Format("{0}/{1}{2}",
+				var url = string.Format("{0}/{1}/{2}",
 					_DropZoneConfig.BaseUrl,
 					"api/payload/pickup",
 					System.Web.HttpUtility.UrlEncode(_DropZoneConfig.ZoneName)

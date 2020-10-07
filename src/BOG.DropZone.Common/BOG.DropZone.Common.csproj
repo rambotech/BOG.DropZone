@@ -12,10 +12,10 @@
     <RepositoryUrl>https://github.com/rambotech/BOG.DropZone</RepositoryUrl>
     <RepositoryType>GIT</RepositoryType>
     <PackageTags>RestAPI aspnetcore netstandard2</PackageTags>
-    <Version>2.0.1</Version>
-    <AssemblyVersion>2.0.1.0</AssemblyVersion>
-    <FileVersion>2.0.1.0</FileVersion>
-    <Copyright>(c) 2017-2020, John J Schultz</Copyright>
+    <Version>2.0.2</Version>
+    <AssemblyVersion>2.0.2.0</AssemblyVersion>
+    <FileVersion>2.0.2.0</FileVersion>
+    <Copyright>(c) 2018-2020, John J Schultz</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>parachute.png</PackageIcon>
     <NeutralLanguage></NeutralLanguage>

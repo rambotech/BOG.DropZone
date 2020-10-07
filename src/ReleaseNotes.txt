@@ -1,5 +1,8 @@
 Release Notes:
 
+2.0.2 -- 2020.10.07
+* Fix a bug in url building in RestApiCalls.cs
+
 2.0.1 -- 2020.09.30
 * Version alignment with nuget projects
 
