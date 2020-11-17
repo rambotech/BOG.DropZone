@@ -10,7 +10,7 @@ echo BUILD_CONFIG == ${BUILD_CONFIG}
 
 echo BUILD_DIR == ${BUILD_DIR}
 
-dotnet build -c $BUILD_CONFIG ./src/BOG.DropZone
+dotnet build -c $BUILD_CONFIG ./src/BOG.DropZone.sln
 
 if [ "${TRAVIS_PULL_REQUEST}" = "false" ] && [ "${TRAVIS_BRANCH}" = "master" ]; then
 		dotnet nuget push ./src/BOG.DropZone.Common/bin/$BUILD_CONFIG/BOG.DropZone.Common.*.nupkg --api-key ${NUGET_API_KEY} --source ${NUGET_SOURCE} --skip-duplicate
