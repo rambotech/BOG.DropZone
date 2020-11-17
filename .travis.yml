@@ -3,6 +3,5 @@ solution: ./src/BOG.DropZone.sln
 mono: none
 dotnet: 3.1
 script:
-- dotnet restore
 - chmod +x ./deploy.sh 
 - ./deploy.sh
