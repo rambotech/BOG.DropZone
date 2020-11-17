@@ -1,5 +1,8 @@
 Release Notes:
 
+2.0.3 -- 2020.11.16
+* Attempt to fix a behavior difference between ARM and x64 for exclusive-or
+
 2.0.2 -- 2020.10.07
 * Fix a bug in url building in RestApiCalls.cs
 

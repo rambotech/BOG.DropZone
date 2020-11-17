@@ -99,8 +99,10 @@ Create a console application, and add a reference to BOG.DropZone.Client from ei
 *Note: This was written to demostrate v1 which did not support recipients, but you can add the optional **recipient** parameter to **Dropoff()** and **Pickup()**  *
 
 ```C#
+// Note: be sure to match these two assembly versions to the dropzone target version in use.
 using BOG.DropZone.Client;
 using BOG.DropZone.Client.Model;
+
 using System;
 using System.IO;
 using System.Threading;

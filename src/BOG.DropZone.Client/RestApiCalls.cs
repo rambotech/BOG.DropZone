@@ -29,9 +29,12 @@ namespace BOG.DropZone.Client
 		/// <param name="config">DropZoneConfig with items populated</param>
 		public RestApiCalls(DropZoneConfig config)
 		{
-			if (string.IsNullOrWhiteSpace(config.Password) ^ string.IsNullOrWhiteSpace(config.Salt))
+			if (config.UseEncryption)
 			{
-				throw new ArgumentException("Both password and salt must be a non-empty string, or both must be null or empty.  You can not specify just one.");
+				if (string.IsNullOrWhiteSpace(config.Password) ^ string.IsNullOrWhiteSpace(config.Salt))
+				{
+					throw new ArgumentException("Both password and salt must be a non-empty string, or both must be null or empty.  You can not specify just one.");
+				}
 			}
 
 			_Client.Timeout = TimeSpan.FromSeconds(config.TimeoutSeconds);
@@ -50,8 +53,8 @@ namespace BOG.DropZone.Client
 				ZoneName = config.ZoneName,
 				AccessToken = config.AccessToken,
 				AdminToken = config.AdminToken,
-				Password = config.Password,
-				Salt = config.Salt,
+				Password = config.UseEncryption ? config.Password : string.Empty,
+				Salt = config.UseEncryption ? config.Salt : string.Empty,
 				UseEncryption = config.UseEncryption && !string.IsNullOrEmpty(config.Password),
 				TimeoutSeconds = config.TimeoutSeconds
 			};
