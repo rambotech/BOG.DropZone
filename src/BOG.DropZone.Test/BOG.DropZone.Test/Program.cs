@@ -35,8 +35,8 @@ namespace BOG.DropZone.Test
 			{
 				BaseUrl = "http://localhost:5000",
 				ZoneName = "Update",
-				Password = "",
-				Salt = "",
+				Password = string.Empty,
+				Salt = string.Empty,
 				UseEncryption = false,
 				AccessToken = Access,
 				AdminToken = Admin,
@@ -167,11 +167,11 @@ namespace BOG.DropZone.Test
 				DisplayResult(result, 0);
 
 				Console.WriteLine($"Retrieve payload for global use ...");
-				result = await restApiUpdateMaster.Pickup("*");
+				result = await restApiUpdateMaster.Pickup();
 				DisplayResult(result, 0);
 
 				Console.WriteLine($"Retrieve payload for global use ... should have nothing");
-				result = await restApiUpdateMaster.Pickup("*");
+				result = await restApiUpdateMaster.Pickup();
 				DisplayResult(result, -1);
 
 				// Other payloads tests.

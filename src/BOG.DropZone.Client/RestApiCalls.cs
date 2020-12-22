@@ -348,7 +348,7 @@ namespace BOG.DropZone.Client
 			};
 			try
 			{
-				var thisRecipient = string.IsNullOrWhiteSpace(recipient) ? "*" : recipient;
+				var thisRecipient = string.IsNullOrWhiteSpace(recipient) ? string.Empty : recipient;
 				var url = string.Format("{0}/{1}/{2}",
 					_DropZoneConfig.BaseUrl,
 					"api/payload/pickup",

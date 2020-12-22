@@ -41,7 +41,7 @@ namespace BOG.DropZone.Common.Dto
         /// Specifies the maximum total size of all payload content the dropzone can store.
         /// </summary>
         [JsonProperty]
-        public Int64 MaxPayloadSize { get; set; } = 1048L * 1024 * 1024;
+        public Int64 MaxPayloadSize { get; set; } = 1024L * 1024 * 1024;  // Default 1Gb
 
         /// <summary>
         /// The number of payload dropoffs denied due to count or size limits triggered.
@@ -53,13 +53,13 @@ namespace BOG.DropZone.Common.Dto
         /// Specifies the maximum count of references this dropzone is allowed to have.
         /// </summary>
         [JsonProperty]
-        public int MaxReferencesCount { get; set; } = 50;
+        public int MaxReferencesCount { get; set; } = 100;
 
         /// <summary>
         /// Specifies the maximum total size of all reference content the dropzone can store.
         /// </summary>
         [JsonProperty]
-        public Int64 MaxReferenceSize { get; set; } = 500L * 1024 * 1024;
+        public Int64 MaxReferenceSize { get; set; } = 500L * 1024 * 1024;  // 500 Mb
 
         /// <summary>
         /// The number of reference set actions denied due to count or size limits triggered.
