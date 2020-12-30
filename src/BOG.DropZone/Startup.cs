@@ -67,40 +67,39 @@ namespace BOG.DropZone
 
 			services.AddHttpContextAccessor();
 
-			services.AddLettuceEncrypt();
-
-			// Register the Swagger generator, defining one or more Swagger documents
-			services.AddSwaggerGen(c =>
-			{
-				c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
-				{
-					Version = $"v{this.GetType().Assembly.GetName().Version}",
-					Title = "BOG.DropZone API",
-					Description = "A non-secure, volatile drop-off and pickup location for quick, inter-application data handoff",
-					Contact = new Microsoft.OpenApi.Models.OpenApiContact { Name = "John J Schultz", Email = "", Url = new Uri("https://github.com/rambotech") },
-					License = new Microsoft.OpenApi.Models.OpenApiLicense { Name = "MIT", Url = new Uri("https://opensource.org/licenses/MIT") }
-				});
-				// Set the comments path for the Swagger JSON and UI.
-				var xmlPath = Path.Combine(PlatformServices.Default.Application.ApplicationBasePath, "BOG.DropZone.xml");
-				c.IncludeXmlComments(xmlPath);
-			});
-
 			var valueHttp = Configuration.GetValue<int>("HttpPort", 5000);
-			var valueHttps = Configuration.GetValue<int>("HttpsPort", 0); 
+			var valueHttps = Configuration.GetValue<int>("HttpsPort", 0);
 			var useLetsEncrypt = Configuration.GetValue<bool>("UseLetsEncrypt");
 			if (valueHttp == 80 && valueHttps == 443 && useLetsEncrypt)
 			{
 				// Register Let's Encrypt for SSL.
-				var lettuceEncryptOptions = new LettuceEncrypt.LettuceEncryptOptions
-				{
-					AcceptTermsOfService = Configuration.GetValue<bool>("LettuceEncrypt:AcceptTermsOfService"),
-					EmailAddress = Configuration.GetValue<string>("LettuceEncrypt:EmailAddress"),
-					DomainNames = Configuration.GetValue<string[]>("LettuceEncrypt:Domains"),
-					RenewalCheckPeriod = TimeSpan.FromHours(Configuration.GetValue<double>("LettuceEncrypt:RenewalCheckPeriodHours", 6)),
-					RenewDaysInAdvance = TimeSpan.FromDays(Configuration.GetValue<double>("LettuceEncrypt:RenewDaysInAdvance", 2)),
-					UseStagingServer = Configuration.GetValue<bool>("LettuceEncrypt:UseStagingServer")
-				};
+				services.AddLettuceEncrypt(o =>
+					new LettuceEncrypt.LettuceEncryptOptions
+					{
+						AcceptTermsOfService = Configuration.GetValue<bool>("LettuceEncrypt:AcceptTermsOfService"),
+						EmailAddress = Configuration.GetValue<string>("LettuceEncrypt:EmailAddress"),
+						DomainNames = Configuration.GetValue<string[]>("LettuceEncrypt:Domains"),
+						RenewalCheckPeriod = TimeSpan.FromHours(Configuration.GetValue<double>("LettuceEncrypt:RenewalCheckPeriodHours", 6)),
+						RenewDaysInAdvance = TimeSpan.FromDays(Configuration.GetValue<double>("LettuceEncrypt:RenewDaysInAdvance", 2)),
+						UseStagingServer = Configuration.GetValue<bool>("LettuceEncrypt:UseStagingServer")
+					});
 			}
+
+			// Register the Swagger generator, defining one or more Swagger documents
+			services.AddSwaggerGen(c =>
+				{
+					c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+					{
+						Version = $"v{this.GetType().Assembly.GetName().Version}",
+						Title = "BOG.DropZone API",
+						Description = "A non-secure, volatile drop-off and pickup location for quick, inter-application data handoff",
+						Contact = new Microsoft.OpenApi.Models.OpenApiContact { Name = "John J Schultz", Email = "", Url = new Uri("https://github.com/rambotech") },
+						License = new Microsoft.OpenApi.Models.OpenApiLicense { Name = "MIT", Url = new Uri("https://opensource.org/licenses/MIT") }
+					});
+				// Set the comments path for the Swagger JSON and UI.
+				var xmlPath = Path.Combine(PlatformServices.Default.Application.ApplicationBasePath, "BOG.DropZone.xml");
+					c.IncludeXmlComments(xmlPath);
+				});
 		}
 
 		/// <summary>

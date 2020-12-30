@@ -1,5 +1,8 @@
 Release Notes:
 
+2.0.4 -- 2020.12.30
+* Nuget Package updates only
+
 2.0.3 -- 2020.11.16
 * Attempt to fix a behavior difference between ARM and x64 for exclusive-or
 
