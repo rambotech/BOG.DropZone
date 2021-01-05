@@ -1,20 +1,15 @@
-﻿using BOG.DropZone.Client;
-using BOG.DropZone.Client.Model;
-using System;
-using System.IO;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using BOG.DropZone.Client;
+using BOG.DropZone.Client.Model;
 using Newtonsoft.Json;
 
 namespace BOG.DropZone.Test
 {
 	public class WorkerComm
 	{
-
 		public string RecipientID { get; set; }
-		/// <summary>
-		/// 
-		/// </summary>
 		public string Message { get; set; }
 	}
 
@@ -44,7 +39,6 @@ namespace BOG.DropZone.Test
 			};
 
 			var restApiUpdateMaster = new RestApiCalls(zone);
-
 
 			try
 			{
@@ -111,6 +105,19 @@ namespace BOG.DropZone.Test
 
 				Console.WriteLine("GetReference()... Perishable ... > 5 sec (perished)");
 				result = await restApiUpdateMaster.GetReference("RefTimed-Good");
+				DisplayResult(result, -1);
+
+				Console.WriteLine("SetReference()");
+				result = await restApiUpdateMaster.SetReference("Test-Ref03", "this will go way");
+
+				Console.WriteLine("GetReference()");
+				result = await restApiUpdateMaster.GetReference("Test-Ref03");
+
+				Console.WriteLine("DropReference()");
+				result = await restApiUpdateMaster.DropReference("Test-Ref03");
+
+				Console.WriteLine("GetReference()");
+				result = await restApiUpdateMaster.GetReference("Test-Ref03");
 				DisplayResult(result, -1);
 
 				Console.WriteLine("SetReference()... BIG...");

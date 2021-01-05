@@ -669,6 +669,61 @@ namespace BOG.DropZone.Client
 		}
 
 		/// <summary>
+		/// Drop a reference from the drop zone's key/value set.
+		/// </summary>
+		/// <param name="key">The string to identify this key</param>
+		/// <returns>
+		/// Result: Content-Type = string, no payload
+		/// </returns>
+		public async Task<Result> DropReference(string key)
+		{
+			var result = new Result
+			{
+				HandleAs = Result.State.OK
+			};
+			try
+			{
+				var builder = new UriBuilder(_DropZoneConfig.BaseUrl + $"/api/reference/drop/{_DropZoneConfig.ZoneName}/{key}");
+				var response = await _Client.DeleteAsync(builder.ToString());
+				result.StatusCode = response.StatusCode;
+				result.Message = response.ReasonPhrase;
+
+				switch (response.StatusCode)
+				{
+					case HttpStatusCode.OK:
+						break;
+
+					case HttpStatusCode.Unauthorized:
+						result.HandleAs = Result.State.InvalidAuthentication;
+						break;
+
+					case HttpStatusCode.NotFound:
+						result.HandleAs = Result.State.NoDataAvailable;
+						break;
+
+					case HttpStatusCode.InternalServerError:
+						result.HandleAs = Result.State.ServerError;
+						break;
+
+					default:
+						result.HandleAs = Result.State.UnexpectedResponse;
+						break;
+				}
+			}
+			catch (HttpRequestException errHttp)
+			{
+				result.HandleAs = Result.State.ConnectionFailed;
+				result.Exception = errHttp;
+			}
+			catch (Exception exFatal)
+			{
+				result.HandleAs = Result.State.Fatal;
+				result.Exception = exFatal;
+			}
+			return result;
+		}
+
+		/// <summary>
 		/// Returns a list of key name in the reference key/value set.
 		/// </summary>
 		/// <returns>

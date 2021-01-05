@@ -276,7 +276,9 @@ namespace BOG.DropZone.Controllers
 		}
 
 		/// <summary>
-		/// Sets the value of a reference key in a dropzone.Statistics.  A reference is a key/value setting.
+		/// Sets the value of a reference key in a dropzone.Statistics.
+		/// A reference is a key/value setting.  The value can any string, but cannot be null.
+		/// Use DropReference to remove an entry in the references.
 		/// </summary>
 		/// <param name="AccessToken">Optional: access token value if used.</param>
 		/// <param name="dropzoneName">the dropzone identifier</param>
@@ -401,6 +403,53 @@ namespace BOG.DropZone.Controllers
 				}
 				dropzone.Statistics.LastGetReference = DateTime.Now;
 				return Ok(result);
+			}
+		}
+
+		/// <summary>
+		/// Drops a reference key and its value in a dropzone, if the key is found.
+		/// </summary>
+		/// <param name="AccessToken">Optional: access token value if used.</param>
+		/// <param name="dropzoneName">the dropzone identifier</param>
+		/// <param name="key">the name for the value to store</param>
+		/// <returns>varies: see method declaration</returns>
+		[HttpDelete("reference/drop/{dropzoneName}/{key}", Name = "DropReference")]
+		[ProducesResponseType(401)]
+		[ProducesResponseType(451)]
+		[ProducesResponseType(200, Type = typeof(string))]
+		[ProducesResponseType(404, Type = typeof(string))]
+		[ProducesResponseType(500)]
+		[Produces("text/plain")]
+		public IActionResult DropReference(
+				[FromHeader] string AccessToken,
+				[FromRoute] string dropzoneName,
+				[FromRoute] string key)
+		{
+			var clientIp = _Accessor.HttpContext.Connection.RemoteIpAddress.ToString();
+			if (!IsValidatedClient(clientIp, AccessToken, TokenType.Access, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
+			{
+				return Unauthorized();
+			}
+
+			lock (_LockDropZoneInfo)
+			{
+				if (!_Storage.DropZoneList.ContainsKey(dropzoneName))
+				{
+					return StatusCode(404, $"Can't find dropzone {dropzoneName}");
+				}
+				var dropzone = _Storage.DropZoneList[dropzoneName];
+				if (dropzone.References.ContainsKey(key))
+				{
+					var len = dropzone.References[key].Value.Length;
+					if (!dropzone.References.Remove(key, out var ignoreThis))
+					{
+						return StatusCode(500, $"Failed to remove reference");
+					}
+					dropzone.Statistics.ReferenceSize -= len;
+				}
+				dropzone.Statistics.ReferenceCount = dropzone.References.Count();
+				dropzone.Statistics.LastSetReference = DateTime.Now;
+				return StatusCode(200, "OK");
 			}
 		}
 
