@@ -1,16 +1,14 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Net;
-using System.Text;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace BOG.DropZone.Client.Model
 {
-    /// <summary>
-    /// The result object from a RestAPI call to a DropZone method.
-    /// </summary>
-    [JsonObject]
+	/// <summary>
+	/// The result object from a RestAPI call to a DropZone method.
+	/// </summary>
+	[JsonObject]
     public class Result
     {
         /// <summary>

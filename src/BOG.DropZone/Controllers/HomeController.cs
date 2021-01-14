@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using BOG.DropZone.Models;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using BOG.DropZone.Interface;
+using BOG.DropZone.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BOG.DropZone.Controllers
 {

@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace BOG.DropZone.Storage
 {
-    /// <summary>
-    /// A string with a perish date.
-    /// </summary>
-    public class StoredValue
+	/// <summary>
+	/// A string with a perish date.
+	/// </summary>
+	public class StoredValue
     {
         /// <summary>
         /// The content

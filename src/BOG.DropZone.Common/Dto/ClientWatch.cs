@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using BOG.SwissArmyKnife;
 using Newtonsoft.Json;
 
 namespace BOG.DropZone.Common.Dto
 {
-    [JsonObject]
+	[JsonObject]
     public class ClientWatch
     {
         /// <summary>

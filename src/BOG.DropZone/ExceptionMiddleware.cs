@@ -1,15 +1,15 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
-using System;
+﻿using System;
 using System.Net;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 namespace BOG.DropZone
 {
-    /// <summary>
-    /// Ensures that a payload too large exception sends 413--not a generic 500.
-    /// </summary>
-    public class ExceptionMiddleware
+	/// <summary>
+	/// Ensures that a payload too large exception sends 413--not a generic 500.
+	/// </summary>
+	public class ExceptionMiddleware
     {
         private readonly RequestDelegate _next;
 

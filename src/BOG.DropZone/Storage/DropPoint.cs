@@ -1,17 +1,12 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Concurrent;
 using BOG.DropZone.Common.Dto;
-using BOG.SwissArmyKnife;
 
 namespace BOG.DropZone.Storage
 {
-    /// <summary>
-    /// Defines a payload: its properties, its activity and its content.
-    /// </summary>
-    public class DropPoint
+	/// <summary>
+	/// Defines a payload: its properties, its activity and its content.
+	/// </summary>
+	public class DropPoint
     {
         /// <summary>
         /// DropZoneInfo

@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace BOG.DropZone.Client.Entity
 {
-    [JsonObject]
+	[JsonObject]
     public class PayloadGram
     {
         [JsonProperty]

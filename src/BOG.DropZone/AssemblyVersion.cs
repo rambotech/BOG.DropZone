@@ -1,10 +1,7 @@
-﻿using BOG.DropZone.Interface;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
+using BOG.DropZone.Interface;
 using Newtonsoft.Json.Linq;
 
 namespace BOG.DropZone

@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text;
-using System.Threading;
 using Newtonsoft.Json;
 
 namespace BOG.DropZone.Common.Dto
 {
-    /// <summary>
-    /// Defines a payload: its metrics, its activity and its content.
-    /// </summary>
-    [JsonObject]
+	/// <summary>
+	/// Defines a payload: its metrics, its activity and its content.
+	/// </summary>
+	[JsonObject]
     public class DropZoneInfo
     {
         /// <summary>

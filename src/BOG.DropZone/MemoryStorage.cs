@@ -1,21 +1,15 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using System.Timers;
 using BOG.DropZone.Common.Dto;
 using BOG.DropZone.Interface;
 using BOG.DropZone.Storage;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 
 namespace BOG.DropZone
 {
-    /// <summary>
-    /// The collection of items persisted on the server, and static across calls.
-    /// </summary>
-    public class MemoryStorage : IStorage
+	/// <summary>
+	/// The collection of items persisted on the server, and static across calls.
+	/// </summary>
+	public class MemoryStorage : IStorage
     {
         readonly Timer stopTimer = new Timer();
         readonly object lockPoint = new object();

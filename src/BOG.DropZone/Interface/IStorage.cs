@@ -1,13 +1,13 @@
-﻿using BOG.DropZone.Common.Dto;
+﻿using System.Collections.Generic;
+using BOG.DropZone.Common.Dto;
 using BOG.DropZone.Storage;
-using System.Collections.Generic;
 
 namespace BOG.DropZone.Interface
 {
-    /// <summary>
-    /// Defines the site's common storage items.
-    /// </summary>
-    public interface IStorage
+	/// <summary>
+	/// Defines the site's common storage items.
+	/// </summary>
+	public interface IStorage
     {
         /// <summary>
         /// An optional access token value which the client must provide to use operational methods.

@@ -1,22 +1,20 @@
-﻿using Microsoft.AspNetCore.Mvc.Formatters;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
-using System.Linq;
-using Microsoft.Net.Http.Headers;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.Net.Http.Headers;
 
 namespace BOG.DropZone
 {
-    /// <summary>
-    /// Formatter that allows content of type text/plain and application/octet stream
-    /// or no content type to be parsed to raw data. Allows for a single input parameter
-    /// in the form of:
-    /// 
-    /// public string RawString([FromBody] string data)
-    /// public byte[] RawData([FromBody] byte[] data)
-    /// </summary>
-    public class RawRequestBodyFormatter : InputFormatter
+	/// <summary>
+	/// Formatter that allows content of type text/plain and application/octet stream
+	/// or no content type to be parsed to raw data. Allows for a single input parameter
+	/// in the form of:
+	/// 
+	/// public string RawString([FromBody] string data)
+	/// public byte[] RawData([FromBody] byte[] data)
+	/// </summary>
+	public class RawRequestBodyFormatter : InputFormatter
     {
         /// <summary>
         /// Formatts supported

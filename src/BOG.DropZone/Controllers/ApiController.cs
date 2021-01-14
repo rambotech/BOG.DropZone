@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using BOG.DropZone.Common;
+using BOG.DropZone.Common.Dto;
 using BOG.DropZone.Interface;
 using BOG.DropZone.Storage;
 using BOG.SwissArmyKnife;
-using BOG.DropZone.Common.Dto;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 
 namespace BOG.DropZone.Controllers

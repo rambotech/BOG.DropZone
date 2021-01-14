@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace BOG.DropZone.Models
+﻿namespace BOG.DropZone.Models
 {
-    /// <summary>
-    /// Standard error page for the MVC site.
-    /// </summary>
-    public class ErrorViewModel
+	/// <summary>
+	/// Standard error page for the MVC site.
+	/// </summary>
+	public class ErrorViewModel
     {
         /// <summary>
         /// The id of the request

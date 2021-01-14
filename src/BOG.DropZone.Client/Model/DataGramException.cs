@@ -1,14 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace BOG.DropZone.Client.Model
 {
-    //
-    // Summary:
-    //     A base class for exceptions thrown by the BOG.DropZone.Client.Model.DataGramException class.
-    //     classes.
-    public class DataGramException : Exception
+	//
+	// Summary:
+	//     A base class for exceptions thrown by the BOG.DropZone.Client.Model.DataGramException class.
+	//     classes.
+	public class DataGramException : Exception
     {
         //
         // Summary:

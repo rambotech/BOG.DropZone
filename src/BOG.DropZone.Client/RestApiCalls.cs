@@ -1,15 +1,14 @@
-﻿using BOG.DropZone.Client.Entity;
-using BOG.DropZone.Client.Model;
-using BOG.DropZone.Common.Dto;
-using BOG.SwissArmyKnife;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
+using BOG.DropZone.Client.Entity;
+using BOG.DropZone.Client.Model;
+using BOG.DropZone.Common.Dto;
+using BOG.SwissArmyKnife;
 
 namespace BOG.DropZone.Client
 {
