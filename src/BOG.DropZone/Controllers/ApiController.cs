@@ -106,15 +106,15 @@ namespace BOG.DropZone.Controllers
 					CreateDropZone(dropzoneName);
 				}
 				var dropzone = _Storage.DropZoneList[dropzoneName];
-				if (dropzone.Statistics.PayloadSize + payload.Length > dropzone.Statistics.MaxPayloadSize)
+				if (dropzone.Statistics.PayloadSize + payload.Length > dropzone.Statistics.Metrics.MaxPayloadSize)
 				{
 					dropzone.Statistics.PayloadDropOffsFailedCount++;
-					return StatusCode(429, $"Can't accept: Exceeds maximum payload size of {dropzone.Statistics.MaxPayloadSize}");
+					return StatusCode(429, $"Can't accept: Exceeds maximum payload size of {dropzone.Statistics.Metrics.MaxPayloadSize}");
 				}
-				if (dropzone.Statistics.PayloadCount + 1 > dropzone.Statistics.MaxPayloadCount)
+				if (dropzone.Statistics.PayloadCount + 1 > dropzone.Statistics.Metrics.MaxPayloadCount)
 				{
 					dropzone.Statistics.PayloadDropOffsFailedCount++;
-					return StatusCode(429, $"Can't accept: Exceeds maximum payload count of {dropzone.Statistics.MaxPayloadCount}");
+					return StatusCode(429, $"Can't accept: Exceeds maximum payload count of {dropzone.Statistics.Metrics.MaxPayloadCount}");
 				}
 				dropzone.Statistics.PayloadSize += payload.Length;
 				dropzone.Statistics.PayloadCount++;
@@ -210,12 +210,12 @@ namespace BOG.DropZone.Controllers
 		}
 
 		/// <summary>
-		/// Get statistics for a dropzone
+		/// Get statistics for a dropzone (includes current metrics)
 		/// </summary>
 		/// <param name="AccessToken">Optional: access token value if used.</param>
 		/// <param name="dropzoneName">the dropzone identifier</param>
 		/// <returns>varies: see method declaration</returns>
-		[HttpGet("payload/statistics/{dropzoneName}", Name = "GetStatistics")]
+		[HttpGet("statistics/{dropzoneName}", Name = "GetStatistics")]
 		[RequestSizeLimit(1024)]
 		[ProducesResponseType(400, Type = typeof(string))]
 		[ProducesResponseType(401)]
@@ -244,6 +244,52 @@ namespace BOG.DropZone.Controllers
 					CreateDropZone(dropzoneName);
 				}
 				return StatusCode(200, Serializer<DropZoneInfo>.ToJson(_Storage.DropZoneList[dropzoneName].Statistics));
+			}
+		}
+
+		/// <summary>
+		/// Update the metric values for a drop zone.
+		/// </summary>
+		/// <param name="AccessToken">Optional: access token value if used.</param>
+		/// <param name="dropzoneName">the dropzone identifier</param>
+		/// <param name="payload">the content to transfer</param>
+		/// <param name="metrics">the max counts and max sizes of payloads and references.</param>
+		/// <returns>varies: see method declaration</returns>
+		[HttpPost("metrics/{dropzoneName}", Name = "SetMetrics")]
+		[ProducesResponseType(201, Type = typeof(string))]
+		[ProducesResponseType(400, Type = typeof(string))]
+		[ProducesResponseType(401)]
+		[ProducesResponseType(429, Type = typeof(string))]
+		[ProducesResponseType(500)]
+		[Produces("text/plain")]
+		public IActionResult SetMetrics(
+				[FromHeader] string AccessToken,
+				[FromBody] string payload,
+				[FromRoute] string dropzoneName,
+				[FromBody] DropZoneMetrics metrics)
+		{
+			var clientIp = _Accessor.HttpContext.Connection.RemoteIpAddress.ToString();
+			if (!IsValidatedClient(clientIp, AccessToken, TokenType.Access, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
+			{
+				return Unauthorized();
+			}
+			// vadlidate the metrics
+			if (!metrics.IsValid())
+			{
+				return StatusCode(400, $"Invalid metrics: all values must zero or greater.");
+			}
+			lock (_LockDropZoneInfo)
+			{
+				if (!_Storage.DropZoneList.ContainsKey(dropzoneName))
+				{
+					if (_Storage.DropZoneList.Count >= _Storage.MaxDropzones)
+					{
+						return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {_Storage.MaxDropzones} dropzone definitions.");
+					}
+					CreateDropZone(dropzoneName);
+				}
+				_Storage.DropZoneList[dropzoneName].Statistics.Metrics = metrics;
+				return StatusCode(201, "Metrics accepted");
 			}
 		}
 
@@ -325,15 +371,15 @@ namespace BOG.DropZone.Controllers
 				{
 					sizeOffset = dropzone.References[key].Value.Length;
 				}
-				if ((dropzone.Statistics.ReferenceSize - sizeOffset + fixedValue.Value.Length) > dropzone.Statistics.MaxReferenceSize)
+				if ((dropzone.Statistics.ReferenceSize - sizeOffset + fixedValue.Value.Length) > dropzone.Statistics.Metrics.MaxReferenceSize)
 				{
 					dropzone.Statistics.ReferenceSetsFailedCount++;
-					return StatusCode(429, $"Can't accept: Exceeds maximum reference value size of {dropzone.Statistics.MaxReferenceSize}");
+					return StatusCode(429, $"Can't accept: Exceeds maximum reference value size of {dropzone.Statistics.Metrics.MaxReferenceSize}");
 				}
-				if (dropzone.References.Count >= dropzone.Statistics.MaxReferencesCount)
+				if (dropzone.References.Count >= dropzone.Statistics.Metrics.MaxReferencesCount)
 				{
 					dropzone.Statistics.ReferenceSetsFailedCount++;
-					return StatusCode(429, $"Can't accept: Exceeds maximum reference count of {dropzone.Statistics.MaxReferencesCount}");
+					return StatusCode(429, $"Can't accept: Exceeds maximum reference count of {dropzone.Statistics.Metrics.MaxReferencesCount}");
 				}
 				dropzone.Statistics.ReferenceSize -= sizeOffset;
 				dropzone.References.Remove(key, out StoredValue ignored);

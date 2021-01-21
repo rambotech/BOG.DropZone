@@ -60,6 +60,16 @@ namespace BOG.DropZone.Test
 					return;
 				}
 
+				Console.WriteLine("SetMetrics()... fails.");
+				result = await restApiUpdateMaster.SetMetrics(new Common.Dto.DropZoneMetrics
+				{
+					MaxPayloadCount = 1,
+					MaxPayloadSize = 1,
+					MaxReferencesCount = 2,
+					MaxReferenceSize = 2
+				});
+				DisplayResult(result, -1);
+
 				Console.WriteLine("ListReferences()... ");
 				result = await restApiUpdateMaster.ListReferences();
 				DisplayResult(result, -1);

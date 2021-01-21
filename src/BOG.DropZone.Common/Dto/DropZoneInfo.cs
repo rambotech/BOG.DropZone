@@ -29,16 +29,10 @@ namespace BOG.DropZone.Common.Dto
         public string Message { get; set; } = string.Empty;
 
         /// <summary>
-        /// Specifies the maximum payloads this dropzone is allowed to have.
+        /// The number of reference set actions denied due to count or size limits triggered.
         /// </summary>
         [JsonProperty]
-        public int MaxPayloadCount { get; set; } = 500;
-
-        /// <summary>
-        /// Specifies the maximum total size of all payload content the dropzone can store.
-        /// </summary>
-        [JsonProperty]
-        public Int64 MaxPayloadSize { get; set; } = 1024L * 1024 * 1024;  // Default 1Gb
+        public int ReferenceSetsFailedCount { get; set; } = 0;
 
         /// <summary>
         /// The number of payload dropoffs denied due to count or size limits triggered.
@@ -47,22 +41,10 @@ namespace BOG.DropZone.Common.Dto
         public int PayloadDropOffsFailedCount { get; set; } = 0;
 
         /// <summary>
-        /// Specifies the maximum count of references this dropzone is allowed to have.
+        /// The metrics to use for the dropzone.
         /// </summary>
         [JsonProperty]
-        public int MaxReferencesCount { get; set; } = 100;
-
-        /// <summary>
-        /// Specifies the maximum total size of all reference content the dropzone can store.
-        /// </summary>
-        [JsonProperty]
-        public Int64 MaxReferenceSize { get; set; } = 500L * 1024 * 1024;  // 500 Mb
-
-        /// <summary>
-        /// The number of reference set actions denied due to count or size limits triggered.
-        /// </summary>
-        [JsonProperty]
-        public int ReferenceSetsFailedCount { get; set; } = 0;
+        public DropZoneMetrics Metrics { get; set; } = new DropZoneMetrics();
 
         /// <summary>
         /// The total size of all payloads currently stored in the dropzone.

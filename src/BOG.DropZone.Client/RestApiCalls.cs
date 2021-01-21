@@ -197,6 +197,80 @@ namespace BOG.DropZone.Client
 		}
 
 		/// <summary>
+		/// Place a payload into a drop zone's queue. Note: Use text/plain for the content-type.
+		/// </summary>
+		/// <param name="payload">The content to queue as a string value</param>
+		/// <param name="expires">A perish time when the payload should be discarded</param>
+		/// <param name="recipient">Drop the payload into a specific recipient's queue</param>
+		/// <returns>
+		/// Result: Content-Type = string, no payload
+		/// </returns>
+		public async Task<Result> SetMetrics(DropZoneMetrics metrics)
+		{
+			var result = new Result
+			{
+				HandleAs = metrics.IsValid() ? Result.State.OK : Result.State.UnexpectedResponse
+			};
+			if (result.HandleAs == Result.State.OK)
+			{
+				try
+				{
+					var url = string.Format("{0}/{1}/{2}",
+						_DropZoneConfig.BaseUrl,
+						"api/metrics",
+						System.Web.HttpUtility.UrlEncode(_DropZoneConfig.ZoneName)
+					);
+					var builder = new UriBuilder(url);
+					var response = await _Client.PostAsync(builder.ToString(),
+						new StringContent(
+							Serializer<DropZoneMetrics>.ToJson(metrics),
+							Encoding.UTF8,
+							"application/json"));
+					result.StatusCode = response.StatusCode;
+					result.Message = response.ReasonPhrase;
+					switch (response.StatusCode)
+					{
+						case HttpStatusCode.Created:
+							result.Content = await response.Content.ReadAsStringAsync();
+							break;
+
+						case HttpStatusCode.Unauthorized:
+							result.HandleAs = Result.State.InvalidAuthentication;
+							break;
+
+						case HttpStatusCode.BadRequest:
+							result.HandleAs = Result.State.UnexpectedResponse;
+							break;
+
+						case HttpStatusCode.Conflict:
+							result.HandleAs = Result.State.OverLimit;
+							break;
+
+						default:
+							result.HandleAs = Result.State.UnexpectedResponse;
+							break;
+					}
+				}
+				catch (DataGramException errDataGram)
+				{
+					result.HandleAs = Result.State.DataCompromised;
+					result.Exception = errDataGram;
+				}
+				catch (HttpRequestException errHttp)
+				{
+					result.HandleAs = Result.State.ConnectionFailed;
+					result.Exception = errHttp;
+				}
+				catch (Exception exFatal)
+				{
+					result.HandleAs = Result.State.Fatal;
+					result.Exception = exFatal;
+				}
+			}
+			return result;
+		}
+
+		/// <summary>
 		/// Place a payload into a drop zone's queue.
 		/// </summary>
 		/// <param name="payload">The content to queue as a string value</param>
@@ -432,7 +506,7 @@ namespace BOG.DropZone.Client
 			};
 			try
 			{
-				var response = await _Client.GetAsync(_DropZoneConfig.BaseUrl + $"/api/payload/statistics/{_DropZoneConfig.ZoneName}", HttpCompletionOption.ResponseContentRead);
+				var response = await _Client.GetAsync(_DropZoneConfig.BaseUrl + $"/api/statistics/{_DropZoneConfig.ZoneName}", HttpCompletionOption.ResponseContentRead);
 				result.StatusCode = response.StatusCode;
 				result.Message = response.ReasonPhrase;
 				switch (response.StatusCode)
