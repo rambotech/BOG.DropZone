@@ -1,0 +1,38 @@
+﻿@{
+		ViewData["Title"] = "Administration";
+}
+
+<h2>Content</h2>
+
+<form name="setToken" method="post">
+		<table>
+				<tr>
+						<td>
+								Admin Token:
+						</td>
+						<td>
+								<input type="text" name="admin" value="@ViewData["AdminToken"]" />
+						</td>
+				</tr>
+				<tr>
+						<td>
+								Access Token:
+						</td>
+						<td>
+								<input type="text" name="access" value="@ViewData["AccessToken"]" />
+								<input style="display:none" type="text" name="action" value="setToken" />
+						</td>
+				</tr>
+				<tr>
+						<td>
+								&nbsp;
+						</td>
+						<td>
+								<button form="setToken" formmethod="get">Get Access</button>
+						</td>
+				</tr>
+		</table>
+</form>
+
+{@ViewData["ZoneList"]}
+
