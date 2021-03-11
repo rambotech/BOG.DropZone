@@ -110,8 +110,10 @@ namespace BOG.DropZone.Controllers
 
 		private void SetCookieValue(string key, string value, DateTime expiration)
 		{
-			CookieOptions option = new CookieOptions();
-			option.Expires = expiration;
+			CookieOptions option = new CookieOptions
+			{
+				Expires = expiration
+			};
 			if (HttpContext.Request.Cookies.ContainsKey(key))
 			{
 				HttpContext.Response.Cookies.Delete(key);

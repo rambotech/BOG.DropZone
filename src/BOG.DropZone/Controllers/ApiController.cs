@@ -178,7 +178,7 @@ namespace BOG.DropZone.Controllers
 				bool recipientKeyIsKnown = dropzone.Payloads.ContainsKey(recipientKey);
 				bool payloadAvailable = false;
 				int retriesRemaining = 3;
-				while (recipientKeyIsKnown && dropzone.Payloads[recipientKey].Count > 0 && !payloadAvailable)
+				while (recipientKeyIsKnown && !dropzone.Payloads[recipientKey].IsEmpty && !payloadAvailable)
 				{
 					if (!dropzone.Payloads[recipientKey].TryDequeue(out payload))
 					{
@@ -430,7 +430,7 @@ namespace BOG.DropZone.Controllers
 				}
 				var dropzone = _Storage.DropZoneList[dropzoneName];
 				string result = null;
-				if (dropzone.References.Count == 0 || !dropzone.References.ContainsKey(key))
+				if (dropzone.References.IsEmpty || !dropzone.References.ContainsKey(key))
 				{
 					return StatusCode(204);
 				}
@@ -532,7 +532,7 @@ namespace BOG.DropZone.Controllers
 				}
 				var dropzone = _Storage.DropZoneList[dropzoneName];
 				List<string> returnList = new List<string>();
-				if (dropzone.References.Count > 0)
+				if (!dropzone.References.IsEmpty)
 				{
 					returnList = _Storage.DropZoneList[dropzoneName].References
 					.Where(o => o.Value.Expires > DateTime.Now)
