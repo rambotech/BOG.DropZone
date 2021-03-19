@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
@@ -17,10 +19,10 @@ namespace BOG.DropZone.Client
 	/// </summary>
 	public class RestApiCalls
 	{
-		public HttpClient _Client = new HttpClient();
-
-		private readonly DropZoneConfig _DropZoneConfig = new DropZoneConfig();
+		public HttpClient _Client;
+		private readonly HttpClientHandler httpClientHandler = new HttpClientHandler();
 		private readonly CipherUtility _Cipher = new CipherUtility();
+		private static readonly DropZoneConfig _DropZoneConfig = new DropZoneConfig();
 
 		/// <summary>
 		/// Instantiate the class specifying a DropZoneConfig object.
@@ -46,17 +48,34 @@ namespace BOG.DropZone.Client
 			{
 				_Client.DefaultRequestHeaders.Add("AdminToken", config.AdminToken);
 			}
-			_DropZoneConfig = new DropZoneConfig
-			{
-				BaseUrl = config.BaseUrl,
-				ZoneName = config.ZoneName,
-				AccessToken = config.AccessToken,
-				AdminToken = config.AdminToken,
-				Password = config.UseEncryption ? config.Password : string.Empty,
-				Salt = config.UseEncryption ? config.Salt : string.Empty,
-				UseEncryption = config.UseEncryption && !string.IsNullOrEmpty(config.Password),
-				TimeoutSeconds = config.TimeoutSeconds
-			};
+
+			RestApiCalls._DropZoneConfig.BaseUrl = config.BaseUrl;
+			RestApiCalls._DropZoneConfig.AllowSSL = config.AllowSSL;
+			RestApiCalls._DropZoneConfig.ZoneName = config.ZoneName;
+			RestApiCalls._DropZoneConfig.AccessToken = config.AccessToken;
+			RestApiCalls._DropZoneConfig.AdminToken = config.AdminToken;
+			RestApiCalls._DropZoneConfig.Password = config.UseEncryption ? config.Password : string.Empty;
+			RestApiCalls._DropZoneConfig.Salt = config.UseEncryption ? config.Salt : string.Empty;
+			RestApiCalls._DropZoneConfig.UseEncryption = config.UseEncryption && !string.IsNullOrEmpty(config.Password);
+			RestApiCalls._DropZoneConfig.TimeoutSeconds = config.TimeoutSeconds;
+
+			httpClientHandler.ServerCertificateCustomValidationCallback = ServerCertificateCustomValidation;
+			_Client = new HttpClient(httpClientHandler);
+		}
+
+		private static bool ServerCertificateCustomValidation(HttpRequestMessage requestMessage, X509Certificate2 certificate, X509Chain chain, SslPolicyErrors sslErrors)
+		{
+#if DEBUG
+			// It is possible inpect the certificate provided by server
+			Console.WriteLine($"Requested URI: {requestMessage.RequestUri}");
+			Console.WriteLine($"Effective date: {certificate.GetEffectiveDateString()}");
+			Console.WriteLine($"Exp date: {certificate.GetExpirationDateString()}");
+			Console.WriteLine($"Issuer: {certificate.Issuer}");
+			Console.WriteLine($"Subject: {certificate.Subject}");
+			Console.WriteLine($"Errors: {sslErrors}");
+			Console.WriteLine($"DropZoneConfig.AllowSSL: {RestApiCalls._DropZoneConfig.AllowSSL}");
+#endif
+			return sslErrors == SslPolicyErrors.None || (RestApiCalls._DropZoneConfig.AllowSSL && sslErrors == SslPolicyErrors.RemoteCertificateChainErrors);
 		}
 
 		#region Payload Helper Methods

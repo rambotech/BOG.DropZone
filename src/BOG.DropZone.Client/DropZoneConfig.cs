@@ -6,9 +6,15 @@
 	public class DropZoneConfig
 	{
 		/// <summary>
-		/// The URI of the drop zone ( e.g. http://localhost:5000)
+		/// The URI of the drop zone ( e.g. http://localhost:5000, https://localhost:5001, https://io.mydomain.com:5001)
 		/// </summary>
 		public string BaseUrl { get; set; } = null;
+		/// <summary>
+		/// Whether a self-signed certificate should be allowed.  Defaults to false.  Only use true for internal (outside internet) testing.
+		/// Internally, this will override an SslPolicyErrors.RemoteCertificateChainErrors state to be ignored since self-signed has no root authority
+		/// outside of the local server.
+		/// </summary>
+		public bool AllowSSL { get; set; } = false;
 		/// <summary>
 		/// The unique name of the drop zone
 		/// </summary>

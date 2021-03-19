@@ -46,6 +46,7 @@ namespace BOG.DropZone
 			if (valueHttps > 0)
 			{
 				useUrls.Add($"https://*:{valueHttps}");
+				host.UseSetting("https_port", valueHttps.ToString());
 				host.UseKestrel();
 			}
 
