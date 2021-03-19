@@ -1,7 +1,7 @@
 language: csharp
 solution: ./src/BOG.DropZone.sln
 mono: none
-dotnet: 5
+dotnet: 5.0
 script:
 - chmod +x ./deploy.sh 
 - ./deploy.sh
