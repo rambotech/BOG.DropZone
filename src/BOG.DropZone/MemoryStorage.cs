@@ -25,11 +25,6 @@ namespace BOG.DropZone
         public string AdminToken { get; set; } = string.Empty;
 
         /// <summary>
-        /// An optional path to persist payloads and references as files. If it is empty, payloads are only persisted in memory.
-        /// </summary>
-        public string PersistencePath { get; set; } = string.Empty;
-
-        /// <summary>
         /// The maximum number of dropzones to allow.
         /// </summary>
         public int MaxDropzones { get; set; } = 10;

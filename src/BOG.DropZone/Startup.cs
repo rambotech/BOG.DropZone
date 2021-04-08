@@ -118,9 +118,6 @@ namespace BOG.DropZone
 			storageArea.AdminToken = Configuration.GetValue<string>("AdminToken");
 			Console.WriteLine($"AdminToken: {storageArea.AdminToken}");
 
-			storageArea.PersistencePath = Configuration.GetValue<string>("PersistencePath");
-			Console.WriteLine($"PersistencePath: {storageArea.PersistencePath}");
-
 			var configValue = Configuration.GetValue<string>("MaxDropzones");
 			if (!string.IsNullOrWhiteSpace(configValue))
 			{

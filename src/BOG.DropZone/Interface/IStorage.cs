@@ -20,11 +20,6 @@ namespace BOG.DropZone.Interface
         string AdminToken { get; set; }
 
         /// <summary>
-        /// The root folder of the file system for persisting payloads and references (if memory is not sufficient).
-        /// </summary>
-        string PersistencePath { get; set; }
-
-        /// <summary>
         /// The list of dropzone information
         /// </summary>
         int MaxDropzones { get; set; }

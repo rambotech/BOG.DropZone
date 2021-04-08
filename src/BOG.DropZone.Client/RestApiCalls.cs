@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Net.Security;
@@ -50,7 +51,7 @@ namespace BOG.DropZone.Client
 			}
 
 			RestApiCalls._DropZoneConfig.BaseUrl = config.BaseUrl;
-			RestApiCalls._DropZoneConfig.AllowSSL = config.AllowSSL;
+			RestApiCalls._DropZoneConfig.IgnoreSslCertProblems = config.IgnoreSslCertProblems;
 			RestApiCalls._DropZoneConfig.ZoneName = config.ZoneName;
 			RestApiCalls._DropZoneConfig.AccessToken = config.AccessToken;
 			RestApiCalls._DropZoneConfig.AdminToken = config.AdminToken;
@@ -67,15 +68,31 @@ namespace BOG.DropZone.Client
 		{
 #if DEBUG
 			// It is possible inpect the certificate provided by server
-			Console.WriteLine($"Requested URI: {requestMessage.RequestUri}");
-			Console.WriteLine($"Effective date: {certificate.GetEffectiveDateString()}");
-			Console.WriteLine($"Exp date: {certificate.GetExpirationDateString()}");
-			Console.WriteLine($"Issuer: {certificate.Issuer}");
-			Console.WriteLine($"Subject: {certificate.Subject}");
-			Console.WriteLine($"Errors: {sslErrors}");
-			Console.WriteLine($"DropZoneConfig.AllowSSL: {RestApiCalls._DropZoneConfig.AllowSSL}");
+			Debug.WriteLine($"Requested URI: {requestMessage.RequestUri}");
+			Debug.WriteLine($"Effective date: {certificate.GetEffectiveDateString()}");
+			Debug.WriteLine($"Expiration date: {certificate.GetExpirationDateString()}");
+			Debug.WriteLine($"Issuer: {certificate.Issuer}");
+			Debug.WriteLine($"Subject: {certificate.Subject}");
+			Debug.WriteLine($"Errors: {sslErrors}");
+			Debug.WriteLine($"DropZoneConfig.AllowSSL: {RestApiCalls._DropZoneConfig.IgnoreSslCertProblems}");
 #endif
-			return sslErrors == SslPolicyErrors.None || (RestApiCalls._DropZoneConfig.AllowSSL && sslErrors == SslPolicyErrors.RemoteCertificateChainErrors);
+			var result = false;
+			switch (sslErrors)
+			{
+				case SslPolicyErrors.None:
+					result = true;
+					break;
+
+				case SslPolicyErrors.RemoteCertificateChainErrors:
+				case SslPolicyErrors.RemoteCertificateNameMismatch:
+				case SslPolicyErrors.RemoteCertificateNotAvailable:
+					result = RestApiCalls._DropZoneConfig.IgnoreSslCertProblems;
+					break;
+
+				default: 
+					break;
+			}
+			return result;
 		}
 
 		#region Payload Helper Methods
