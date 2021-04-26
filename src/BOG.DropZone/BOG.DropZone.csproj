@@ -5,8 +5,8 @@
     <RuntimeIdentifiers>win10-x64</RuntimeIdentifiers>
     <RuntimeIdentifiers>linux-x64</RuntimeIdentifiers>
     <RuntimeIdentifiers>linux-arm</RuntimeIdentifiers>
-    <Version>2.1.1</Version>
-    <AssemblyVersion>2.1.1.0</AssemblyVersion>
+    <Version>2.1.2</Version>
+    <AssemblyVersion>2.1.2.0</AssemblyVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -19,11 +19,11 @@
 
   <PropertyGroup>
     <PublishWithAspNetCoreTargetManifest>false</PublishWithAspNetCoreTargetManifest>
-    <FileVersion>2.1.1.0</FileVersion>
+    <FileVersion>2.1.2.0</FileVersion>
     <Authors>John J Schultz</Authors>
     <Company />
     <Description>A standalone interapplication communication point</Description>
-    <Copyright>(c) 2017-2020, John J Schultz</Copyright>
+    <Copyright>(c) 2017-2021, John J Schultz</Copyright>
     <PackageProjectUrl>https://github.com/rambotech/BOG.DropZone</PackageProjectUrl>
     <PackageIconUrl></PackageIconUrl>
     <RepositoryUrl>https://github.com/rambotech/BOG.DropZone</RepositoryUrl>
@@ -34,17 +34,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BOG.SwissArmyKnife" Version="1.7.7" />
+    <PackageReference Include="BOG.SwissArmyKnife" Version="1.7.8" />
     <PackageReference Include="LettuceEncrypt" Version="1.0.1" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.7" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.5" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.PlatformAbstractions" Version="1.1.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="5.0.2" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.1.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.1.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.1.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.1.3" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,5 +1,8 @@
 Release Notes:
 
+2.1.2 -- 2021.04.25
+* Security update from BOG.SwissArmyKnife
+
 2.1.1 -- 2021.01.04
 * Add Metrics as endpoint, to override the default values at any time.
 
