@@ -72,6 +72,7 @@ namespace BOG.DropZone.Controllers
 		/// <param name="dropzoneName">the dropzone identifier</param>
 		/// <param name="payload">the content to transfer</param>
 		/// <param name="recipient">(optional): a specific identifier for a specfic  recipient of the payload.</param>
+		/// <param name="tracking">(optional): a tracking key which can later be used to check if the payload was picked up.</param>
 		/// <param name="expiresOn">(optional): when the value should no longer be returned.</param>
 		/// <returns>varies: see method declaration</returns>
 		[HttpPost("payload/dropoff/{dropzoneName}", Name = "DropoffPayload")]
@@ -86,9 +87,11 @@ namespace BOG.DropZone.Controllers
 				[FromBody] string payload,
 				[FromRoute] string dropzoneName,
 				[FromQuery] string recipient = null,
+				[FromQuery] string tracking = null,
 				[FromQuery] DateTime expiresOn = default)
 		{
 			var recipientKey = string.IsNullOrWhiteSpace(recipient) ? "*" : recipient;
+			var trackingKey = string.IsNullOrWhiteSpace(tracking) ? string.Empty : tracking;
 			var expirationTime = expiresOn == default ? DateTime.MaxValue : expiresOn;
 			var clientIp = _Accessor.HttpContext.Connection.RemoteIpAddress.ToString();
 			if (!IsValidatedClient(clientIp, AccessToken, TokenType.Access, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
@@ -127,11 +130,68 @@ namespace BOG.DropZone.Controllers
 				dropzone.Payloads[recipientKey].Enqueue(new StoredValue
 				{
 					Value = payload,
-					Expires = expirationTime
+					Expires = expirationTime,
+					Tracking = trackingKey
 				});
 				dropzone.Statistics.LastDropoff = DateTime.Now;
 
 				return StatusCode(201, "Payload accepted");
+			}
+		}
+
+		/// <summary>
+		/// Use the recipient and tracking number combination to determine if a payload, previously dropped off, 
+		/// is still in the pickup area.
+		/// </summary>
+		/// <param name="AccessToken">Optional: access token value if used.</param>
+		/// <param name="dropzoneName">the dropzone identifier</param>
+		/// <param name="recipient">(optional): a specific identifier for a specfic recipient of the payload.</param>
+		/// <param name="tracking">(optional): a tracking key which can later be used to check if the payload was picked up.</param>
+		/// <returns>204: no in the pickup area (either picked up or expired).  202: the payload is awaiting pickup.</returns>
+		/// <remarks>
+		/// The same arguments must be used for recipient and tracking query parameters, as used when the payload was dropped off.
+		/// Otherwsie, unpredictble answers will ok.  The response is an empty text body: the HTTP Response code contins the answer.
+		/// </remarks>
+		[HttpGet("payload/inquiry/{dropzoneName}", Name = "PayloadInquiry")]
+		[ProducesResponseType(202, Type = typeof(string))]
+		[ProducesResponseType(204, Type = typeof(string))]
+		[ProducesResponseType(401)]
+		[ProducesResponseType(429, Type = typeof(string))]
+		[ProducesResponseType(500)]
+		[Produces("text/plain")]
+		public IActionResult PayloadInquiry(
+				[FromHeader] string AccessToken,
+				[FromRoute] string dropzoneName,
+				[FromQuery] string recipient = null,
+				[FromQuery] string tracking = null)
+		{
+			var recipientKey = string.IsNullOrWhiteSpace(recipient) ? "*" : recipient;
+			var trackingKey = string.IsNullOrWhiteSpace(tracking) ? string.Empty : tracking;
+			var clientIp = _Accessor.HttpContext.Connection.RemoteIpAddress.ToString();
+			if (!IsValidatedClient(clientIp, AccessToken, TokenType.Access, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
+			{
+				return Unauthorized();
+			}
+			lock (_LockDropZoneInfo)
+			{
+				if (!_Storage.DropZoneList.ContainsKey(dropzoneName))
+				{
+					if (_Storage.DropZoneList.Count >= _Storage.MaxDropzones)
+					{
+						return StatusCode(429, $"Can't create new dropzone {dropzoneName}.. at maximum of {_Storage.MaxDropzones} dropzone definitions.");
+					}
+					CreateDropZone(dropzoneName);
+				}
+				var responseCode = 204;
+				var dropzone = _Storage.DropZoneList[dropzoneName];
+				if (dropzone.Payloads.ContainsKey(recipientKey))
+				{
+					if (dropzone.Payloads[recipientKey].Where(o => string.Compare(o.Tracking, trackingKey, false) == 0).FirstOrDefault() != null)
+					{
+						responseCode = 202;
+					}
+				}
+				return StatusCode(responseCode, responseCode == 202 ? "Payload accepted" : "Payload not found");
 			}
 		}
 
