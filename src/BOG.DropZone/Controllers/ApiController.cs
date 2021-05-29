@@ -24,8 +24,8 @@ namespace BOG.DropZone.Controllers
 		private readonly IStorage _Storage;
 		private readonly IAssemblyVersion _AssemblyVersion;
 
-		private readonly object _LockClientWatchList = new object();
-		private readonly object _LockDropZoneInfo = new object();
+		private readonly object _LockClientWatchList = new ();
+		private readonly object _LockDropZoneInfo = new ();
 
 		/// <summary>
 		/// Instantiated via injection
@@ -312,7 +312,6 @@ namespace BOG.DropZone.Controllers
 		/// </summary>
 		/// <param name="AccessToken">Optional: access token value if used.</param>
 		/// <param name="dropzoneName">the dropzone identifier</param>
-		/// <param name="payload">the content to transfer</param>
 		/// <param name="metrics">the max counts and max sizes of payloads and references.</param>
 		/// <returns>varies: see method declaration</returns>
 		[HttpPost("metrics/{dropzoneName}", Name = "SetMetrics")]
@@ -324,7 +323,6 @@ namespace BOG.DropZone.Controllers
 		[Produces("text/plain")]
 		public IActionResult SetMetrics(
 				[FromHeader] string AccessToken,
-				[FromBody] string payload,
 				[FromRoute] string dropzoneName,
 				[FromBody] DropZoneMetrics metrics)
 		{
@@ -445,7 +443,7 @@ namespace BOG.DropZone.Controllers
 				dropzone.References.Remove(key, out StoredValue ignored);
 				dropzone.References.AddOrUpdate(key, fixedValue, (k, o) => fixedValue);
 				dropzone.Statistics.ReferenceSize += fixedValue.Value.Length;
-				dropzone.Statistics.ReferenceCount = dropzone.References.Count();
+				dropzone.Statistics.ReferenceCount = dropzone.References.Count;
 				dropzone.Statistics.LastSetReference = DateTime.Now;
 				return StatusCode(201, "Reference accepted");
 			}
@@ -550,7 +548,7 @@ namespace BOG.DropZone.Controllers
 					}
 					dropzone.Statistics.ReferenceSize -= len;
 				}
-				dropzone.Statistics.ReferenceCount = dropzone.References.Count();
+				dropzone.Statistics.ReferenceCount = dropzone.References.Count;
 				dropzone.Statistics.LastSetReference = DateTime.Now;
 				return StatusCode(200, "OK");
 			}
@@ -591,7 +589,7 @@ namespace BOG.DropZone.Controllers
 					CreateDropZone(dropzoneName);
 				}
 				var dropzone = _Storage.DropZoneList[dropzoneName];
-				List<string> returnList = new List<string>();
+				List<string> returnList = new ();
 				if (!dropzone.References.IsEmpty)
 				{
 					returnList = _Storage.DropZoneList[dropzoneName].References
