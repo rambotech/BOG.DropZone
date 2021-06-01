@@ -60,7 +60,7 @@ namespace BOG.DropZone.Test
 					return;
 				}
 
-				Console.WriteLine("SetMetrics()... fails.");
+				Console.WriteLine("SetMetrics()...");
 				result = await restApiUpdateMaster.SetMetrics(new Common.Dto.DropZoneMetrics
 				{
 					MaxPayloadCount = 1,
@@ -171,8 +171,20 @@ namespace BOG.DropZone.Test
 				DisplayResult(result, 0);
 
 				var recipient = "Tim";
+				var tracking = "ABC123";
 				Console.WriteLine($"Add \"Tim's payload\" for {recipient} queue in the zone ... ");
-				result = await restApiUpdateMaster.DropOff("Tim's payload", recipient);
+				result = await restApiUpdateMaster.DropOff("Tim's payload", new PayloadMetadata { 
+					Recipient = recipient,
+					Tracking = tracking
+				});
+				DisplayResult(result, 0);
+
+				Console.WriteLine($"Query payload tracking number for recipient {recipient} ...");
+				result = await restApiUpdateMaster.Inquiry(tracking, recipient);
+				DisplayResult(result, 0);
+
+				Console.WriteLine($"Query payload bad tracking number for recipient {recipient} ...");
+				result = await restApiUpdateMaster.Inquiry(tracking+"X", recipient);
 				DisplayResult(result, 0);
 
 				Console.WriteLine($"Retrieve payload for recipient {recipient} ...");
@@ -199,7 +211,11 @@ namespace BOG.DropZone.Test
 				for (int index = 0; index < 5; index++)
 				{
 					Console.WriteLine($"Add {index}: {set[index % 3]}... ");
-					result = await restApiUpdateMaster.DropOff(set[index % 3] + $"{index}", DateTime.Now.AddSeconds(3 + index));
+					result = await restApiUpdateMaster.DropOff(set[index % 3] + $"{index}",
+						new PayloadMetadata
+						{
+							ExpiresOn = DateTime.Now.AddSeconds(3 + index)
+						});
 					DisplayResult(result, 0);
 				}
 

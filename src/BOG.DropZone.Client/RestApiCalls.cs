@@ -39,17 +39,6 @@ namespace BOG.DropZone.Client
 				}
 			}
 
-			_Client.Timeout = TimeSpan.FromSeconds(config.TimeoutSeconds);
-			_Client.BaseAddress = new Uri(config.BaseUrl);
-			if (!string.IsNullOrEmpty(config.AccessToken))
-			{
-				_Client.DefaultRequestHeaders.Add("AccessToken", config.AccessToken);
-			}
-			if (!string.IsNullOrEmpty(config.AdminToken))
-			{
-				_Client.DefaultRequestHeaders.Add("AdminToken", config.AdminToken);
-			}
-
 			RestApiCalls._DropZoneConfig.BaseUrl = config.BaseUrl;
 			RestApiCalls._DropZoneConfig.IgnoreSslCertProblems = config.IgnoreSslCertProblems;
 			RestApiCalls._DropZoneConfig.ZoneName = config.ZoneName;
@@ -61,7 +50,21 @@ namespace BOG.DropZone.Client
 			RestApiCalls._DropZoneConfig.TimeoutSeconds = config.TimeoutSeconds;
 
 			httpClientHandler.ServerCertificateCustomValidationCallback = ServerCertificateCustomValidation;
-			_Client = new HttpClient(httpClientHandler);
+
+			_Client = new HttpClient(httpClientHandler)
+			{
+				Timeout = TimeSpan.FromSeconds(config.TimeoutSeconds),
+				BaseAddress = new Uri(config.BaseUrl)
+			};
+			if (!string.IsNullOrEmpty(config.AccessToken))
+			{
+				_Client.DefaultRequestHeaders.Add("AccessToken", config.AccessToken);
+			}
+			if (!string.IsNullOrEmpty(config.AdminToken))
+			{
+				_Client.DefaultRequestHeaders.Add("AdminToken", config.AdminToken);
+			}
+
 		}
 
 		private static bool ServerCertificateCustomValidation(HttpRequestMessage requestMessage, X509Certificate2 certificate, X509Chain chain, SslPolicyErrors sslErrors)
@@ -89,7 +92,7 @@ namespace BOG.DropZone.Client
 					result = RestApiCalls._DropZoneConfig.IgnoreSslCertProblems;
 					break;
 
-				default: 
+				default:
 					break;
 			}
 			return result;
@@ -310,50 +313,16 @@ namespace BOG.DropZone.Client
 		/// Place a payload into a drop zone's queue.
 		/// </summary>
 		/// <param name="payload">The content to queue as a string value</param>
+		/// <param name="metadata">Hanling for the metadatae.</param>
 		/// <returns>
 		/// Result: Content-Type = string, no payload
 		/// </returns>
 		public async Task<Result> DropOff(string data)
 		{
-			return await DropOff(data, default, null);
+			return await DropOff(data, new PayloadMetadata());
 		}
 
-		/// <summary>
-		/// Place a payload into a drop zone's queue.
-		/// </summary>
-		/// <param name="payload">The content to queue as a string value</param>
-		/// <param name="expires">A perish time when the payload should be discarded</param>
-		/// <returns>
-		/// Result: Content-Type = string, no payload
-		/// </returns>
-		public async Task<Result> DropOff(string data, DateTime expires)
-		{
-			return await DropOff(data, expires, null);
-		}
-
-		/// <summary>
-		/// Place a payload into a drop zone's queue.
-		/// </summary>
-		/// <param name="payload">The content to queue as a string value</param>
-		/// <param name="recipient">Drop the payload into a specific recipient's queue</param>
-		/// <returns>
-		/// Result: Content-Type = string, no payload
-		/// </returns>
-		public async Task<Result> DropOff(string data, string recipient)
-		{
-			return await DropOff(data, default, recipient);
-		}
-
-		/// <summary>
-		/// Place a payload into a drop zone's queue. Note: Use text/plain for the content-type.
-		/// </summary>
-		/// <param name="payload">The content to queue as a string value</param>
-		/// <param name="expires">A perish time when the payload should be discarded</param>
-		/// <param name="recipient">Drop the payload into a specific recipient's queue</param>
-		/// <returns>
-		/// Result: Content-Type = string, no payload
-		/// </returns>
-		public async Task<Result> DropOff(string data, DateTime expires, string recipient)
+		public async Task<Result> DropOff(string data, PayloadMetadata metadata)
 		{
 			var result = new Result
 			{
@@ -362,25 +331,26 @@ namespace BOG.DropZone.Client
 			try
 			{
 				var datagram = BuildPayloadGram(data);
-				var thisRecipient = string.IsNullOrWhiteSpace(recipient) ? "*" : recipient;
+				var thisRecipient = string.IsNullOrWhiteSpace(metadata.Recipient) ? string.Empty : metadata.Recipient;
 				var url = string.Format("{0}/{1}/{2}",
 					_DropZoneConfig.BaseUrl,
 					"api/payload/dropoff",
 					System.Web.HttpUtility.UrlEncode(_DropZoneConfig.ZoneName)
 				);
 				var builder = new UriBuilder(url);
+				var query = HttpUtility.ParseQueryString(builder.Query);
 				if (thisRecipient != "*")
 				{
-					var query = HttpUtility.ParseQueryString(builder.Query);
 					query["recipient"] = thisRecipient;
 					builder.Query = query.ToString();
 				}
-				if (expires != default)
+				query["expires"] = metadata.ExpiresOn.ToString();
+				if (!string.IsNullOrWhiteSpace(metadata.Tracking))
 				{
-					var query = HttpUtility.ParseQueryString(builder.Query);
-					query["expires"] = expires.ToString();
-					builder.Query = query.ToString();
+					var tracking = HttpUtility.ParseQueryString(builder.Query);
+					query["tracking"] = metadata.Tracking;
 				}
+				builder.Query = query.ToString();
 				var response = await _Client.PostAsync(builder.ToString(),
 					new StringContent(
 						datagram,
@@ -514,6 +484,107 @@ namespace BOG.DropZone.Client
 				result.HandleAs = Result.State.DataCompromised;
 				result.Message = errDataGram.Message;
 				result.Exception = errDataGram.InnerException;
+			}
+			catch (HttpRequestException errHttp)
+			{
+				result.HandleAs = Result.State.ConnectionFailed;
+				result.Exception = errHttp;
+			}
+			catch (Exception exFatal)
+			{
+				result.HandleAs = Result.State.Fatal;
+				result.Exception = exFatal;
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Queries a payload with the tracking reference from the specified drop zone.
+		/// </summary>
+		/// <param name="tracking">The tracking reference to locate in the payloads of this dropzone (i.e. dropped off but awating pickup).</param>
+		/// <returns>
+		/// Result: Content-Type = string (user-defined content), success has payload
+		/// </returns>
+		/// <returns></returns>
+		public async Task<Result> Inquiry(string tracking)
+		{
+			return await Inquiry(tracking, string.Empty);
+		}
+
+		/// <summary>
+		/// Queries a payload with the tracking reference from the specified drop zone. A specific recipient may be spcified for an AND match.
+		/// </summary>
+		/// <param name="tracking">The tracking reference to locate in the payloads of this dropzone (i.e. dropped off but awating pickup).</param>
+		/// <param name="recipient">optional: the tracking number AND recipient must match.</param>
+		/// <returns>
+		/// Result: Content-Type = string (user-defined content), success has payload
+		/// </returns>
+		/// <returns></returns>
+		public async Task<Result> Inquiry(string tracking, string recipient)
+		{
+			var result = new Result
+			{
+				HandleAs = Result.State.OK
+			};
+			try
+			{
+				var thisRecipient = string.IsNullOrWhiteSpace(recipient) ? string.Empty : recipient;
+				var url = string.Format("{0}/{1}/{2}",
+					_DropZoneConfig.BaseUrl,
+					"api/payload/inquiry",
+					System.Web.HttpUtility.UrlEncode(_DropZoneConfig.ZoneName)
+				);
+				var builder = new UriBuilder(url);
+				var query = HttpUtility.ParseQueryString(builder.Query);
+				if (thisRecipient != "*")
+				{
+					query["recipient"] = thisRecipient;
+				}
+				if (!string.IsNullOrWhiteSpace(tracking))
+				{
+					query["tracking"] = tracking;
+				}
+				builder.Query = query.ToString();
+				var response = await _Client.GetAsync(builder.ToString());
+				result.StatusCode = response.StatusCode;
+				result.Message = response.ReasonPhrase;
+				switch (response.StatusCode)
+				{
+					case HttpStatusCode.Accepted:
+						result.Content = "true";
+						result.HandleAs = Result.State.OK;
+						break;
+
+					case HttpStatusCode.NoContent:
+						result.Content = "false";
+						result.HandleAs = Result.State.NoDataAvailable;
+						break;
+
+					case HttpStatusCode.Unauthorized:
+						result.HandleAs = Result.State.InvalidAuthentication;
+						break;
+
+					case HttpStatusCode.BadRequest:
+						result.HandleAs = Result.State.UnexpectedResponse;
+						result.Message = response.ReasonPhrase;
+						break;
+
+					case HttpStatusCode.Conflict:
+						result.HandleAs = Result.State.OverLimit;
+						result.Message = response.ReasonPhrase;
+						break;
+
+					case HttpStatusCode.InternalServerError:
+						result.HandleAs = Result.State.ServerError;
+						result.Message = response.ReasonPhrase;
+						break;
+
+					default:
+						result.HandleAs = Result.State.UnexpectedResponse;
+						result.Message = response.ReasonPhrase;
+						break;
+
+				}
 			}
 			catch (HttpRequestException errHttp)
 			{
