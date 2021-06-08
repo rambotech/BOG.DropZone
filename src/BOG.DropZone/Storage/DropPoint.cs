@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
 using BOG.DropZone.Common.Dto;
 
 namespace BOG.DropZone.Storage
@@ -15,12 +16,13 @@ namespace BOG.DropZone.Storage
 
         /// <summary>
         /// The payload storage. Key is empty or null for any, otherwise the optional identifier on the DropOffPayload or PickUpPayload endpoints.
+        /// The dictionary for stored values uses a key of 
         /// </summary>
-        public ConcurrentDictionary<string, ConcurrentQueue<StoredValue>> Payloads { get; set; } = new ConcurrentDictionary<string, ConcurrentQueue<StoredValue>>();
+        public Dictionary<string, Dictionary<long, StoredValue>> Payloads { get; set; } = new Dictionary<string, Dictionary<long, StoredValue>>();
 
         /// <summary>
         /// The reference storage.
         /// </summary>
-        public ConcurrentDictionary<string, StoredValue> References { get; set; } = new ConcurrentDictionary<string, StoredValue>();
+        public Dictionary<string, StoredValue> References { get; set; } = new Dictionary<string, StoredValue>();
     }
 }

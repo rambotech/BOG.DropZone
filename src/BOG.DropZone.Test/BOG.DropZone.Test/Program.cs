@@ -7,6 +7,9 @@ using Newtonsoft.Json;
 
 namespace BOG.DropZone.Test
 {
+
+	// Functions as both an example, and a functional test.
+	// - Make 
 	public class WorkerComm
 	{
 		public string RecipientID { get; set; }

@@ -26,6 +26,8 @@ namespace BOG.DropZone
 		public Startup(IConfiguration configuration)
 		{
 			Configuration = configuration;
+			var x = DateTime.MinValue.Ticks;
+			var x1 = DateTime.MaxValue.Ticks;
 		}
 
 		/// <summary>
@@ -73,7 +75,7 @@ namespace BOG.DropZone
 			if (valueHttp == 80 && valueHttps == 443 && useLetsEncrypt)
 			{
 				// Register Let's Encrypt for SSL.
-				services.AddLettuceEncrypt(o =>
+				services.AddLettuceEncrypt(o => 
 					new LettuceEncrypt.LettuceEncryptOptions
 					{
 						AcceptTermsOfService = Configuration.GetValue<bool>("LettuceEncrypt:AcceptTermsOfService"),

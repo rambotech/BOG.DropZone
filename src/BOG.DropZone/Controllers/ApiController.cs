@@ -24,8 +24,8 @@ namespace BOG.DropZone.Controllers
 		private readonly IStorage _Storage;
 		private readonly IAssemblyVersion _AssemblyVersion;
 
-		private readonly object _LockClientWatchList = new ();
-		private readonly object _LockDropZoneInfo = new ();
+		private readonly object _LockClientWatchList = new();
+		private readonly object _LockDropZoneInfo = new();
 
 		/// <summary>
 		/// Instantiated via injection
@@ -123,11 +123,11 @@ namespace BOG.DropZone.Controllers
 				dropzone.Statistics.PayloadCount++;
 				if (!dropzone.Payloads.ContainsKey(recipientKey))
 				{
-					dropzone.Payloads.TryAdd(recipientKey, new System.Collections.Concurrent.ConcurrentQueue<StoredValue>());
+					dropzone.Payloads.TryAdd(recipientKey, new Dictionary<long, StoredValue>());
 					dropzone.Statistics.Recipients.Add(recipientKey, 0);
 				}
 				dropzone.Statistics.Recipients[recipientKey]++;
-				dropzone.Payloads[recipientKey].Enqueue(new StoredValue
+				dropzone.Payloads[recipientKey].TryAdd(DateTime.Now.Ticks, new StoredValue
 				{
 					Value = payload,
 					Expires = expirationTime,
@@ -186,7 +186,7 @@ namespace BOG.DropZone.Controllers
 				var dropzone = _Storage.DropZoneList[dropzoneName];
 				if (dropzone.Payloads.ContainsKey(recipientKey))
 				{
-					if (dropzone.Payloads[recipientKey].Where(o => string.Compare(o.Tracking, trackingKey, false) == 0).FirstOrDefault() != null)
+					if (dropzone.Payloads[recipientKey].Where(o => string.Compare(o.Value.Tracking, trackingKey, false) == 0).FirstOrDefault().Value != null)
 					{
 						responseCode = 202;
 					}
@@ -238,9 +238,13 @@ namespace BOG.DropZone.Controllers
 				bool recipientKeyIsKnown = dropzone.Payloads.ContainsKey(recipientKey);
 				bool payloadAvailable = false;
 				int retriesRemaining = 3;
-				while (recipientKeyIsKnown && !dropzone.Payloads[recipientKey].IsEmpty && !payloadAvailable)
+
+				// Change to determine the lowest Tick value in the key, capture from the list, and remove it.
+
+				while (recipientKeyIsKnown && dropzone.Payloads[recipientKey].Count > 0 && !payloadAvailable)
 				{
-					if (!dropzone.Payloads[recipientKey].TryDequeue(out payload))
+					var key = dropzone.Payloads[recipientKey].Keys.OrderBy(o => o).FirstOrDefault();
+					if (key == 0) // no payloads queued 
 					{
 						if (retriesRemaining > 0)
 						{
@@ -250,12 +254,14 @@ namespace BOG.DropZone.Controllers
 						}
 						return StatusCode(500, $"Dropzone exists with payloads, but failed to acquire a payload after three attempts.");
 					}
+					payload = dropzone.Payloads[recipientKey][key];
 					dropzone.Statistics.PayloadSize -= payload.Value.Length;
 					dropzone.Statistics.PayloadCount--;
 					dropzone.Statistics.Recipients[recipientKey]--;
 					if (payload.Expires < DateTime.Now)
 					{
 						dropzone.Statistics.PayloadExpiredCount++;
+						dropzone.Payloads[recipientKey].Remove(key);
 						continue;
 					}
 					dropzone.Statistics.LastPickup = DateTime.Now;
@@ -440,8 +446,8 @@ namespace BOG.DropZone.Controllers
 					return StatusCode(429, $"Can't accept: Exceeds maximum reference count of {dropzone.Statistics.Metrics.MaxReferencesCount}");
 				}
 				dropzone.Statistics.ReferenceSize -= sizeOffset;
-				dropzone.References.Remove(key, out StoredValue ignored);
-				dropzone.References.AddOrUpdate(key, fixedValue, (k, o) => fixedValue);
+				dropzone.References.Remove(key);
+				dropzone.References.Add(key, fixedValue);
 				dropzone.Statistics.ReferenceSize += fixedValue.Value.Length;
 				dropzone.Statistics.ReferenceCount = dropzone.References.Count;
 				dropzone.Statistics.LastSetReference = DateTime.Now;
@@ -488,7 +494,7 @@ namespace BOG.DropZone.Controllers
 				}
 				var dropzone = _Storage.DropZoneList[dropzoneName];
 				string result = null;
-				if (dropzone.References.IsEmpty || !dropzone.References.ContainsKey(key))
+				if (dropzone.References.Count == 0 || !dropzone.References.ContainsKey(key))
 				{
 					return StatusCode(204);
 				}
@@ -589,8 +595,8 @@ namespace BOG.DropZone.Controllers
 					CreateDropZone(dropzoneName);
 				}
 				var dropzone = _Storage.DropZoneList[dropzoneName];
-				List<string> returnList = new ();
-				if (!dropzone.References.IsEmpty)
+				List<string> returnList = new();
+				if (dropzone.References.Count == 0)
 				{
 					returnList = _Storage.DropZoneList[dropzoneName].References
 					.Where(o => o.Value.Expires > DateTime.Now)
