@@ -373,39 +373,47 @@ namespace BOG.DropZone.Test
 
 				Console.Write("GetReference() [found]... ");
 				result = await restApiUpdateMaster.GetReference("Test-Ref01");
-				Console.WriteLine(result.HandleAs == Result.State.NoDataAvailable ? "OK" : $"BAD, expected: NoDataAvailable, got: {result.HandleAs}");
+				Console.WriteLine(result.HandleAs == Result.State.OK ? "OK" : $"BAD, expected: OK, got: {result.HandleAs}");
 				Console.WriteLine(result.Content == "test ref 1" ? "OK" : $"BAD, expected: test ref 1, got: {result.Content}");
 
-				// I STOPPED HERE //
-				Console.ReadLine();
-				return;
-
-				Console.WriteLine("GetReference()... ");
-				result = await restApiUpdateMaster.GetReference("Test-Ref01");
-				DisplayResult(result, 1000);
-
-				Console.WriteLine("SetReference()... Perishable");
+				Console.Write("SetReference()... Perishable");
 				result = await restApiUpdateMaster.SetReference("Test-Ref02-Perish-5-Sec", "this will go way", DateTime.Now.AddSeconds(5));
-				DisplayResult(result, 1000);
+				Console.WriteLine(result.HandleAs == Result.State.OK ? "OK" : $"BAD, expected: OK, got: {result.HandleAs}");
 
 				Console.WriteLine("ListReferences()... shows static and perishable");
 				result = await restApiUpdateMaster.ListReferences();
-				DisplayResult(result, -1);
+				Console.WriteLine($"{result.HandleAs}");
+				{
+					var list = Serializer<System.Collections.Generic.List<System.String>>.FromJson(result.Content);
+					Console.Write("  list.Count()... ");
+					Console.WriteLine(list.Count == 2 ? "OK" : $"BAD, expected: 1, got: {list.Count}");
+				}
 
 				Console.WriteLine("GetReference()... Perishable ... < 1 sec (finds it)");
 				result = await restApiUpdateMaster.GetReference("Test-Ref02-Perish-5-Sec");
-				DisplayResult(result, 1000);
+				Console.WriteLine(result.HandleAs == Result.State.OK ? "OK" : $"BAD, expected: OK, got: {result.HandleAs}");
+				Console.WriteLine(result.Content == "this will go way" ? "OK" : $"BAD, expected: this will go way, got: {result.Content}");
 
 				Console.WriteLine("Wait 5 seconds for reference to expire...");
 				Thread.Sleep(5000);
 
 				Console.WriteLine("ListReferences()... shows static only... perishable has expired");
 				result = await restApiUpdateMaster.ListReferences();
-				DisplayResult(result, -1);
+				Console.WriteLine($"{result.HandleAs}");
+				{
+					var list = Serializer<System.Collections.Generic.List<System.String>>.FromJson(result.Content);
+					Console.Write("  list.Count()... ");
+					Console.WriteLine(list.Count == 1 ? "OK" : $"BAD, expected: 1, got: {list.Count}");
+				}
 
 				Console.WriteLine("GetReference()... Perishable ... > 5 sec (perished)");
-				result = await restApiUpdateMaster.GetReference("RefTimed-Good");
-				DisplayResult(result, -1);
+				result = await restApiUpdateMaster.GetReference("Test-Ref02-Perish-5-Sec");
+				Console.WriteLine(result.HandleAs == Result.State.NoDataAvailable ? "OK" : $"BAD, expected: NoDataAvailable, got: {result.HandleAs}");
+				Console.WriteLine(result.Content == string.Empty ? "OK" : $"BAD, expected: missing, got: {result.Content}");
+
+				// I STOPPED HERE //
+				Console.ReadLine();
+				return;
 
 				Console.WriteLine("SetReference()");
 				result = await restApiUpdateMaster.SetReference("Test-Ref03", "this will go way");

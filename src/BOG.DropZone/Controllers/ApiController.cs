@@ -610,9 +610,9 @@ namespace BOG.DropZone.Controllers
 				}
 				var dropzone = _Storage.DropZoneList[dropzoneName];
 				List<string> returnList = new();
-				if (dropzone.References.Count == 0)
+				if (dropzone.References.Count > 0)
 				{
-					returnList = _Storage.DropZoneList[dropzoneName].References
+					returnList = dropzone.References
 					.Where(o => o.Value.Expires > DateTime.Now)
 					.Select(o => o.Key).ToList();
 					returnList.Sort();
