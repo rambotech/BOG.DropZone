@@ -1,7 +1,14 @@
 Release Notes:
 
+2.2.0 -- 2021.06.08
+* Changed from queue to dictionary internally for more controlled handling of expired payloads.
+* Added an optional tracking query parameter to dropoff for the caller to later inquire whether the payload is still in the pickup queue.
+* Added an optional expireOn parameter to the inquiry endpoint to allow the payload depositor to change the expiration time.
+* Added /api/payload/inquiry endpoint.
+
 2.1.2 -- 2021.04.25
 * Security update from BOG.SwissArmyKnife
+* Target framework changed from .NET Core 2.1 to .NET5.0
 
 2.1.1 -- 2021.01.04
 * Add Metrics as endpoint, to override the default values at any time.

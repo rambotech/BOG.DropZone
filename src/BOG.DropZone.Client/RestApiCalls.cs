@@ -70,7 +70,7 @@ namespace BOG.DropZone.Client
 		private static bool ServerCertificateCustomValidation(HttpRequestMessage requestMessage, X509Certificate2 certificate, X509Chain chain, SslPolicyErrors sslErrors)
 		{
 #if DEBUG
-			// It is possible inpect the certificate provided by server
+			// It is possible to inpect the certificate provided by server
 			Debug.WriteLine($"Requested URI: {requestMessage.RequestUri}");
 			Debug.WriteLine($"Effective date: {certificate.GetEffectiveDateString()}");
 			Debug.WriteLine($"Expiration date: {certificate.GetExpirationDateString()}");
@@ -499,28 +499,16 @@ namespace BOG.DropZone.Client
 		}
 
 		/// <summary>
-		/// Queries a payload with the tracking reference from the specified drop zone.
-		/// </summary>
-		/// <param name="tracking">The tracking reference to locate in the payloads of this dropzone (i.e. dropped off but awating pickup).</param>
-		/// <returns>
-		/// Result: Content-Type = string (user-defined content), success has payload
-		/// </returns>
-		/// <returns></returns>
-		public async Task<Result> Inquiry(string tracking)
-		{
-			return await Inquiry(tracking, string.Empty);
-		}
-
-		/// <summary>
 		/// Queries a payload with the tracking reference from the specified drop zone. A specific recipient may be spcified for an AND match.
 		/// </summary>
 		/// <param name="tracking">The tracking reference to locate in the payloads of this dropzone (i.e. dropped off but awating pickup).</param>
 		/// <param name="recipient">optional: the tracking number AND recipient must match.</param>
+		/// <param name="expireOn">optional: a new expiration time for the payload (null or empty string for no change).</param>
 		/// <returns>
 		/// Result: Content-Type = string (user-defined content), success has payload
 		/// </returns>
 		/// <returns></returns>
-		public async Task<Result> Inquiry(string tracking, string recipient)
+		public async Task<Result> Inquiry(string tracking, string recipient, string expireOn)
 		{
 			var result = new Result
 			{
@@ -544,20 +532,21 @@ namespace BOG.DropZone.Client
 				{
 					query["tracking"] = tracking;
 				}
+				if (!string.IsNullOrWhiteSpace(expireOn))
+				{
+					query["expireOn"] = expireOn;
+				}
 				builder.Query = query.ToString();
 				var response = await _Client.GetAsync(builder.ToString());
 				result.StatusCode = response.StatusCode;
 				result.Message = response.ReasonPhrase;
 				switch (response.StatusCode)
 				{
-					case HttpStatusCode.Accepted:
+					case HttpStatusCode.OK:
 						result.Content = "true";
 						result.HandleAs = Result.State.OK;
-						break;
-
-					case HttpStatusCode.NoContent:
-						result.Content = "false";
-						result.HandleAs = Result.State.NoDataAvailable;
+						result.Content = await response.Content.ReadAsStringAsync();
+						result.CastType = "BOG.DropZone.Client.Entity.DropZoneInfo";
 						break;
 
 					case HttpStatusCode.Unauthorized:
@@ -621,6 +610,7 @@ namespace BOG.DropZone.Client
 					case HttpStatusCode.OK:
 						result.Content = await response.Content.ReadAsStringAsync();
 						result.CastType = "BOG.DropZone.Common.DropZoneInfo";
+
 						break;
 
 					case HttpStatusCode.Unauthorized:

@@ -4,6 +4,7 @@ using System.Linq;
 using BOG.DropZone.Common.Dto;
 using BOG.DropZone.Interface;
 using BOG.DropZone.Storage;
+using BOG.DropZone.Client.Entity;
 using BOG.SwissArmyKnife;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -109,6 +110,7 @@ namespace BOG.DropZone.Controllers
 					CreateDropZone(dropzoneName);
 				}
 				var dropzone = _Storage.DropZoneList[dropzoneName];
+				// To ensure optimum use of memory, purge any entries
 				if (dropzone.Statistics.PayloadSize + payload.Length > dropzone.Statistics.Metrics.MaxPayloadSize)
 				{
 					dropzone.Statistics.PayloadDropOffsFailedCount++;
@@ -141,20 +143,20 @@ namespace BOG.DropZone.Controllers
 
 		/// <summary>
 		/// Use the recipient and tracking number combination to determine if a payload, previously dropped off, 
-		/// is still in the pickup area.
+		/// is still in the pickup area.  Optionally, a new expiration date can be establshed for the payload.
 		/// </summary>
 		/// <param name="AccessToken">Optional: access token value if used.</param>
 		/// <param name="dropzoneName">the dropzone identifier</param>
 		/// <param name="recipient">(optional): a specific identifier for a specfic recipient of the payload.</param>
 		/// <param name="tracking">(optional): a tracking key which can later be used to check if the payload was picked up.</param>
-		/// <returns>204: no in the pickup area (either picked up or expired).  202: the payload is awaiting pickup.</returns>
+		/// <param name="expireOn">(optional): an new expiration time to set for the payload.</param>
+		/// <returns>200: PayloadInquir object with the results.</returns>
 		/// <remarks>
 		/// The same arguments must be used for recipient and tracking query parameters, as used when the payload was dropped off.
-		/// Otherwsie, unpredictble answers will ok.  The response is an empty text body: the HTTP Response code contins the answer.
+		/// Otherwise, unpredictble answers will ok.  The response is an empty text body: the HTTP Response code contins the answer.
 		/// </remarks>
 		[HttpGet("payload/inquiry/{dropzoneName}", Name = "PayloadInquiry")]
-		[ProducesResponseType(202, Type = typeof(string))]
-		[ProducesResponseType(204, Type = typeof(string))]
+		[ProducesResponseType(200, Type = typeof(string))]
 		[ProducesResponseType(401)]
 		[ProducesResponseType(429, Type = typeof(string))]
 		[ProducesResponseType(500)]
@@ -163,10 +165,20 @@ namespace BOG.DropZone.Controllers
 				[FromHeader] string AccessToken,
 				[FromRoute] string dropzoneName,
 				[FromQuery] string recipient = null,
-				[FromQuery] string tracking = null)
+				[FromQuery] string tracking = null,
+				[FromQuery] string expireOn = null)
 		{
 			var recipientKey = string.IsNullOrWhiteSpace(recipient) ? "*" : recipient;
 			var trackingKey = string.IsNullOrWhiteSpace(tracking) ? string.Empty : tracking;
+			var expirationOn = DateTime.MinValue;
+			if (!string.IsNullOrWhiteSpace(expireOn))
+			{
+				if (!DateTime.TryParse(expireOn, out expirationOn))
+				{
+					return BadRequest("expireOn query parameter is not a valid DateTime");
+				}
+
+			}
 			var clientIp = _Accessor.HttpContext.Connection.RemoteIpAddress.ToString();
 			if (!IsValidatedClient(clientIp, AccessToken, TokenType.Access, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
 			{
@@ -182,16 +194,21 @@ namespace BOG.DropZone.Controllers
 					}
 					CreateDropZone(dropzoneName);
 				}
-				var responseCode = 204;
+				var result = new PayloadInquiry
+				{
+					Tracking = trackingKey
+				};
 				var dropzone = _Storage.DropZoneList[dropzoneName];
 				if (dropzone.Payloads.ContainsKey(recipientKey))
 				{
-					if (dropzone.Payloads[recipientKey].Where(o => string.Compare(o.Value.Tracking, trackingKey, false) == 0).FirstOrDefault().Value != null)
+					var entry = dropzone.Payloads[recipientKey].Where(o => string.Compare(o.Value.Tracking, trackingKey, false) == 0).FirstOrDefault().Value;
+					if (entry != null)
 					{
-						responseCode = 202;
+						result.Found = true;
+						result.Expiration = string.IsNullOrWhiteSpace(expireOn) ? entry.Expires : expirationOn;
 					}
 				}
-				return StatusCode(responseCode, responseCode == 202 ? "Payload accepted" : "Payload not found");
+				return StatusCode(200, Serializer<PayloadInquiry>.ToJson(result));
 			}
 		}
 
@@ -237,31 +254,28 @@ namespace BOG.DropZone.Controllers
 				StoredValue payload = null;
 				bool recipientKeyIsKnown = dropzone.Payloads.ContainsKey(recipientKey);
 				bool payloadAvailable = false;
-				int retriesRemaining = 3;
 
-				// Change to determine the lowest Tick value in the key, capture from the list, and remove it.
-
-				while (recipientKeyIsKnown && dropzone.Payloads[recipientKey].Count > 0 && !payloadAvailable)
+				// Keep cycling through the payloads for the recipient, in chronological order of posting,
+				// until one is found which has not expired. This will drop any expired payloads for the recipient,
+				// until a non-expired payload is encountered.
+				while (!payloadAvailable)
 				{
 					var key = dropzone.Payloads[recipientKey].Keys.OrderBy(o => o).FirstOrDefault();
-					if (key == 0) // no payloads queued 
+					if (key == 0L) break;  // list is empty
+					payload = new StoredValue
 					{
-						if (retriesRemaining > 0)
-						{
-							retriesRemaining--;
-							System.Threading.Thread.Sleep(50);
-							continue;
-						}
-						return StatusCode(500, $"Dropzone exists with payloads, but failed to acquire a payload after three attempts.");
-					}
-					payload = dropzone.Payloads[recipientKey][key];
+						Value = dropzone.Payloads[recipientKey][key].Value,
+						Expires = dropzone.Payloads[recipientKey][key].Expires,
+						Tracking = dropzone.Payloads[recipientKey][key].Tracking
+					};
+					dropzone.Payloads[recipientKey].Remove(key);
+
 					dropzone.Statistics.PayloadSize -= payload.Value.Length;
 					dropzone.Statistics.PayloadCount--;
 					dropzone.Statistics.Recipients[recipientKey]--;
-					if (payload.Expires < DateTime.Now)
+					if (payload.Expires < DateTime.Now)  // disqualified, toss and get next.
 					{
 						dropzone.Statistics.PayloadExpiredCount++;
-						dropzone.Payloads[recipientKey].Remove(key);
 						continue;
 					}
 					dropzone.Statistics.LastPickup = DateTime.Now;
@@ -696,6 +710,21 @@ namespace BOG.DropZone.Controllers
 			_Storage.DropZoneList.Add(dropzoneName, new DropPoint());
 			_Storage.DropZoneList[dropzoneName].Statistics.Name = dropzoneName;
 		}
+
+#if FALSE
+		// Prunes the expired payloads in a dropzone.  Assumed to be operating within a lock() block.
+		private void PruneDropZone(string dropzoneName)
+		{
+			if (!_Storage.DropZoneList.ContainsKey(dropzoneName)) return;
+			foreach (var recipient in _Storage.DropZoneList[dropzoneName].Payloads.Keys)
+			{
+ 				foreach (var tickValue in _Storage.DropZoneList[dropzoneName].Payloads[recipient].Keys.Where(o=> o < DateTime.Now.Ticks).ToList())
+				{
+					_Storage.DropZoneList[dropzoneName].Payloads[recipient].Remove(tickValue);
+				}
+			}
+		}
+#endif
 
 		private void ReleaseDropZone(string dropzoneName)
 		{
