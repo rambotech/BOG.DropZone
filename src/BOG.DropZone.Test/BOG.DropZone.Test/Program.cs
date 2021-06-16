@@ -10,7 +10,7 @@ namespace BOG.DropZone.Test
 {
 
 	// Functions as both an example, and a functional test.
-	// - Make 
+	// - Make this the default project when testing, and run BOG.DropZone externally on the host with start_me.bat/.sh
 	public class WorkerComm
 	{
 		public string RecipientID { get; set; }
