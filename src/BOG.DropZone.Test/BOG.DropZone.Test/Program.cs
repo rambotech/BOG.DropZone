@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BOG.DropZone.Client;
 using BOG.DropZone.Client.Model;
+using BOG.DropZone.Common.Dto;
 using Newtonsoft.Json;
 
 namespace BOG.DropZone.Test
@@ -25,6 +26,7 @@ namespace BOG.DropZone.Test
 			UnitTestAsync().GetAwaiter().GetResult();
 		}
 
+#if FALSE
 		static async Task RunAsync()
 		{
 			const string Access = "YourAccessTokenValueHere";
@@ -299,6 +301,7 @@ namespace BOG.DropZone.Test
 			Console.WriteLine("Done");
 			Console.ReadLine();
 		}
+#endif
 
 		static async Task UnitTestAsync()
 		{
@@ -319,23 +322,31 @@ namespace BOG.DropZone.Test
 			};
 
 			var restApiUpdateMaster = new RestApiCalls(zone);
+			var testPassed = true;
 
 			try
 			{
-				Console.Write($"CheckHeartbeat()... ");
+				Console.Write($"CheckHeartbeat(): ");
 				Result result = await restApiUpdateMaster.CheckHeartbeat();
 				Console.WriteLine($"{result.HandleAs}");
 				if (result.HandleAs != Result.State.OK)
 				{
 					Console.WriteLine("Invalid response, testing halted... ");
+					Console.ReadLine();
 					return;
 				}
 
-				Console.Write("Reset()...");
+				Console.Write("Reset(): ");
 				result = await restApiUpdateMaster.Reset();
 				Console.WriteLine($"{result.HandleAs}");
+				if (result.HandleAs != Result.State.OK)
+				{
+					Console.WriteLine("Invalid response, testing halted... ");
+					Console.ReadLine();
+					return;
+				}
 
-				Console.Write("SetMetrics()...");
+				Console.Write("SetMetrics(): ");
 				result = await restApiUpdateMaster.SetMetrics(new Common.Dto.DropZoneMetrics
 				{
 					MaxPayloadCount = 500,
@@ -345,119 +356,155 @@ namespace BOG.DropZone.Test
 				});
 				Console.WriteLine($"{result.HandleAs}");
 
-				Console.Write("ListReferences()... ");
+				Console.Write("ListReferences(): ");
 				result = await restApiUpdateMaster.ListReferences();
 				Console.WriteLine($"{result.HandleAs}");
 				{
 					var list = Serializer<System.Collections.Generic.List<System.String>>.FromJson(result.Content);
 					Console.Write("  list.Count()... ");
-					Console.WriteLine(list.Count == 0 ? "OK" : $"BAD, expected: 0, got: {list.Count}");
+					Console.WriteLine(list.Count == 0 ? "pass" : $"FAIL, expected: 0, got: {list.Count}");
 				}
 
-				Console.Write("GetReference() [empty]... ");
+				Console.Write("GetReference() [empty]: ");
 				result = await restApiUpdateMaster.GetReference("Test-Ref01");
-				Console.WriteLine(result.HandleAs == Result.State.NoDataAvailable ? "OK" : $"BAD, expected: NoDataAvailable, got: {result.HandleAs}");
+				Console.WriteLine(result.HandleAs == Result.State.NoDataAvailable ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
 
-				Console.Write("SetReference()... ");
+				Console.Write("SetReference(): ");
 				result = await restApiUpdateMaster.SetReference("Test-Ref01", "test ref 1");
-				Console.WriteLine(result.HandleAs == Result.State.OK ? "OK" : $"BAD, expected: NoDataAvailable, got: {result.HandleAs}");
+				Console.WriteLine(result.HandleAs == Result.State.OK ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
 
-				Console.Write("ListReferences()... ");
+				Console.Write("ListReferences(): ");
 				result = await restApiUpdateMaster.ListReferences();
 				Console.WriteLine($"{result.HandleAs}");
 				{
 					var list = Serializer<System.Collections.Generic.List<System.String>>.FromJson(result.Content);
 					Console.Write("  list.Count()... ");
-					Console.WriteLine(list.Count == 1 ? "OK" : $"BAD, expected: 1, got: {list.Count}");
+					Console.WriteLine(list.Count == 1 ? "pass" : $"FAIL, expected: 1, got: {list.Count}");
 				}
 
-				Console.Write("GetReference() [found]... ");
+				Console.Write("GetReference() [found]:  ");
 				result = await restApiUpdateMaster.GetReference("Test-Ref01");
-				Console.WriteLine(result.HandleAs == Result.State.OK ? "OK" : $"BAD, expected: OK, got: {result.HandleAs}");
-				Console.WriteLine(result.Content == "test ref 1" ? "OK" : $"BAD, expected: test ref 1, got: {result.Content}");
+				Console.WriteLine(result.HandleAs == Result.State.OK ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				Console.Write("  Value check... ");
+				Console.WriteLine(result.Content == "test ref 1" ? "pass" : $"FAIL, expected: test ref 1, got: {result.Content}");
 
-				Console.Write("SetReference()... Perishable");
+				Console.Write("SetReference()... Perishable: ");
 				result = await restApiUpdateMaster.SetReference("Test-Ref02-Perish-5-Sec", "this will go way", DateTime.Now.AddSeconds(5));
-				Console.WriteLine(result.HandleAs == Result.State.OK ? "OK" : $"BAD, expected: OK, got: {result.HandleAs}");
+				Console.WriteLine(result.HandleAs == Result.State.OK ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
 
-				Console.WriteLine("ListReferences()... shows static and perishable");
+				Console.Write("ListReferences()... shows static and perishable: ");
 				result = await restApiUpdateMaster.ListReferences();
 				Console.WriteLine($"{result.HandleAs}");
 				{
 					var list = Serializer<System.Collections.Generic.List<System.String>>.FromJson(result.Content);
 					Console.Write("  list.Count()... ");
-					Console.WriteLine(list.Count == 2 ? "OK" : $"BAD, expected: 1, got: {list.Count}");
+					Console.WriteLine(list.Count == 2 ? "pass" : $"FAIL, expected: 1, got: {list.Count}");
 				}
 
-				Console.WriteLine("GetReference()... Perishable ... < 1 sec (finds it)");
+				Console.Write("GetReference()... Perishable ... < 1 sec (finds it): ");
 				result = await restApiUpdateMaster.GetReference("Test-Ref02-Perish-5-Sec");
-				Console.WriteLine(result.HandleAs == Result.State.OK ? "OK" : $"BAD, expected: OK, got: {result.HandleAs}");
-				Console.WriteLine(result.Content == "this will go way" ? "OK" : $"BAD, expected: this will go way, got: {result.Content}");
+				Console.WriteLine(result.HandleAs == Result.State.OK ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				{
+					Console.Write("  list.Count()... ");
+					Console.WriteLine(result.Content == "this will go way" ? "pass" : $"FAIL, expected: this will go way, got: {result.Content}");
+				}
 
 				Console.WriteLine("Wait 5 seconds for reference to expire...");
 				Thread.Sleep(5000);
 
-				Console.WriteLine("ListReferences()... shows static only... perishable has expired");
+				Console.Write("ListReferences()... shows static only... perishable has expired: ");
 				result = await restApiUpdateMaster.ListReferences();
 				Console.WriteLine($"{result.HandleAs}");
 				{
 					var list = Serializer<System.Collections.Generic.List<System.String>>.FromJson(result.Content);
-					Console.Write("  list.Count()... ");
-					Console.WriteLine(list.Count == 1 ? "OK" : $"BAD, expected: 1, got: {list.Count}");
+					Console.Write("  list.Count(): ");
+					Console.WriteLine(list.Count == 1 ? "pass" : $"FAIL, expected: 1, got: {list.Count}");
 				}
 
-				Console.WriteLine("GetReference()... Perishable ... > 5 sec (perished)");
+				Console.Write("GetReference()... Perishable ... > 5 sec (perished): ");
 				result = await restApiUpdateMaster.GetReference("Test-Ref02-Perish-5-Sec");
-				Console.WriteLine(result.HandleAs == Result.State.NoDataAvailable ? "OK" : $"BAD, expected: NoDataAvailable, got: {result.HandleAs}");
-				Console.WriteLine(result.Content == string.Empty ? "OK" : $"BAD, expected: missing, got: {result.Content}");
+				Console.WriteLine(result.HandleAs == Result.State.NoDataAvailable ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
+
+				var bigData = new string('X', 524288);
+				Console.Write($"SetReference()... BIG...{bigData.Length}: ");
+				result = await restApiUpdateMaster.SetReference("BIG", bigData);
+				Console.WriteLine(result.HandleAs == Result.State.OK ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+
+				Console.Write($"GetReference()... BIG...:");
+				result = await restApiUpdateMaster.GetReference("BIG");
+				Console.Write($"{result.Message.Length}: ");
+				testPassed = result.HandleAs == Result.State.NoDataAvailable;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				if (!testPassed) Console.ReadLine();
+				testPassed = true;
+
+				result.Message = string.Empty;
+				var messageTest = "Payload Too Large";
+				var hugeData = new string('X', 41000000);
+				Console.Write($"SetReference()... HUGE... rejected due to size {hugeData.Length}: ");
+				result = await restApiUpdateMaster.SetReference("HUGE", hugeData);
+				if (result.HandleAs == Result.State.UnexpectedResponse)
+				{
+					if (result.Message == messageTest)
+					{
+						Console.WriteLine("pass");
+					}
+					else
+					{
+						Console.WriteLine($"FAIL, expected text: {messageTest}, got: {result.Message}");
+						testPassed = false;
+					}
+				}
+				else
+				{
+					Console.WriteLine($"FAIL, expected UnexpectedReponse, got: {result.HandleAs}");
+					testPassed = false;
+				}
+				testPassed = result.HandleAs == Result.State.NoDataAvailable;
+				if (!testPassed) Console.ReadLine();
+				testPassed = true;
+
+				Console.Write("GetReference()... HUGE...");
+				result = await restApiUpdateMaster.GetReference("HUGE");
+				Console.WriteLine(result.HandleAs == Result.State.NoDataAvailable ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
+				testPassed = result.HandleAs == Result.State.NoDataAvailable;
+				if (!testPassed) Console.ReadLine();
+				testPassed = true;
+
+				result.Message = string.Empty;
+
+				Console.Write("GetStatistics(): ");
+				result = await restApiUpdateMaster.GetStatistics();
+				Console.WriteLine(result.HandleAs == Result.State.OK ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				testPassed = result.HandleAs == Result.State.OK;
+				if (testPassed)
+				{
+					var obj = JsonConvert.DeserializeObject<DropZoneInfo>(result.Content);
+					// DropZoneInfo obj = (DropZoneInfo) JsonConvert.DeserializeObject(result.Content, Type.GetType(result.CastType)); 
+					Console.Write("  PayloadCount: ");
+					Console.WriteLine(obj.PayloadCount == 0 ? "pass" : $"FAIL, expected: 0, got {obj.PayloadCount}");
+					testPassed &= obj.PayloadCount == 0;
+					Console.Write("  ReferenceCount: ");
+					Console.WriteLine(obj.ReferenceCount == 2 ? "pass" : $"FAIL, expected: 2, got {obj.PayloadCount}");
+					testPassed &= obj.ReferenceCount == 2;
+					Console.Write("  PayloadExpiredCount: ");
+					Console.WriteLine(obj.PayloadExpiredCount == 1 ? "pass" : $"FAIL, expected: 1, got {obj.PayloadExpiredCount}");
+					testPassed &= obj.PayloadExpiredCount == 1;
+				}
+				if (!testPassed) Console.ReadLine();
+				testPassed = true;
+
+				Console.WriteLine("GetSecurityInfo(): ");
+				result = await restApiUpdateMaster.GetSecurity();
+				Console.WriteLine(result.HandleAs == Result.State.OK ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				DisplayResult(result, -1);
 
 				// I STOPPED HERE //
+
 				Console.ReadLine();
 				return;
 
-				Console.WriteLine("SetReference()");
-				result = await restApiUpdateMaster.SetReference("Test-Ref03", "this will go way");
 
-				Console.WriteLine("GetReference()");
-				result = await restApiUpdateMaster.GetReference("Test-Ref03");
-
-				Console.WriteLine("DropReference()");
-				result = await restApiUpdateMaster.DropReference("Test-Ref03");
-
-				Console.WriteLine("GetReference()");
-				result = await restApiUpdateMaster.GetReference("Test-Ref03");
-				DisplayResult(result, -1);
-
-				Console.WriteLine("SetReference()... BIG...");
-				var bigData = new string('X', 524288);
-				Console.WriteLine($"{bigData.Length}");
-				result = await restApiUpdateMaster.SetReference("BIG", bigData);
-				DisplayResult(result, 1000);
-
-				Console.WriteLine("GetReference()... BIG...");
-				result = await restApiUpdateMaster.GetReference("BIG");
-				Console.WriteLine($"{result.Message.Length}");
-				result.Message = string.Empty;
-				DisplayResult(result, 1000);
-
-				Console.WriteLine("SetReference()... HUGE... rejected due to size");
-				var hugeData = new string('X', 41000000);
-				Console.WriteLine($"{hugeData.Length}");
-				result = await restApiUpdateMaster.SetReference("HUGE", hugeData);
-				DisplayResult(result, 1000);
-
-				Console.WriteLine("GetReference()... HUGE...");
-				result = await restApiUpdateMaster.GetReference("HUGE");
-				Console.WriteLine($"{result.Message.Length}");
-				result.Message = string.Empty;
-				DisplayResult(result, -1);
-
-				Console.WriteLine("GetStatistics()... ");
-				result = await restApiUpdateMaster.GetStatistics();
-				DisplayResult(result, -1);
-				Console.WriteLine("GetSecurityInfo()... ");
-				result = await restApiUpdateMaster.GetSecurity();
-				DisplayResult(result, -1);
 
 				// Payloads and recipients
 
