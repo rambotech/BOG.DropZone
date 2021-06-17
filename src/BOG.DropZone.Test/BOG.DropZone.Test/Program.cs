@@ -10,7 +10,8 @@ namespace BOG.DropZone.Test
 {
 
 	// Functions as both an example, and a functional test.
-	// - Make this the default project when testing, and run BOG.DropZone externally on the host with start_me.bat/.sh
+	// - Make this the default startup project
+	// - open a command prompt and start BOG.DropZone externally on the host with start_me.bat/.sh
 	public class WorkerComm
 	{
 		public string RecipientID { get; set; }
@@ -347,14 +348,43 @@ namespace BOG.DropZone.Test
 				}
 
 				Console.Write("SetMetrics(): ");
-				result = await restApiUpdateMaster.SetMetrics(new Common.Dto.DropZoneMetrics
+				var metrics = new Common.Dto.DropZoneMetrics
 				{
 					MaxPayloadCount = 500,
 					MaxPayloadSize = 5L * 1024L * 1024L,
 					MaxReferencesCount = 100,
 					MaxReferenceSize = 5L * 1024L * 1024L
-				});
-				Console.WriteLine($"{result.HandleAs}");
+				};
+				result = await restApiUpdateMaster.SetMetrics(metrics);
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected : NoDataAvailable, got: {result.HandleAs}");
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
+
+				Console.Write("GetMetrics(): ");
+				result.Message = string.Empty;
+				result = await restApiUpdateMaster.GetStatistics();
+				Console.WriteLine(result.HandleAs == Result.State.OK ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				testPassed = result.HandleAs == Result.State.OK;
+				if (testPassed)
+				{
+					var obj = JsonConvert.DeserializeObject<DropZoneInfo>(result.Content).Metrics;
+					// DropZoneInfo obj = (DropZoneInfo) JsonConvert.DeserializeObject(result.Content, Type.GetType(result.CastType)); 
+					Console.Write("  MaxPayloadCount: ");
+					Console.WriteLine(obj.MaxPayloadCount == metrics.MaxPayloadCount ? "pass" : $"FAIL, expected: 0, got {obj.MaxPayloadCount}");
+					testPassed &= obj.MaxPayloadCount == metrics.MaxPayloadCount;
+					Console.Write("  MaxPayloadSize: ");
+					Console.WriteLine(obj.MaxPayloadSize == metrics.MaxPayloadSize ? "pass" : $"FAIL, expected: 0, got {obj.MaxPayloadSize}");
+					testPassed &= obj.MaxPayloadSize == metrics.MaxPayloadSize;
+					Console.Write("  MaxReferencesCount: ");
+					Console.WriteLine(obj.MaxReferencesCount == metrics.MaxReferencesCount ? "pass" : $"FAIL, expected: 0, got {obj.MaxReferencesCount}");
+					testPassed &= obj.MaxReferencesCount == metrics.MaxReferencesCount;
+					Console.Write("  MaxReferenceSize: ");
+					Console.WriteLine(obj.MaxReferenceSize == metrics.MaxReferenceSize ? "pass" : $"FAIL, expected: 0, got {obj.MaxReferenceSize}");
+					testPassed &= obj.MaxReferenceSize == metrics.MaxReferenceSize;
+				}
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
 
 				Console.Write("ListReferences(): ");
 				result = await restApiUpdateMaster.ListReferences();
@@ -435,7 +465,7 @@ namespace BOG.DropZone.Test
 				Console.Write($"{result.Message.Length}: ");
 				testPassed = result.HandleAs == Result.State.NoDataAvailable;
 				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
-				if (!testPassed) Console.ReadLine();
+				if (!testPassed) UnexpectedResult();
 				testPassed = true;
 
 				result.Message = string.Empty;
@@ -461,14 +491,14 @@ namespace BOG.DropZone.Test
 					testPassed = false;
 				}
 				testPassed = result.HandleAs == Result.State.NoDataAvailable;
-				if (!testPassed) Console.ReadLine();
+				if (!testPassed) UnexpectedResult();
 				testPassed = true;
 
 				Console.Write("GetReference()... HUGE...");
 				result = await restApiUpdateMaster.GetReference("HUGE");
 				Console.WriteLine(result.HandleAs == Result.State.NoDataAvailable ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
 				testPassed = result.HandleAs == Result.State.NoDataAvailable;
-				if (!testPassed) Console.ReadLine();
+				if (!testPassed) UnexpectedResult();
 				testPassed = true;
 
 				result.Message = string.Empty;
@@ -491,7 +521,7 @@ namespace BOG.DropZone.Test
 					Console.WriteLine(obj.PayloadExpiredCount == 1 ? "pass" : $"FAIL, expected: 1, got {obj.PayloadExpiredCount}");
 					testPassed &= obj.PayloadExpiredCount == 1;
 				}
-				if (!testPassed) Console.ReadLine();
+				if (!testPassed) UnexpectedResult();
 				testPassed = true;
 
 				Console.WriteLine("GetSecurityInfo(): ");
@@ -503,8 +533,6 @@ namespace BOG.DropZone.Test
 
 				Console.ReadLine();
 				return;
-
-
 
 				// Payloads and recipients
 
@@ -639,6 +667,12 @@ namespace BOG.DropZone.Test
 			}
 
 			Console.WriteLine("Done");
+			Console.ReadLine();
+		}
+
+		static void UnexpectedResult()
+		{
+			Console.WriteLine("Non-pass result: press Enter to continue");
 			Console.ReadLine();
 		}
 
