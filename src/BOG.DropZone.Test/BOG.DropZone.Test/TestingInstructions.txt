@@ -1,0 +1,14 @@
+﻿Testing Instructions
+====================
+
+This is a console application, which is run after starting the up the drop zone web api application.
+It will display its progress, and only pause for a keystroke to continue if an action fails to resolve as expected.
+
+- Build the solution for a DEBUG target
+- Open a command-line, and make the current directory BOG.DropZone/bin/debug/net5
+- Execute start_me.bat
+
+Once the application has started, make this the startup project and execute it.
+
+When done, stop the application in the console window, and close it.
+

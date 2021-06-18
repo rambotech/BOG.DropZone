@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using BOG.DropZone.Client;
@@ -332,8 +333,8 @@ namespace BOG.DropZone.Test
 				Console.WriteLine($"{result.HandleAs}");
 				if (result.HandleAs != Result.State.OK)
 				{
-					Console.WriteLine("Invalid response, testing halted... ");
-					Console.ReadLine();
+					Console.WriteLine();
+					UnexpectedResult("No response to heartbeat call, testing halted... ");
 					return;
 				}
 
@@ -342,8 +343,7 @@ namespace BOG.DropZone.Test
 				Console.WriteLine($"{result.HandleAs}");
 				if (result.HandleAs != Result.State.OK)
 				{
-					Console.WriteLine("Invalid response, testing halted... ");
-					Console.ReadLine();
+					UnexpectedResult("Reset failed, testing halted... ");
 					return;
 				}
 
@@ -388,120 +388,159 @@ namespace BOG.DropZone.Test
 
 				Console.Write("ListReferences(): ");
 				result = await restApiUpdateMaster.ListReferences();
-				Console.WriteLine($"{result.HandleAs}");
+				testPassed = result.HandleAs == Result.State.OK;
+				if (testPassed)
 				{
 					var list = Serializer<System.Collections.Generic.List<System.String>>.FromJson(result.Content);
 					Console.Write("  list.Count()... ");
+					testPassed &= list.Count == 0;
 					Console.WriteLine(list.Count == 0 ? "pass" : $"FAIL, expected: 0, got: {list.Count}");
 				}
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
 
 				Console.Write("GetReference() [empty]: ");
 				result = await restApiUpdateMaster.GetReference("Test-Ref01");
-				Console.WriteLine(result.HandleAs == Result.State.NoDataAvailable ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
+				testPassed = result.HandleAs == Result.State.NoDataAvailable;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
 
 				Console.Write("SetReference(): ");
 				result = await restApiUpdateMaster.SetReference("Test-Ref01", "test ref 1");
-				Console.WriteLine(result.HandleAs == Result.State.OK ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
 
 				Console.Write("ListReferences(): ");
 				result = await restApiUpdateMaster.ListReferences();
-				Console.WriteLine($"{result.HandleAs}");
+				testPassed = result.HandleAs == Result.State.OK;
+				if (testPassed)
 				{
 					var list = Serializer<System.Collections.Generic.List<System.String>>.FromJson(result.Content);
 					Console.Write("  list.Count()... ");
-					Console.WriteLine(list.Count == 1 ? "pass" : $"FAIL, expected: 1, got: {list.Count}");
+					testPassed &= list.Count == 1;
+					Console.WriteLine(list.Count == 1 ? "pass" : $"FAIL, expected: 0, got: {list.Count}");
 				}
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
 
 				Console.Write("GetReference() [found]:  ");
 				result = await restApiUpdateMaster.GetReference("Test-Ref01");
-				Console.WriteLine(result.HandleAs == Result.State.OK ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
-				Console.Write("  Value check... ");
-				Console.WriteLine(result.Content == "test ref 1" ? "pass" : $"FAIL, expected: test ref 1, got: {result.Content}");
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				if (testPassed)
+				{
+					Console.Write("  Value check... ");
+					testPassed &= result.Content == "test ref 1";
+					Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: test ref 1, got: {result.Content}");
+				}
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
 
 				Console.Write("SetReference()... Perishable: ");
 				result = await restApiUpdateMaster.SetReference("Test-Ref02-Perish-5-Sec", "this will go way", DateTime.Now.AddSeconds(5));
-				Console.WriteLine(result.HandleAs == Result.State.OK ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
 
 				Console.Write("ListReferences()... shows static and perishable: ");
 				result = await restApiUpdateMaster.ListReferences();
-				Console.WriteLine($"{result.HandleAs}");
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
+				if (testPassed)
 				{
 					var list = Serializer<System.Collections.Generic.List<System.String>>.FromJson(result.Content);
 					Console.Write("  list.Count()... ");
-					Console.WriteLine(list.Count == 2 ? "pass" : $"FAIL, expected: 1, got: {list.Count}");
+					testPassed &= list.Count == 2;
+					Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: 0, got: {list.Count}");
 				}
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
 
 				Console.Write("GetReference()... Perishable ... < 1 sec (finds it): ");
 				result = await restApiUpdateMaster.GetReference("Test-Ref02-Perish-5-Sec");
-				Console.WriteLine(result.HandleAs == Result.State.OK ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				if (testPassed)
 				{
-					Console.Write("  list.Count()... ");
-					Console.WriteLine(result.Content == "this will go way" ? "pass" : $"FAIL, expected: this will go way, got: {result.Content}");
+					Console.Write("  Value check... ");
+					testPassed &= result.Content == "this will go way";
+					Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: this will go way, got: {result.Content}");
 				}
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
 
 				Console.WriteLine("Wait 5 seconds for reference to expire...");
 				Thread.Sleep(5000);
 
 				Console.Write("ListReferences()... shows static only... perishable has expired: ");
 				result = await restApiUpdateMaster.ListReferences();
-				Console.WriteLine($"{result.HandleAs}");
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
+				if (testPassed)
 				{
 					var list = Serializer<System.Collections.Generic.List<System.String>>.FromJson(result.Content);
-					Console.Write("  list.Count(): ");
-					Console.WriteLine(list.Count == 1 ? "pass" : $"FAIL, expected: 1, got: {list.Count}");
+					Console.Write("  list.Count()... ");
+					testPassed &= list.Count == 1;
+					Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: 0, got: {list.Count}");
 				}
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
 
 				Console.Write("GetReference()... Perishable ... > 5 sec (perished): ");
 				result = await restApiUpdateMaster.GetReference("Test-Ref02-Perish-5-Sec");
-				Console.WriteLine(result.HandleAs == Result.State.NoDataAvailable ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
-
-				var bigData = new string('X', 524288);
-				Console.Write($"SetReference()... BIG...{bigData.Length}: ");
-				result = await restApiUpdateMaster.SetReference("BIG", bigData);
-				Console.WriteLine(result.HandleAs == Result.State.OK ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
-
-				Console.Write($"GetReference()... BIG...:");
-				result = await restApiUpdateMaster.GetReference("BIG");
-				Console.Write($"{result.Message.Length}: ");
 				testPassed = result.HandleAs == Result.State.NoDataAvailable;
-				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
 				if (!testPassed) UnexpectedResult();
 				testPassed = true;
+
+				{
+					var bigData = new string('X', 524288);   // 512K of X's... not over limit.
+					Console.Write($"SetReference()... BIG...{bigData.Length}: ");
+					result = await restApiUpdateMaster.SetReference("BIG", bigData);
+					testPassed = result.HandleAs == Result.State.OK;
+					Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+					if (!testPassed) UnexpectedResult();
+					testPassed = true;
+
+					Console.Write($"GetReference()... BIG...:");
+					result = await restApiUpdateMaster.GetReference("BIG");
+					Console.Write($"{result.Message.Length}: ");
+					testPassed = result.HandleAs == Result.State.OK;
+					Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+					if (testPassed)
+					{
+						Console.Write("  Value check... ");
+						testPassed &= result.Content == bigData;
+						Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: test ref 1, got: {result.Content}");
+					}
+					if (!testPassed) UnexpectedResult();
+					testPassed = true;
+				}
 
 				result.Message = string.Empty;
-				var messageTest = "Payload Too Large";
-				var hugeData = new string('X', 41000000);
-				Console.Write($"SetReference()... HUGE... rejected due to size {hugeData.Length}: ");
-				result = await restApiUpdateMaster.SetReference("HUGE", hugeData);
-				if (result.HandleAs == Result.State.UnexpectedResponse)
 				{
-					if (result.Message == messageTest)
-					{
-						Console.WriteLine("pass");
-					}
-					else
-					{
-						Console.WriteLine($"FAIL, expected text: {messageTest}, got: {result.Message}");
-						testPassed = false;
-					}
-				}
-				else
-				{
-					Console.WriteLine($"FAIL, expected UnexpectedReponse, got: {result.HandleAs}");
-					testPassed = false;
-				}
-				testPassed = result.HandleAs == Result.State.NoDataAvailable;
-				if (!testPassed) UnexpectedResult();
-				testPassed = true;
+					var messageTest = "Payload Too Large";
+					var hugeData = new string('X', 41000000);
+					Console.Write($"SetReference()... HUGE... rejected due to size {hugeData.Length}: ");
+					result = await restApiUpdateMaster.SetReference("HUGE", hugeData);
+					testPassed = result.HandleAs == Result.State.UnexpectedResponse;
+					Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: UnexpectedResponse, got: {result.HandleAs}");
+					if (!testPassed) UnexpectedResult();
+					testPassed = true;
 
-				Console.Write("GetReference()... HUGE...");
-				result = await restApiUpdateMaster.GetReference("HUGE");
-				Console.WriteLine(result.HandleAs == Result.State.NoDataAvailable ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
-				testPassed = result.HandleAs == Result.State.NoDataAvailable;
-				if (!testPassed) UnexpectedResult();
-				testPassed = true;
+					Console.Write("GetReference()... HUGE...");
+					result = await restApiUpdateMaster.GetReference("HUGE");
+					testPassed = result.HandleAs == Result.State.NoDataAvailable;
+					Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
+					if (!testPassed) UnexpectedResult();
+					testPassed = true;
 
-				result.Message = string.Empty;
+					result.Message = string.Empty;
+				}
 
 				Console.Write("GetStatistics(): ");
 				result = await restApiUpdateMaster.GetStatistics();
@@ -518,8 +557,11 @@ namespace BOG.DropZone.Test
 					Console.WriteLine(obj.ReferenceCount == 2 ? "pass" : $"FAIL, expected: 2, got {obj.PayloadCount}");
 					testPassed &= obj.ReferenceCount == 2;
 					Console.Write("  PayloadExpiredCount: ");
-					Console.WriteLine(obj.PayloadExpiredCount == 1 ? "pass" : $"FAIL, expected: 1, got {obj.PayloadExpiredCount}");
-					testPassed &= obj.PayloadExpiredCount == 1;
+					Console.WriteLine(obj.PayloadExpiredCount == 0 ? "pass" : $"FAIL, expected: 1, got {obj.PayloadExpiredCount}");
+					testPassed &= obj.PayloadExpiredCount == 0;
+					Console.Write("  ReferenceExpiredCount: ");
+					Console.WriteLine(obj.ReferenceExpiredCount == 1 ? "pass" : $"FAIL, expected: 1, got {obj.ReferenceExpiredCount}");
+					testPassed &= obj.ReferenceExpiredCount == 1;
 				}
 				if (!testPassed) UnexpectedResult();
 				testPassed = true;
@@ -527,21 +569,34 @@ namespace BOG.DropZone.Test
 				Console.WriteLine("GetSecurityInfo(): ");
 				result = await restApiUpdateMaster.GetSecurity();
 				Console.WriteLine(result.HandleAs == Result.State.OK ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
-				DisplayResult(result, -1);
+				testPassed = result.HandleAs == Result.State.OK;
+				if (testPassed)
+				{
+					var obj = JsonConvert.DeserializeObject<List<ClientWatch>>(result.Content);
+					Console.Write("  TotalClients: ");
+					Console.WriteLine(obj.Count == 1 ? "pass" : $"FAIL, expected: 0, got {obj.Count}");
+					testPassed &= obj.Count == 1;
 
-				// I STOPPED HERE //
+					Console.Write("  AccessAttemptsTotalCount: ");
+					Console.WriteLine(obj[0].AccessAttemptsTotalCount == 17 ? "pass" : $"FAIL, expected: 0, got {obj[0].AccessAttemptsTotalCount}");
+					testPassed &= obj[0].AccessAttemptsTotalCount == 17;
+				}
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
 
-				Console.ReadLine();
-				return;
+				// DONE THROUGH HERE for testPassed changes.
 
 				// Payloads and recipients
 
 				// Test a payload with and without a specific recipient
 
 				Console.WriteLine("*** Drop off to global (1) and to a specific recipient (1)");
-				Console.WriteLine($"Add \"Global payload\" for global queue in the zone ... ");
+				Console.Write($"Add \"Global payload\" for global queue in the zone: ");
 				result = await restApiUpdateMaster.DropOff("Global payload");
-				DisplayResult(result, 0);
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
 
 				var recipient = "Tim";
 				var tracking = "ABC123";
@@ -668,11 +723,19 @@ namespace BOG.DropZone.Test
 
 			Console.WriteLine("Done");
 			Console.ReadLine();
+
+			//Console.ReadLine();
+			//return;
 		}
 
 		static void UnexpectedResult()
 		{
-			Console.WriteLine("Non-pass result: press Enter to continue");
+			UnexpectedResult(null);
+		}
+
+		static void UnexpectedResult(string message)
+		{
+			Console.WriteLine(!string.IsNullOrWhiteSpace(message) ? message : "Non-pass result: press Enter to continue tests");
 			Console.ReadLine();
 		}
 
