@@ -1,8 +1,8 @@
-[![Build status](https://api.travis-ci.com/rambotech/BOG.DropZone.svg?branch=master)](https://travis-ci.com/rambotech/BOG.DropZone) BOG.DropZone
-
-[![Nuget](https://img.shields.io/nuget/v/BOG.DropZone.Client)](https://www.nuget.org/packages/BOG.DropZone.Client/) BOG.DropZone.Client
-
-[![Nuget](https://img.shields.io/nuget/v/BOG.DropZone.Client)](https://www.nuget.org/packages/BOG.DropZone.Common/) BOG.DropZone.Common
+|  | BOG.DropZone  | BOG.DropZone.Client   | BOG.DropZone.Common
+|---    |---    |---    |
+| master    | [![Build status](https://api.travis-ci.com/rambotech/BOG.DropZone.svg?branch=master)](https://travis-ci.com/rambotech/BOG.DropZone){target="_blank"} |  [![Nuget](https://img.shields.io/nuget/v/BOG.DropZone.Client)](https://www.nuget.org/packages/BOG.DropZone.Client/){target="_blank"}  | [![Nuget](https://img.shields.io/nuget/v/BOG.DropZone.Client)](https://www.nuget.org/packages/BOG.DropZone.Common/){target="_blank"} |
+| release   | [![Build status](https://api.travis-ci.com/rambotech/BOG.DropZone.svg?branch=release)](https://travis-ci.com/rambotech/BOG.DropZone){target="_blank"} | (n/a)  |  (n/a) |
+| develop   | [![Build status](https://api.travis-ci.com/rambotech/BOG.DropZone.svg?branch=develop)](https://travis-ci.com/rambotech/BOG.DropZone){target="_blank"} | (n/a)  |  (n/a) |
 
 # BOG.DropZone
 ![alt text](https://github.com/rambotech/BOG.DropZone/blob/master/assets/DropZone.png "They just keep coming and going, and going and coming!")
@@ -102,287 +102,32 @@ and contains support for encryption of payloads.
 
 ## Example usage
 
-Build the BOG.DropZone project and run it locally.
+The project BOG.DropZone.Test demonstrates all the functionality of the DropZone. This project can be demonstrated as follows.
 
-Create a console application, and add a reference to BOG.DropZone.Client from either the project here, or  
-from the Nuget package repository [here](https://www.nuget.org/packages/BOG.DropZone.Client/).
-Replace the content of Program.cs with the code below.
+- Build the entire solution as debug.
+- Right click on the project BOG.DropZone.Test, and select "Set as Startup Project" from the menu.
+- Right click on the project BOG.DropZone, and select "Open in Terminal" from the menu.
+- Enter these commands in the terminal window:
+  - ```cd .\bin\Debug\net5.0\```
+  - ```.\start_me.bat```
+- The rerminal window will display the following:
 
-*Note: This was written to demostrate v1 which did not support recipients. The current example is maintained in
-the project BOG.DropZone.Test (dotnetcore console app).
-
-```C#
-// Note: be sure to match these two assembly versions to the dropzone target version in use.
-using BOG.DropZone.Client;
-using BOG.DropZone.Client.Model;
-
-using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace BOG.DropZone.Test
-{
-    class Program
-    {
-        static void Main(string[] args)
-        {
-            RunAsync().GetAwaiter().GetResult();
-        }
-
-        static async Task RunAsync()
-        {
-            DropZoneConfig[] dropZoneConfigs = new DropZoneConfig[]
-            {
-                new DropZoneConfig
-                {
-                    BaseUrl = "http://localhost:5000",
-                    ZoneName = "CityData",
-                    Password = "YourPassword",
-                    Salt = "YourSalt",
-                    UseEncryption = false,
-                    AccessToken = "YourAccessToken",
-                    AdminToken = "YourAdminToken",
-                    TimeoutSeconds = 10
-                },
-                new DropZoneConfig
-                {
-                    BaseUrl = "http://localhost:5000",
-                    ZoneName = "MysteryPath",
-                    Password = "YourPassword1",
-                    Salt = "YourSalt1",
-                    UseEncryption = false,
-                    AccessToken = "YourAccessToken",
-                    AdminToken = "YourAdminToken",
-                    TimeoutSeconds = 10
-                }
-            };
-            RestApiCalls[] restApi = new RestApiCalls[]
-            {
-                new RestApiCalls(dropZoneConfigs[0]),
-                new RestApiCalls(dropZoneConfigs[1])
-            };
-
-            try
-            {
-                Console.WriteLine("CheckHeartbeat()...");
-                var result = await restApi[0].CheckHeartbeat();
-                DisplayResult(result, 1000);
-                if (result.HandleAs == Result.State.InvalidAuthentication)
-                {
-                    Console.WriteLine("Invalid access token, testing halted... ");
-                    return;
-                }
-
-                Console.WriteLine("Reset()... ");
-                result = await restApi[0].Reset();
-                DisplayResult(result, 100);
-
-                Console.WriteLine("ListReferences()... ");
-                result = await restApi[0].ListReferences();
-                DisplayResult(result, 1000);
-
-                Console.WriteLine("GetReference()... ");
-                result = await restApi[0].GetReference("Test-Ref01");
-                DisplayResult(result, 1000);
-
-                Console.WriteLine("ListReferences()... ");
-                result = await restApi[0].ListReferences();
-                DisplayResult(result, 1000);
-
-                Console.WriteLine("SetReference()... ");
-                result = await restApi[0].SetReference("Test-Ref01", "test ref 1");
-                DisplayResult(result, 1000);
-
-                Console.WriteLine("ListReferences()... ");
-                result = await restApi[0].ListReferences();
-                DisplayResult(result, 1000);
-
-                Console.WriteLine("GetReference()... ");
-                result = await restApi[0].GetReference("Test-Ref01");
-                DisplayResult(result, 1000);
-
-                Console.WriteLine("SetReference()... Perishable");
-                result = await restApi[0].SetReference("Test-Ref02-Perish-5-Sec", "this will go way", DateTime.Now.AddSeconds(5));
-                DisplayResult(result, 1000);
-
-                Console.WriteLine("ListReferences()... shows static and perishable");
-                result = await restApi[0].ListReferences();
-                DisplayResult(result, 1000);
-
-                Console.WriteLine("GetReference()... Perishable ... < 1 sec (finds it)");
-                result = await restApi[0].GetReference("Test-Ref02-Perish-5-Sec");
-                DisplayResult(result, 1000);
-
-                Console.WriteLine("Wait 5 seconds for reference to expire...");
-                Thread.Sleep(5000);
-
-                Console.WriteLine("ListReferences()... shows static only... perishable has expired");
-                result = await restApi[0].ListReferences();
-                DisplayResult(result, -1);
-
-                Console.WriteLine("GetReference()... Perishable ... > 5 sec (perished)");
-                result = await restApi[0].GetReference("RefTimed-Good");
-                DisplayResult(result, -1);
-
-                Console.WriteLine("SetReference()... BIG...");
-                var bigData = new string('X', 524288);
-                Console.WriteLine($"{bigData.Length}");
-                result = await restApi[0].SetReference("BIG", bigData);
-                DisplayResult(result, 1000);
-
-                Console.WriteLine("GetReference()... BIG...");
-                result = await restApi[0].GetReference("BIG");
-                Console.WriteLine($"{result.Message.Length}");
-                result.Message = string.Empty;
-                DisplayResult(result, 1000);
-
-                Console.WriteLine("SetReference()... HUGE... rejected due to size");
-                var hugeData = new string('X', 41000000);
-                Console.WriteLine($"{hugeData.Length}");
-                result = await restApi[0].SetReference("HUGE", hugeData);
-                DisplayResult(result, 1000);
-
-                Console.WriteLine("GetReference()... HUGE...");
-                result = await restApi[0].GetReference("HUGE");
-                Console.WriteLine($"{result.Message.Length}");
-                result.Message = string.Empty;
-                DisplayResult(result, -1);
-
-                Console.WriteLine("GetStatistics()... ");
-                result = await restApi[0].GetStatistics();
-                DisplayResult(result, -1);
-
-                Console.WriteLine("GetSecurityInfo()... ");
-                result = await restApi[0].GetSecurity();
-                DisplayResult(result, -1);
-
-                string[] set = new string[] { "Tallahunda", "Kookamunga", "Whatever" };
-
-                Console.WriteLine("*** Drop off some data .. which expires ***");
-                for (int index = 0; index < 5; index++)
-                {
-                    Console.WriteLine($"Add {index}: {set[index % 3]}... ");
-                    result = await restApi[0].DropOff(set[index % 3] + $"{index}", DateTime.Now.AddSeconds(3 + index));
-                    DisplayResult(result, 0);
-                }
-
-                Console.WriteLine("Wait 5 for reference to expire...");
-                Thread.Sleep(5000);
-
-                Console.WriteLine("*** Pickup some data .. some of which has expired ***");
-                for (int index = 0; index < 5; index++)
-                {
-                    var target = index == 2 ? 1 : 0;
-                    Console.WriteLine($"Retrieve {index} from {dropZoneConfigs[target].ZoneName}: ");
-                    result = await restApi[target].Pickup();
-                    DisplayResult(result, 0);
-                }
-
-                Console.WriteLine("*** Clear ***");
-                result = await restApi[0].Clear();
-                DisplayResult(result, -1);
-
-                Console.WriteLine("*** Drop off some data.. places 501 items when 500 is the max ***");
-                for (int index = 0; index < 501; index++)
-                {
-                    Console.WriteLine($"Add {index}: {set[index % 3]}... ");
-                    result = await restApi[0].DropOff(set[index % 3]);
-                    DisplayResult(result, index < 5 ? 1000 : 0);
-                }
-                Console.WriteLine("GetStatistics()...");
-                result = await restApi[0].GetStatistics();
-                DisplayResult(result, -1);
-
-                Console.WriteLine("*** Pickup some data ***");
-                for (int index = 0; index < 502; index++)
-                {
-                    var target = index == 2 ? 1 : 0;
-                    Console.WriteLine($"Retrieve {index} from {dropZoneConfigs[target].ZoneName}: ");
-                    result = await restApi[target].Pickup();
-                    DisplayResult(result, index == 2 ? -1 : (index < 5 ? 1000 : 0));
-                }
-
-                Console.WriteLine("*** List references ***");
-                result = await restApi[0].ListReferences();
-                DisplayResult(result, 1000);
-
-                Console.WriteLine("Overload references...");
-                for (int index = 0; index < 48; index++)
-                {
-                    Console.WriteLine($"SetReference(Ref-{BOG.SwissArmyKnife.Formatting.RJLZ(index, 2)}... ");
-                    result = await restApi[0].SetReference($"Ref-{BOG.SwissArmyKnife.Formatting.RJLZ(index, 2)}", $"test ref {index}");
-                    DisplayResult(result, 0);
-                }
-
-                Console.WriteLine("*** List references after overload ***");
-                result = await restApi[0].ListReferences();
-                DisplayResult(result, 2000);
-
-                Console.WriteLine("GetStatistics()... ");
-                result = await restApi[0].GetStatistics();
-                DisplayResult(result, -1);
-
-                Console.WriteLine("*** Reset ***");
-                result = await restApi[0].Reset();
-                DisplayResult(result, 2000);
-
-                Console.WriteLine("*** Shutdown ***");
-                result = await restApi[0].Shutdown();
-                DisplayResult(result, 2000);
-
-                Console.WriteLine("*** Shutdown (with no answer) ***");
-                result = await restApi[1].Shutdown();
-                DisplayResult(result, 2000);
-            }
-            catch (Exception err)
-            {
-                Console.WriteLine($"Untrapped: {err.Message.ToString()}");
-            }
-
-            Console.WriteLine("Done");
-            Console.ReadLine();
-        }
-
-        static void DisplayResult(Result result, int waitMS)
-        {
-            Console.WriteLine(Serializer<Result>.ToJson(result));
-            Console.WriteLine();
-            switch (waitMS)
-            {
-                case -1:
-                    Console.WriteLine("Press ENTER to clear");
-                    Console.ReadLine();
-                    break;
-
-                case 0:
-                    break;
-
-                default:
-                    System.Threading.Thread.Sleep(waitMS);
-                    break;
-            }
-        }
-
-        static void DisplayString(string result, int waitMS)
-        {
-            Console.WriteLine(result);
-            Console.WriteLine();
-            switch (waitMS)
-            {
-                case -1:
-                    Console.WriteLine("Press ENTER to clear");
-                    Console.ReadLine();
-                    break;
-
-                case 0:
-                    break;
-
-                default:
-                    System.Threading.Thread.Sleep(waitMS);
-                    break;
-            }
-        }
-    }
-}
 ```
+AccessToken: YourAccessTokenValueHere
+AdminToken: YourAdminTokenValueHere
+MaxDropzones: 5
+MaximumFailedAttemptsBeforeLockout: 3
+LockoutSeconds: 300
+Hosting environment: Development
+Content root path: C:\src\BOG\Public\BOG.DropZone\src\BOG.DropZone\bin\Debug\net5.0
+Now listening on: http://[::]:5000
+Application started. Press Ctrl+C to shut down.
+```
+
+- Now run the app BOG.DropZone.Test by pressing the play button in the toolbar, or by pressing ```Ctrl+F5```
+- If you would like to set breakpoints in BOG.DropZone.Test and run in Debug, pressing ```F5``` after setting your breakpoints.
+- When complete, close the Developer terminal window.
+
+
+
+

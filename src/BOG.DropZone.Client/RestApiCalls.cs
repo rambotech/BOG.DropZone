@@ -344,7 +344,7 @@ namespace BOG.DropZone.Client
 					query["recipient"] = thisRecipient;
 					builder.Query = query.ToString();
 				}
-				query["expires"] = metadata.ExpiresOn.ToString();
+				query["expires"] = metadata.ExpiresOn.ToString("s");
 				if (!string.IsNullOrWhiteSpace(metadata.Tracking))
 				{
 					var tracking = HttpUtility.ParseQueryString(builder.Query);

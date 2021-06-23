@@ -89,11 +89,19 @@ namespace BOG.DropZone.Controllers
 				[FromRoute] string dropzoneName,
 				[FromQuery] string recipient = null,
 				[FromQuery] string tracking = null,
-				[FromQuery] DateTime expiresOn = default)
+				[FromQuery] string expiresOn = null)
 		{
 			var recipientKey = string.IsNullOrWhiteSpace(recipient) ? "*" : recipient;
 			var trackingKey = string.IsNullOrWhiteSpace(tracking) ? string.Empty : tracking;
-			var expirationTime = expiresOn == default ? DateTime.MaxValue : expiresOn;
+
+			var expirationOn = DateTime.MaxValue;
+			if (!string.IsNullOrWhiteSpace(expiresOn))
+			{
+				if (!DateTime.TryParse(expiresOn, out expirationOn))
+				{
+					return BadRequest("expireOn query parameter is not a valid DateTime");
+				}
+			}
 			var clientIp = _Accessor.HttpContext.Connection.RemoteIpAddress.ToString();
 			if (!IsValidatedClient(clientIp, AccessToken, TokenType.Access, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
 			{
@@ -132,7 +140,7 @@ namespace BOG.DropZone.Controllers
 				dropzone.Payloads[recipientKey].TryAdd(DateTime.Now.Ticks, new StoredValue
 				{
 					Value = payload,
-					Expires = expirationTime,
+					Expires = expirationOn,
 					Tracking = trackingKey
 				});
 				dropzone.Statistics.LastDropoff = DateTime.Now;
@@ -258,10 +266,10 @@ namespace BOG.DropZone.Controllers
 				// Keep cycling through the payloads for the recipient, in chronological order of posting,
 				// until one is found which has not expired. This will drop any expired payloads for the recipient,
 				// until a non-expired payload is encountered.
-				while (!payloadAvailable)
+				while (!payloadAvailable && recipientKeyIsKnown)
 				{
-					var key = dropzone.Payloads[recipientKey].Keys.OrderBy(o => o).FirstOrDefault();
-					if (key == 0L) break;  // list is empty
+					if (dropzone.Payloads[recipientKey].Count == 0L) break;  // list is empty
+					var key = dropzone.Payloads[recipientKey].Keys.OrderBy(o => o).First();
 					payload = new StoredValue
 					{
 						Value = dropzone.Payloads[recipientKey][key].Value,

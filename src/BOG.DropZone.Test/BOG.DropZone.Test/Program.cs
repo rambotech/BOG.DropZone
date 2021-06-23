@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using BOG.DropZone.Client;
+using BOG.DropZone.Client.Entity;
 using BOG.DropZone.Client.Model;
 using BOG.DropZone.Common.Dto;
 using Newtonsoft.Json;
@@ -584,84 +585,151 @@ namespace BOG.DropZone.Test
 				if (!testPassed) UnexpectedResult();
 				testPassed = true;
 
-				// DONE THROUGH HERE for testPassed changes.
-
 				// Payloads and recipients
 
 				// Test a payload with and without a specific recipient
 
+				var globalPayloadValue = "GlobalPayloadData";
+				var globalPayloadMetadata = new PayloadMetadata();
+				var TimsPayloadValue = "TimsPayloadData";
+				var TimsPayloadMetadata = new PayloadMetadata
+				{
+					Recipient = "Tim",
+					Tracking = "ABC123"
+				};
+
 				Console.WriteLine("*** Drop off to global (1) and to a specific recipient (1)");
-				Console.Write($"Add \"Global payload\" for global queue in the zone: ");
-				result = await restApiUpdateMaster.DropOff("Global payload");
+				Console.Write($"Add Global payload to \"{globalPayloadMetadata.Recipient}\"global queue in the zone: ");
+				result = await restApiUpdateMaster.DropOff(globalPayloadValue, globalPayloadMetadata);
 				testPassed = result.HandleAs == Result.State.OK;
 				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
 				if (!testPassed) UnexpectedResult();
 				testPassed = true;
 
-				var recipient = "Tim";
-				var tracking = "ABC123";
-				Console.WriteLine($"Add \"Tim's payload\" for {recipient} queue in the zone ... ");
-				result = await restApiUpdateMaster.DropOff("Tim's payload", new PayloadMetadata
+				Console.Write($"Add Tim's payload to \"{TimsPayloadMetadata.Recipient}\" queue in the zone ");
+				result = await restApiUpdateMaster.DropOff(TimsPayloadValue, TimsPayloadMetadata);
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
+
+				Console.Write($"Query payload tracking number for recipient {TimsPayloadMetadata.Recipient}:");
+				result = await restApiUpdateMaster.Inquiry(TimsPayloadMetadata.Tracking, TimsPayloadMetadata.Recipient, null);
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				if (testPassed)
 				{
-					Recipient = recipient,
-					Tracking = tracking
-				});
-				DisplayResult(result, 0);
+					Console.Write($"Payload found: ");
+					var obj = JsonConvert.DeserializeObject<PayloadInquiry>(result.Content);
+					testPassed = obj.Found;
+					Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: found == true, got: {result.HandleAs}");
+				}
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
 
-				Console.WriteLine($"Query payload tracking number for recipient {recipient} ...");
-				result = await restApiUpdateMaster.Inquiry(tracking, recipient, null);
-				DisplayResult(result, 0);
+				Console.Write($"Query payload bad tracking number for recipient {TimsPayloadMetadata.Recipient}:");
+				result = await restApiUpdateMaster.Inquiry(TimsPayloadMetadata.Tracking + "X", TimsPayloadMetadata.Recipient, null);
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				if (testPassed)
+				{
+					Console.Write($"Payload found: ");
+					var obj = JsonConvert.DeserializeObject<PayloadInquiry>(result.Content);
+					testPassed = !obj.Found;
+					Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: found == false, got: {result.HandleAs}");
+				}
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
 
-				Console.WriteLine($"Query payload bad tracking number for recipient {recipient} ...");
-				result = await restApiUpdateMaster.Inquiry(tracking + "X", recipient, null);
-				DisplayResult(result, -1);
+				Console.Write($"Retrieve payload for recipient {TimsPayloadMetadata.Recipient}: ");
+				result = await restApiUpdateMaster.Pickup(TimsPayloadMetadata.Recipient);
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
 
-				Console.WriteLine($"Retrieve payload for recipient {recipient} ...");
-				result = await restApiUpdateMaster.Pickup(recipient);
-				DisplayResult(result, 0);
+				Console.Write($"Retrieve payload for recipient {TimsPayloadMetadata.Recipient} (nothing): ");
+				result = await restApiUpdateMaster.Pickup(TimsPayloadMetadata.Recipient);
+				testPassed = result.HandleAs == Result.State.NoDataAvailable;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
 
-				Console.WriteLine($"Retrieve payload for recipient {recipient} ... should have nothing");
-				result = await restApiUpdateMaster.Pickup(recipient);
-				DisplayResult(result, 0);
+				Console.Write($"Retrieve payload for global use: ");
+				result = await restApiUpdateMaster.Pickup(globalPayloadMetadata.Recipient);
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
 
-				Console.WriteLine($"Retrieve payload for global use ...");
-				result = await restApiUpdateMaster.Pickup();
-				DisplayResult(result, 0);
-
-				Console.WriteLine($"Retrieve payload for global use ... should have nothing");
-				result = await restApiUpdateMaster.Pickup();
-				DisplayResult(result, -1);
+				Console.WriteLine($"Retrieve payload for global use ... should have nothing: ");
+				result = await restApiUpdateMaster.Pickup(globalPayloadMetadata.Recipient);
+				testPassed = result.HandleAs == Result.State.NoDataAvailable;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
 
 				// Other payloads tests.
 
 				string[] set = new string[] { "Tallahunda", "Kookamunga", "Whatever" };
 
-				Console.WriteLine("*** Drop off some data .. which expires ***");
+				Console.WriteLine("*** Drop off 5 payloads .. which expire after 5 seconds ***");
 				for (int index = 0; index < 5; index++)
 				{
-					Console.WriteLine($"Add {index}: {set[index % 3]}... ");
-					result = await restApiUpdateMaster.DropOff(set[index % 3] + $"{index}",
-						new PayloadMetadata
-						{
-							ExpiresOn = DateTime.Now.AddSeconds(3 + index)
-						});
-					DisplayResult(result, 0);
+					var thisTest = true;
+					var payload = set[index % 3] + $"{index}";
+					Console.Write($"Add {index}: {payload}... ");
+					result = await restApiUpdateMaster.DropOff(payload, new PayloadMetadata
+					{
+						ExpiresOn = DateTime.Now.AddSeconds(index > 0 ? 600 : 1)
+					});
+					thisTest = result.HandleAs == Result.State.OK;
+					Console.WriteLine(thisTest? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+					if (!thisTest) UnexpectedResult();
+					testPassed &= thisTest;
 				}
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
 
-				Console.WriteLine("Wait 5 for reference to expire...");
-				Thread.Sleep(5000);
+				Console.WriteLine("Wait 2 seconds for reference to expire...");
+				Thread.Sleep(2000);
 
-				Console.WriteLine("*** Pickup some data .. some of which has expired ***");
-				for (int index = 0; index < 5; index++)
+				// DONE THROUGH HERE for testPassed changes.
+
+				Console.WriteLine("*** Pickup five items .. index 0 has expired: ***");
+				for (int index = 1; index < 5; index++)
 				{
-					Console.WriteLine($"Retrieve {index} from {set[index % 3]}: ");
+					var thisTest = true;
+					var payload = set[index % 3] + $"{index}";
+					Console.Write($"Retrieve {index} from {payload}: ");
 					result = await restApiUpdateMaster.Pickup();
-					DisplayResult(result, 0);
+					thisTest = result.HandleAs == Result.State.OK;
+					Console.Write(thisTest ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+					if (thisTest)
+					{
+						thisTest = (result.Content == payload);
+						Console.Write($"  payload as expected: ");
+						Console.Write(thisTest ? "pass" : $"FAIL, expected: {payload}, got: {result.Content}");
+					}
+					Console.WriteLine();
+					testPassed &= thisTest;
 				}
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
 
-				Console.WriteLine("*** Clear ***");
+				// Item 6 shoud not be available: the five non-perishing payloads have been picked up.
+				Console.Write($"Check for no availabile payloads: ");
+				result = await restApiUpdateMaster.Pickup();
+				testPassed = result.HandleAs == Result.State.NoDataAvailable;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: NoDataAvailableK, got: {result.HandleAs}");
+				if (!testPassed) UnexpectedResult();
+
+				Console.Write("*** Clear: ");
 				result = await restApiUpdateMaster.Clear();
-				DisplayResult(result, -1);
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
 
 				Console.WriteLine("*** Drop off some data.. places 501 items when 500 is the max ***");
 				//for (int index = 0; index < 501; index++)
@@ -722,6 +790,7 @@ namespace BOG.DropZone.Test
 			}
 
 			Console.WriteLine("Done");
+
 			Console.ReadLine();
 
 			//Console.ReadLine();
