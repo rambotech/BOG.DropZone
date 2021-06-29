@@ -157,7 +157,7 @@ namespace BOG.DropZone.Controllers
 		/// <param name="dropzoneName">the dropzone identifier</param>
 		/// <param name="recipient">(optional): a specific identifier for a specfic recipient of the payload.</param>
 		/// <param name="tracking">(optional): a tracking key which can later be used to check if the payload was picked up.</param>
-		/// <param name="expireOn">(optional): an new expiration time to set for the payload.</param>
+		/// <param name="expiresOn">(optional): an new expiration time to set for the payload.</param>
 		/// <returns>200: PayloadInquir object with the results.</returns>
 		/// <remarks>
 		/// The same arguments must be used for recipient and tracking query parameters, as used when the payload was dropped off.
@@ -174,14 +174,14 @@ namespace BOG.DropZone.Controllers
 				[FromRoute] string dropzoneName,
 				[FromQuery] string recipient = null,
 				[FromQuery] string tracking = null,
-				[FromQuery] string expireOn = null)
+				[FromQuery] string expiresOn = null)
 		{
 			var recipientKey = string.IsNullOrWhiteSpace(recipient) ? "*" : recipient;
 			var trackingKey = string.IsNullOrWhiteSpace(tracking) ? string.Empty : tracking;
 			var expirationOn = DateTime.MinValue;
-			if (!string.IsNullOrWhiteSpace(expireOn))
+			if (!string.IsNullOrWhiteSpace(expiresOn))
 			{
-				if (!DateTime.TryParse(expireOn, out expirationOn))
+				if (!DateTime.TryParse(expiresOn, out expirationOn))
 				{
 					return BadRequest("expireOn query parameter is not a valid DateTime");
 				}
@@ -213,7 +213,7 @@ namespace BOG.DropZone.Controllers
 					if (entry != null)
 					{
 						result.Found = true;
-						result.Expiration = string.IsNullOrWhiteSpace(expireOn) ? entry.Expires : expirationOn;
+						result.Expiration = string.IsNullOrWhiteSpace(expiresOn) ? entry.Expires : expirationOn;
 					}
 				}
 				return StatusCode(200, Serializer<PayloadInquiry>.ToJson(result));
@@ -428,7 +428,7 @@ namespace BOG.DropZone.Controllers
 				[FromRoute] string dropzoneName,
 				[FromRoute] string key,
 				[FromBody] string value,
-				[FromQuery] DateTime? expires)
+				[FromQuery] DateTime? expiresOn)
 		{
 			var clientIp = _Accessor.HttpContext.Connection.RemoteIpAddress.ToString();
 			if (!IsValidatedClient(clientIp, AccessToken, TokenType.Access, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
@@ -438,7 +438,7 @@ namespace BOG.DropZone.Controllers
 			var fixedValue = new StoredValue
 			{
 				Value = value ?? string.Empty,
-				Expires = expires ?? DateTime.MaxValue
+				Expires = expiresOn ?? DateTime.MaxValue
 			};
 
 			lock (_LockDropZoneInfo)

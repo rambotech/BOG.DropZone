@@ -4,7 +4,9 @@ Release Notes:
 * Changed from queue to dictionary internally for more effective handling of expired payloads.
 * Added an optional tracking query parameter to /api/payload/dropoff for the caller to later inquire whether the payload is still in the pickup queue.
 * Added /api/payload/inquiry endpoint to check for a payload awaiting pickup, and optionally change the expiration time.
+* Standardize argument name of expiresOn for all path and query arguments.
 * Rebuild BOG.DropZone.Test for example / demo / validation.
+* Update build target to 5.0.2 for Travis.
 
 2.1.2 -- 2021.04.25
 * Security update from BOG.SwissArmyKnife
