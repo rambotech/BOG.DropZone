@@ -24,42 +24,47 @@ namespace BOG.DropZone.Client.Model
             /// <summary>
             /// The action succeeded, on one or all servers called.
             /// </summary>
-            InvalidAuthentication = 1,
+            InvalidRequest = 1,
+
+            /// <summary>
+            /// The action succeeded, on one or all servers called.
+            /// </summary>
+            InvalidAuthentication = 2,
 
             /// <summary>
             /// No payload is available
             /// </summary>
-            NoDataAvailable = 2,
+            NoDataAvailable = 3,
 
             /// <summary>
             /// No space to store another reference or payload
             /// </summary>
-            OverLimit = 3,
+            OverLimit = 4,
 
             /// <summary>
             /// Cryptography failure
             /// </summary>
-            DataCompromised = 4,
+            DataCompromised = 5,
 
             /// <summary>
             /// Error logged at server
             /// </summary>
-            ServerError = 5,
+            ServerError = 6,
 
             /// <summary>
             /// Failed to connect to the dropzone endpoint
             /// </summary>
-            ConnectionFailed = 6,
+            ConnectionFailed = 7,
 
             /// <summary>
             /// The response is unknown
             /// </summary>
-            UnexpectedResponse = 7,
+            UnexpectedResponse = 8,
 
             /// <summary>
             /// Exception occurred in the client.
             /// </summary>
-            Fatal = 8
+            Fatal = 9
         };
 
         [JsonProperty]

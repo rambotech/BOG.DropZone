@@ -412,7 +412,7 @@ namespace BOG.DropZone.Controllers
 		/// <param name="AccessToken">Optional: access token value if used.</param>
 		/// <param name="dropzoneName">the dropzone identifier</param>
 		/// <param name="key">the name for the value to store</param>
-		/// <param name="expires">(optional): when the value should no longer be returned.</param>
+		/// <param name="expiresOn">(optional): when the value should no longer be returned.</param>
 		/// <param name="value">the value to store for the key name</param>
 		/// <returns>varies: see method declaration</returns>
 		[HttpPost("reference/set/{dropzoneName}/{key}", Name = "SetReference")]

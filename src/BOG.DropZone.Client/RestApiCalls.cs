@@ -236,11 +236,9 @@ namespace BOG.DropZone.Client
 		}
 
 		/// <summary>
-		/// Place a payload into a drop zone's queue. Note: Use text/plain for the content-type.
+		/// Set a a drop zone's metrics values.
 		/// </summary>
-		/// <param name="payload">The content to queue as a string value</param>
-		/// <param name="expires">A perish time when the payload should be discarded</param>
-		/// <param name="recipient">Drop the payload into a specific recipient's queue</param>
+		/// <param name="DropZoneMetrics">The values to set.</param>
 		/// <returns>
 		/// Result: Content-Type = string, no payload
 		/// </returns>
@@ -248,7 +246,7 @@ namespace BOG.DropZone.Client
 		{
 			var result = new Result
 			{
-				HandleAs = metrics.IsValid() ? Result.State.OK : Result.State.UnexpectedResponse
+				HandleAs = metrics.IsValid() ? Result.State.OK : Result.State.InvalidRequest
 			};
 			if (result.HandleAs == Result.State.OK)
 			{
@@ -281,7 +279,7 @@ namespace BOG.DropZone.Client
 							result.HandleAs = Result.State.UnexpectedResponse;
 							break;
 
-						case HttpStatusCode.Conflict:
+						case HttpStatusCode.TooManyRequests:
 							result.HandleAs = Result.State.OverLimit;
 							break;
 
@@ -344,7 +342,7 @@ namespace BOG.DropZone.Client
 					query["recipient"] = thisRecipient;
 					builder.Query = query.ToString();
 				}
-				query["expires"] = metadata.ExpiresOn.ToString("s");
+				query["expiresOn"] = metadata.ExpiresOn.ToString("s");
 				if (!string.IsNullOrWhiteSpace(metadata.Tracking))
 				{
 					var tracking = HttpUtility.ParseQueryString(builder.Query);
@@ -373,6 +371,7 @@ namespace BOG.DropZone.Client
 						break;
 
 					case HttpStatusCode.Conflict:
+					case HttpStatusCode.TooManyRequests:
 						result.HandleAs = Result.State.OverLimit;
 						break;
 
@@ -741,6 +740,8 @@ namespace BOG.DropZone.Client
 						break;
 
 					case HttpStatusCode.Conflict:
+					case HttpStatusCode.RequestEntityTooLarge:
+					case HttpStatusCode.TooManyRequests:
 						result.HandleAs = Result.State.OverLimit;
 						break;
 
