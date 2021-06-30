@@ -110,7 +110,7 @@ The project BOG.DropZone.Test demonstrates all the functionality of the DropZone
 - Enter these commands in the terminal window:
   - ```cd .\bin\Debug\net5.0\```
   - ```.\start_me.bat```
-- The rerminal window will display the following:
+- The terminal window will display the following:
 
 ```
 AccessToken: YourAccessTokenValueHere
@@ -124,9 +124,8 @@ Now listening on: http://[::]:5000
 Application started. Press Ctrl+C to shut down.
 ```
 
-- Now run the app BOG.DropZone.Test by pressing the play button in the toolbar, or by pressing ```Ctrl+F5```
+- Now run the app BOG.DropZone.Test by pressing the play button in the toolbar, or by pressing ```Ctrl+F5``` in Visual Studio.
 - If you would like to set breakpoints in BOG.DropZone.Test and run in Debug, pressing ```F5``` after setting your breakpoints.
-- When complete, close the Developer terminal window.
 
 
 
