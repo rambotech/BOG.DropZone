@@ -1,8 +1,8 @@
 | *branch* | BOG.DropZone  | BOG.DropZone.Client   | BOG.DropZone.Common |
 | :--- | :---: | :---: | :---: |
-| master    | [![Build status](https://api.travis-ci.com/rambotech/BOG.DropZone.svg?branch=master)](https://travis-ci.com/rambotech/BOG.DropZone) |  [![Nuget](https://img.shields.io/nuget/v/BOG.DropZone.Client)](https://www.nuget.org/packages/BOG.DropZone.Client/)  | [![Nuget](https://img.shields.io/nuget/v/BOG.DropZone.Client)](https://www.nuget.org/packages/BOG.DropZone.Common/) |
-| release   | [![Build status](https://api.travis-ci.com/rambotech/BOG.DropZone.svg?branch=release)](https://travis-ci.com/rambotech/BOG.DropZone) | (n/a)  |  (n/a) |
-| develop   | [![Build status](https://api.travis-ci.com/rambotech/BOG.DropZone.svg?branch=develop)](https://travis-ci.com/rambotech/BOG.DropZone) | (n/a)  |  (n/a) |
+| master    | [![Build status](https://app.travis-ci.com/rambotech/BOG.DropZone.svg?branch=master)](https://app.travis-ci.com/rambotech/BOG.DropZone) |  [![Nuget](https://img.shields.io/nuget/v/BOG.DropZone.Client)](https://www.nuget.org/packages/BOG.DropZone.Client/)  | [![Nuget](https://img.shields.io/nuget/v/BOG.DropZone.Client)](https://www.nuget.org/packages/BOG.DropZone.Common/) |
+| release   | [![Build status](https://app.travis-ci.com/rambotech/BOG.DropZone.svg?branch=release)](https://app.travis-ci.com/rambotech/BOG.DropZone) | (n/a)  |  (n/a) |
+| develop   | [![Build status](https://app.travis-ci.com/rambotech/BOG.DropZone.svg?branch=develop)](https://app.travis-ci.com/rambotech/BOG.DropZone) | (n/a)  |  (n/a) |
 
 # BOG.DropZone
 ![alt text](https://github.com/rambotech/BOG.DropZone/blob/master/assets/DropZone.png "They just keep coming and going, and going and coming!")
