@@ -11,4 +11,3 @@ branches:
   only:
   - master
   - release
-  - develop
