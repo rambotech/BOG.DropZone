@@ -5,7 +5,6 @@ Release Notes:
   ** Stored on file system instead of memory to survive app restarts.
   ** Not dropped when the drop zone is cleared.  Must be explicitly dropped using the blob/delete endpoint
   ** No expiration date for blobs. Size limit determined by ASP body size limit, not user controlled.
-* Target changed from NET5 to NET6.
 
 2.2.0 -- 2021.06.29
 * Changed from queue to dictionary internally for more effective handling of expired payloads.
