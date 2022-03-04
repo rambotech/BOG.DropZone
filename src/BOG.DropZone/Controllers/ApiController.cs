@@ -234,7 +234,6 @@ namespace BOG.DropZone.Controllers
 		[ProducesResponseType(204, Type = typeof(string))]
 		[ProducesResponseType(400, Type = typeof(string))]
 		[ProducesResponseType(401)]
-		[ProducesResponseType(451)]
 		[ProducesResponseType(429, Type = typeof(string))]
 		[ProducesResponseType(500)]
 		public IActionResult PickupPayload(
@@ -307,7 +306,6 @@ namespace BOG.DropZone.Controllers
 		[RequestSizeLimit(1024)]
 		[ProducesResponseType(400, Type = typeof(string))]
 		[ProducesResponseType(401)]
-		[ProducesResponseType(451)]
 		[ProducesResponseType(200, Type = typeof(string))]
 		[ProducesResponseType(429, Type = typeof(string))]
 		[ProducesResponseType(500)]
@@ -387,7 +385,6 @@ namespace BOG.DropZone.Controllers
 		[HttpGet("securityinfo", Name = "GetSecurityInfo")]
 		[RequestSizeLimit(1024)]
 		[ProducesResponseType(401)]
-		[ProducesResponseType(451)]
 		[ProducesResponseType(200, Type = typeof(string))]
 		[ProducesResponseType(500)]
 		[Produces("text/plain")]
@@ -418,7 +415,6 @@ namespace BOG.DropZone.Controllers
 		[HttpPost("reference/set/{dropzoneName}/{key}", Name = "SetReference")]
 		[ProducesResponseType(400, Type = typeof(string))]
 		[ProducesResponseType(401)]
-		[ProducesResponseType(451)]
 		[ProducesResponseType(201, Type = typeof(string))]
 		[ProducesResponseType(429, Type = typeof(string))]
 		[ProducesResponseType(500)]
@@ -488,7 +484,6 @@ namespace BOG.DropZone.Controllers
 		[RequestSizeLimit(1024)]
 		[ProducesResponseType(400, Type = typeof(string))]
 		[ProducesResponseType(401)]
-		[ProducesResponseType(451)]
 		[ProducesResponseType(429, Type = typeof(string))]
 		[ProducesResponseType(200, Type = typeof(string))]
 		[ProducesResponseType(204, Type = typeof(string))]
@@ -515,7 +510,7 @@ namespace BOG.DropZone.Controllers
 					CreateDropZone(dropzoneName);
 				}
 				var dropzone = _Storage.DropZoneList[dropzoneName];
-				string result = null;
+				string result = String.Empty;
 				if (dropzone.References.Count == 0 || !dropzone.References.ContainsKey(key))
 				{
 					return StatusCode(204);
@@ -524,6 +519,7 @@ namespace BOG.DropZone.Controllers
 				{
 					dropzone.References.Remove(key, out StoredValue ignored);
 					dropzone.Statistics.ReferenceExpiredCount++;
+					dropzone.Statistics.ReferenceCount = dropzone.References.Count;
 					return StatusCode(204);
 				}
 				else
@@ -544,7 +540,6 @@ namespace BOG.DropZone.Controllers
 		/// <returns>varies: see method declaration</returns>
 		[HttpDelete("reference/drop/{dropzoneName}/{key}", Name = "DropReference")]
 		[ProducesResponseType(401)]
-		[ProducesResponseType(451)]
 		[ProducesResponseType(200, Type = typeof(string))]
 		[ProducesResponseType(404, Type = typeof(string))]
 		[ProducesResponseType(500)]
@@ -572,6 +567,7 @@ namespace BOG.DropZone.Controllers
 					var len = dropzone.References[key].Value.Length;
 					if (!dropzone.References.Remove(key, out var ignoreThis))
 					{
+						dropzone.Statistics.ReferenceCount = dropzone.References.Count;
 						return StatusCode(500, $"Failed to remove reference");
 					}
 					dropzone.Statistics.ReferenceSize -= len;
@@ -593,7 +589,6 @@ namespace BOG.DropZone.Controllers
 		[ProducesResponseType(200, Type = typeof(List<string>))]
 		[ProducesResponseType(400, Type = typeof(string))]
 		[ProducesResponseType(401)]
-		[ProducesResponseType(451)]
 		[ProducesResponseType(404, Type = typeof(string))]
 		[ProducesResponseType(500)]
 		[Produces("application/json")]
@@ -617,6 +612,7 @@ namespace BOG.DropZone.Controllers
 					CreateDropZone(dropzoneName);
 				}
 				var dropzone = _Storage.DropZoneList[dropzoneName];
+				dropzone.Statistics.ReferenceCount = dropzone.References.Count;
 				List<string> returnList = new();
 				if (dropzone.References.Count > 0)
 				{
@@ -629,6 +625,178 @@ namespace BOG.DropZone.Controllers
 			}
 		}
 
+		#region Blog
+		/// <summary>
+		/// Sets the value of a blob into a persisted file (key is the root name).
+		/// Blobs are like references, but data survives restarts of the app.  Blobs are removed when the dropzone is removed.
+		/// Use DropBlob to remove an entry in the references.
+		/// </summary>
+		/// <param name="AccessToken">Optional: access token value if used.</param>
+		/// <param name="dropzoneName">the dropzone identifier</param>
+		/// <param name="key">the name for the value to store</param>
+		/// <param name="value">the value to store for the key name</param>
+		/// <returns>varies: see method declaration</returns>
+		[HttpPost("blob/set/{dropzoneName}/{key}", Name = "SetBlob")]
+		[ProducesResponseType(400)]
+		[ProducesResponseType(401)]
+		[ProducesResponseType(201, Type = typeof(string))]
+		[ProducesResponseType(500)]
+		[Produces("text/plain")]
+		public IActionResult SetBlob(
+				[FromHeader] string AccessToken,
+				[FromRoute] string dropzoneName,
+				[FromRoute] string key,
+				[FromBody] string value)
+		{
+			var clientIp = _Accessor.HttpContext.Connection.RemoteIpAddress.ToString();
+			if (!IsValidatedClient(clientIp, AccessToken, TokenType.Access, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
+			{
+				return Unauthorized();
+			}
+			if (!_Storage.IsValidZoneName(dropzoneName))
+			{
+				return StatusCode(400, $"DropZone name is not valid: {dropzoneName}");
+			}
+			if (!_Storage.IsValidKeyName(key))
+			{
+				return StatusCode(400, $"Key name is not valid: {key}");
+			}
+			try
+			{
+				_Storage.SaveBlob(dropzoneName, key, value);
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, $"Exception saving blob: {ex.Message}");
+			}
+			return StatusCode(201, "Blob accepted and successfully persisted");
+		}
+
+		/// <summary>
+		/// Gets the value of a blob key in a dropzone.Statistics.  A blob is a key/value setting, with the value stored in a file.
+		/// </summary>
+		/// <param name="AccessToken">Optional: access token value if used.</param>
+		/// <param name="dropzoneName">the dropzone identifier</param>
+		/// <param name="key">the name identifying the value to retrieve</param>
+		/// <returns>string which is the reference value (always text/plain)</returns>
+		[HttpGet("blob/get/{dropzoneName}/{key}", Name = "GetBlob")]
+		[RequestSizeLimit(1024)]
+		[ProducesResponseType(400, Type = typeof(string))]
+		[ProducesResponseType(401)]
+		[ProducesResponseType(200, Type = typeof(string))]
+		[ProducesResponseType(500)]
+		[Produces("text/plain")]
+		public IActionResult GetBlob(
+				[FromHeader] string AccessToken,
+				[FromRoute] string dropzoneName,
+				[FromRoute] string key)
+		{
+			var clientIp = _Accessor.HttpContext.Connection.RemoteIpAddress.ToString();
+			if (!IsValidatedClient(clientIp, AccessToken, TokenType.Access, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
+			{
+				return Unauthorized();
+			}
+			if (!_Storage.IsValidZoneName(dropzoneName))
+			{
+				return StatusCode(400, $"DropZone name is not valid: {dropzoneName}");
+			}
+			if (!_Storage.IsValidKeyName(key))
+			{
+				return StatusCode(400, $"Key name is not valid: {key}");
+			}
+			try
+			{
+				return StatusCode(200, _Storage.ReadBlob(dropzoneName, key, string.Empty));
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, $"Exception reading blob: {ex.Message}");
+			}
+		}
+
+		/// <summary>
+		/// Drops a blog file.
+		/// </summary>
+		/// <param name="AccessToken">Optional: access token value if used.</param>
+		/// <param name="dropzoneName">the dropzone identifier</param>
+		/// <param name="key">the name for the value to store</param>
+		/// <returns>varies: see method declaration</returns>
+		[HttpDelete("blob/drop/{dropzoneName}/{key}", Name = "DropBlob")]
+		[ProducesResponseType(400, Type = typeof(string))]
+		[ProducesResponseType(401)]
+		[ProducesResponseType(200, Type = typeof(string))]
+		[ProducesResponseType(500)]
+		[Produces("text/plain")]
+		public IActionResult DropBlob(
+				[FromHeader] string AccessToken,
+				[FromRoute] string dropzoneName,
+				[FromRoute] string key)
+		{
+			var clientIp = _Accessor.HttpContext.Connection.RemoteIpAddress.ToString();
+			if (!IsValidatedClient(clientIp, AccessToken, TokenType.Access, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
+			{
+				return Unauthorized();
+			}
+			if (!_Storage.IsValidZoneName(dropzoneName))
+			{
+				return StatusCode(400, $"DropZone name is not valid: {dropzoneName}");
+			}
+			if (!_Storage.IsValidKeyName(key))
+			{
+				return StatusCode(400, $"Key name is not valid: {key}");
+			}
+			try
+			{
+				_Storage.DeleteBlob(dropzoneName, key);
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, $"Exception reading blob: {ex.Message}");
+			}
+			return Ok();
+		}
+
+		/// <summary>
+		/// Get a list of the reference key names available
+		/// </summary>
+		/// <param name="AccessToken">Optional: access token value if used.</param>
+		/// <param name="dropzoneName">the dropzone identifier</param>
+		/// <returns>list of strings which contain the reference key names</returns>
+		[HttpGet("blob/list/{dropzoneName}", Name = "ListBlobs")]
+		[RequestSizeLimit(1024)]
+		[ProducesResponseType(200, Type = typeof(List<string>))]
+		[ProducesResponseType(400, Type = typeof(string))]
+		[ProducesResponseType(401)]
+		[ProducesResponseType(404, Type = typeof(string))]
+		[ProducesResponseType(500)]
+		[Produces("application/json")]
+		public IActionResult ListBlobs(
+				[FromHeader] string AccessToken,
+				[FromRoute] string dropzoneName)
+		{
+			var clientIp = _Accessor.HttpContext.Connection.RemoteIpAddress.ToString();
+			if (!IsValidatedClient(clientIp, AccessToken, TokenType.Access, dropzoneName, System.Reflection.MethodBase.GetCurrentMethod().Name))
+			{
+				return Unauthorized();
+			}
+			if (!_Storage.IsValidZoneName(dropzoneName))
+			{
+				return StatusCode(400, $"DropZone name is not valid: {dropzoneName}");
+			}
+			var result = new List<string>();
+			try
+			{
+				result.AddRange(_Storage.GetBlobKeys(dropzoneName));
+				result.Sort();
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, $"Exception reading blob key list: {ex.Message}");
+			}
+			return Ok(result);
+		}
+		#endregion
+
 		/// <summary>
 		/// Clear: drops all payloads and references from a specific drop zone, and resets its statistics.
 		/// </summary>
@@ -639,7 +807,6 @@ namespace BOG.DropZone.Controllers
 		[RequestSizeLimit(1024)]
 		[ProducesResponseType(200, Type = typeof(string))]
 		[ProducesResponseType(401)]
-		[ProducesResponseType(451)]
 		[ProducesResponseType(500)]
 		[Produces("text/plain")]
 		public IActionResult Clear(
@@ -670,7 +837,6 @@ namespace BOG.DropZone.Controllers
 		[RequestSizeLimit(1024)]
 		[ProducesResponseType(200, Type = typeof(string))]
 		[ProducesResponseType(401)]
-		[ProducesResponseType(451)]
 		[ProducesResponseType(500)]
 		[Produces("text/plain")]
 		public IActionResult Reset([FromHeader] string AdminToken)
@@ -696,7 +862,6 @@ namespace BOG.DropZone.Controllers
 		[RequestSizeLimit(1024)]
 		[ProducesResponseType(200, Type = typeof(string))]
 		[ProducesResponseType(401)]
-		[ProducesResponseType(451)]
 		[ProducesResponseType(500)]
 		[Produces("text/plain")]
 		public IActionResult Shutdown([FromHeader] string AdminToken)
@@ -736,6 +901,7 @@ namespace BOG.DropZone.Controllers
 
 		private void ReleaseDropZone(string dropzoneName)
 		{
+			_Storage.Clear(dropzoneName);
 			_Storage.DropZoneList.Remove(dropzoneName);
 		}
 

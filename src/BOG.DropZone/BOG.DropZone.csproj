@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <RuntimeIdentifiers>win10-x64</RuntimeIdentifiers>
     <RuntimeIdentifiers>linux-x64</RuntimeIdentifiers>
     <RuntimeIdentifiers>linux-arm</RuntimeIdentifiers>
-    <Version>2.2.0</Version>
+    <Version>2.3.0</Version>
     <AssemblyVersion>2.2.0.0</AssemblyVersion>
   </PropertyGroup>
 

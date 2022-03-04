@@ -10,6 +10,7 @@ using BOG.SwissArmyKnife.Extensions;
 using Microsoft.Extensions.Configuration;
 using BOG.SwissArmyKnife;
 using static BOG.DropZone.Interface.IStorage;
+using System.Text.RegularExpressions;
 
 namespace BOG.DropZone
 {
@@ -18,8 +19,11 @@ namespace BOG.DropZone
 	/// </summary>
 	public class MemoryStorage : IStorage
 	{
-		readonly Timer stopTimer = new Timer();
-		readonly object lockPoint = new object();
+		const string ZoneNamePattern = @"^[A-Za-z][A-Za-z0-9_\-\.]{0,58}[A-Za-z0-9\.]$";
+		const string KeyNamePattern = @"^[A-Za-z][A-Za-z0-9_\-\.]{0,58}[A-Za-z0-9\.]$";
+
+		readonly Timer stopTimer = new();
+		readonly object lockPoint = new();
 
 		/// <summary>
 		/// If not empty, the header value "AccessToken" from the client must contain this value to use the site.
@@ -63,7 +67,10 @@ namespace BOG.DropZone
 		/// </summary>
 		public MemoryStorage(IConfiguration config)
 		{
-			PersistBaseFolder = ResolveLocalSpec(config.GetValue<string>("PersistFolderRoot", "$HOME/appdata/dropzone"));
+			PersistBaseFolder = config.GetValue<string>(
+					"PersistFolderRoot", 
+					Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "app.data", "local", "dropzone")
+			);
 			if (!Directory.Exists(PersistBaseFolder))
 			{
 				Directory.CreateDirectory(PersistBaseFolder);
@@ -73,21 +80,46 @@ namespace BOG.DropZone
 			stopTimer.Interval = 1000;
 		}
 
-		private string ResolveLocalSpec(string localFolderSpec)
+		/// <summary>
+		/// Ensure the patten is valid.
+		/// </summary>
+		/// <param name="zoneName"></param>
+		/// <returns></returns>
+		public bool IsValidZoneName(string zoneName)
 		{
-			string result = localFolderSpec;
-			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			return new Regex(ZoneNamePattern, RegexOptions.IgnoreCase).IsMatch(zoneName);
+		}
+
+		/// <summary>
+		/// Ensure the patten is valid.
+		/// </summary>
+		/// <param name="key"></param>
+		/// <returns></returns>
+		public bool IsValidKeyName(string key)
+		{
+			return new Regex(KeyNamePattern, RegexOptions.IgnoreCase).IsMatch(key);
+		}
+
+		/// <summary>
+		/// Clear a specific drop zone, including their payloads and reference dictionary.
+		/// </summary>
+		/// <param name="zoneName"></param>
+		/// <returns></returns>
+		public List<string> GetBlobKeys(string zoneName)
+		{
+			var result = new List<string>();
+
+			if (IsValidZoneName(zoneName))
 			{
-				result = result.Replace(@"/", @"\").ResolvePathPlaceholders();
-				result = result.Replace("$HOME", Environment.GetEnvironmentVariable("USERPROFILE"));
-				while (result[result.Length - 1] == '\\') result = result.Substring(0, result.Length - 1);
-				result += "\\";
-			}
-			else
-			{
-				result = result.Replace("$HOME", Environment.GetEnvironmentVariable("HOME"));
-				while (result[result.Length - 1] == '/') result = result.Substring(0, result.Length - 1);
-				result += "/";
+				var zoneFolder = Path.Combine(PersistBaseFolder, zoneName);
+				if (Directory.Exists(zoneFolder))
+				{
+					foreach (var filename in Directory.GetFiles(zoneFolder, MakeBlobFilename("*"), SearchOption.TopDirectoryOnly))
+					{
+						var filenameOnly = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(filename));
+						result.Add(filenameOnly);
+					}
+				}
 			}
 			return result;
 		}
@@ -97,17 +129,19 @@ namespace BOG.DropZone
 		/// </summary>
 		/// <param name="zoneName"></param>
 		/// <param name="key"></param>
-		/// <param name="value"></param>
+		/// <param name="value">A default value to return if the file is not present.</param>
 		/// <returns></returns>
-		public BlobState ReadBlob(string zoneName, string key, out StoredValue value)
+		public string ReadBlob(string zoneName, string key, string value)
 		{
-			value = null;
+			if (!IsValidZoneName(zoneName)) return null;
+			if (!IsValidZoneName(key)) return null;
 			var zoneFolder = Path.Combine(PersistBaseFolder, zoneName);
-			if (!Directory.Exists(zoneFolder)) return BlobState.NotFound;
+			if (!Directory.Exists(zoneFolder)) return string.Empty;
 
-			var filename = Path.Combine(zoneFolder, key);
-			value = ObjectJsonSerializer<StoredValue>.LoadDocumentFormat(filename);
-			return BlobState.Exists;
+			var filename = Path.Combine(zoneFolder, MakeBlobFilename(key));
+			if (!File.Exists(filename)) return string.Empty;
+			using StreamReader sr = new(filename);
+			return sr.ReadToEnd();
 		}
 
 		/// <summary>
@@ -117,14 +151,18 @@ namespace BOG.DropZone
 		/// <param name="key"></param>
 		/// <param name="value"></param>
 		/// <returns></returns>
-		public BlobState SaveBlob(string zoneName, string key, StoredValue value)
+		public void SaveBlob(string zoneName, string key, string value)
 		{
+			if (string.IsNullOrEmpty(value)) return;
+			if (!IsValidZoneName(zoneName)) return;
+			if (!IsValidZoneName(key)) return;
 			var zoneFolder = Path.Combine(PersistBaseFolder, zoneName);
 			if (!Directory.Exists(zoneFolder)) Directory.CreateDirectory(zoneFolder);
 
-			var filename = Path.Combine(zoneFolder, key);
-			ObjectJsonSerializer<StoredValue>.SaveDocumentFormat(value, filename);
-			return BlobState.Exists;
+			var filename = Path.Combine(zoneFolder, MakeBlobFilename(key));
+			using StreamWriter sw = File.CreateText(filename);
+			sw.Write(value);
+			sw.Close();
 		}
 
 		/// <summary>
@@ -134,10 +172,12 @@ namespace BOG.DropZone
 		/// <param name="key"></param>
 		public void DeleteBlob(string zoneName, string key)
 		{
+			if (!IsValidZoneName(zoneName)) return;
+			if (!IsValidZoneName(key)) return;
 			var zoneFolder = Path.Combine(PersistBaseFolder, zoneName);
 			if (!Directory.Exists(zoneFolder)) return;
 
-			var filename = Path.Combine(zoneFolder, key);
+			var filename = Path.Combine(zoneFolder, MakeBlobFilename(key));
 			if (!File.Exists(filename)) return;
 
 			File.Delete(filename);
@@ -157,13 +197,12 @@ namespace BOG.DropZone
 		}
 
 		/// <summary>
-		/// Clear a specific drop zone, including their payloads and reference dictionary.
+		/// Clear a specific drop zone, including their payloads and reference dictionary.  Will not touch blobs.
 		/// </summary>
 		public void Clear(string zoneName)
 		{
-			var zoneFolder = Path.Combine(PersistBaseFolder, zoneName);
-			if (Directory.Exists(zoneFolder)) Directory.Delete(zoneFolder);
-			DropZoneList.Remove(zoneName);
+			//var zoneFolder = Path.Combine(PersistBaseFolder, zoneName);
+			//if (Directory.Exists(zoneFolder)) Directory.Delete(zoneFolder);
 			lock (lockPoint)
 			{
 				foreach (var clientEntry in ClientWatchList)
@@ -188,6 +227,11 @@ namespace BOG.DropZone
 		private static void OnTimedEvent(object source, ElapsedEventArgs e)
 		{
 			System.Environment.Exit(0);
+		}
+
+		private static string MakeBlobFilename (string rootname)
+		{
+			return rootname.Trim() + ".blob.json";
 		}
 	}
 }

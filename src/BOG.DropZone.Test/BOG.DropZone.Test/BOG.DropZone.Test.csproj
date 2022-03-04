@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/rambotech/BOG.DropZone</PackageProjectUrl>
     <PackageLicenseUrl></PackageLicenseUrl>
@@ -13,7 +13,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageIconUrl></PackageIconUrl>
-    <Version>2.2.0</Version>
+    <Version>2.3.0</Version>
     <AssemblyVersion>2.2.0.0</AssemblyVersion>
     <FileVersion>2.2.0.0</FileVersion>
     <Copyright>(c) 2017-2021, John J Schultz</Copyright>

@@ -58,12 +58,11 @@ namespace BOG.DropZone
 				.AddJsonOptions(options =>
 				{
 					options.JsonSerializerOptions.WriteIndented = true;
-					options.JsonSerializerOptions.IgnoreNullValues = true;
+					options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault;
 					options.JsonSerializerOptions.IgnoreReadOnlyProperties = false;
 					options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 					options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-				})
-				.SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
+				});
 
 			services.AddHttpContextAccessor();
 

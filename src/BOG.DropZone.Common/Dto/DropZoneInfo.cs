@@ -83,27 +83,33 @@ namespace BOG.DropZone.Common.Dto
         public int ReferenceExpiredCount { get; set; } = 0;
 
         /// <summary>
+        /// The total count of references currently stored in the dropzone.
+        /// </summary>
+        [JsonProperty]
+        public int BlobCount { get; set; } = 0;
+
+        /// <summary>
         /// The time a payload was last dropped off.
         /// </summary>
         [JsonProperty]
-        public DateTime LastDropoff { get; set; }
+        public DateTime LastDropoff { get; set; } = DateTime.MinValue;
 
         /// <summary>
         /// The time a payload was last picked up.
         /// </summary>
         [JsonProperty]
-        public DateTime LastPickup { get; set; }
+        public DateTime LastPickup { get; set; } = DateTime.MinValue;
 
         /// <summary>
         /// The time a reference was last retrieved.
         /// </summary>
         [JsonProperty]
-        public DateTime LastGetReference { get; set; }
+        public DateTime LastGetReference { get; set; } = DateTime.MinValue;
 
         /// <summary>
         /// The time a reference was last set.
         /// </summary>
         [JsonProperty]
-        public DateTime LastSetReference { get; set; }
+        public DateTime LastSetReference { get; set; } = DateTime.MinValue;
     }
 }

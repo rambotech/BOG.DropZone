@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using BOG.DropZone.Client;
@@ -13,7 +14,7 @@ namespace BOG.DropZone.Test
 
 	// Functions as both an example, and a functional test.
 	// - Make this the default startup project
-	// - open a command prompt and start BOG.DropZone externally on the host with start_me.bat/.sh
+	// - Open a command prompt and start BOG.DropZone externally on the host with start_me.bat/.sh
 	public class WorkerComm
 	{
 		public string RecipientID { get; set; }
@@ -48,10 +49,13 @@ namespace BOG.DropZone.Test
 			};
 
 			var restApiUpdateMaster = new RestApiCalls(zone);
-			var testPassed = true;
+			bool testPassed = true;
 
 			try
 			{
+				Console.WriteLine("### TESTING BEGINS ###");
+				Console.WriteLine();
+				Console.WriteLine("---------------------------");
 				Console.Write($"CheckHeartbeat(): ");
 				Result result = await restApiUpdateMaster.CheckHeartbeat();
 				Console.WriteLine($"{result.HandleAs}");
@@ -59,9 +63,11 @@ namespace BOG.DropZone.Test
 				{
 					Console.WriteLine();
 					UnexpectedResult("No response to heartbeat call, testing halted... ");
-					return;
+					System.Environment.Exit(1);
 				}
 
+				Console.WriteLine();
+				Console.WriteLine("---------------------------");
 				Console.Write("Reset(): ");
 				result = await restApiUpdateMaster.Reset();
 				Console.WriteLine($"{result.HandleAs}");
@@ -71,6 +77,8 @@ namespace BOG.DropZone.Test
 					return;
 				}
 
+				Console.WriteLine();
+				Console.WriteLine("---------------------------");
 				Console.Write("SetMetrics(): ");
 				var metrics = new Common.Dto.DropZoneMetrics
 				{
@@ -110,7 +118,10 @@ namespace BOG.DropZone.Test
 				if (!testPassed) UnexpectedResult();
 				testPassed = true;
 
-				Console.Write("ListReferences(): ");
+				Console.WriteLine();
+				Console.WriteLine("--------------------------- Reference Storage");
+
+				Console.Write("ListReferences() ...: ");
 				result = await restApiUpdateMaster.ListReferences();
 				testPassed = result.HandleAs == Result.State.OK;
 				if (testPassed)
@@ -123,21 +134,14 @@ namespace BOG.DropZone.Test
 				if (!testPassed) UnexpectedResult();
 				testPassed = true;
 
-				Console.Write("GetReference() [empty]: ");
-				result = await restApiUpdateMaster.GetReference("Test-Ref01");
-				testPassed = result.HandleAs == Result.State.NoDataAvailable;
-				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
-				if (!testPassed) UnexpectedResult();
-				testPassed = true;
-
 				Console.Write("SetReference(): ");
 				result = await restApiUpdateMaster.SetReference("Test-Ref01", "test ref 1");
 				testPassed = result.HandleAs == Result.State.OK;
-				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
 				if (!testPassed) UnexpectedResult();
 				testPassed = true;
 
-				Console.Write("ListReferences(): ");
+				Console.Write("ListReferences() ...: ");
 				result = await restApiUpdateMaster.ListReferences();
 				testPassed = result.HandleAs == Result.State.OK;
 				if (testPassed)
@@ -163,14 +167,14 @@ namespace BOG.DropZone.Test
 				if (!testPassed) UnexpectedResult();
 				testPassed = true;
 
-				Console.Write("SetReference()... Perishable: ");
-				result = await restApiUpdateMaster.SetReference("Test-Ref02-Perish-5-Sec", "this will go way", DateTime.Now.AddSeconds(5));
+				Console.Write("SetReference()... Perishable (5 second life span): ");
+				result = await restApiUpdateMaster.SetReference("Test-Ref02-Perish-5-Sec", "this will go away", DateTime.Now.AddSeconds(5));
 				testPassed = result.HandleAs == Result.State.OK;
 				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
 				if (!testPassed) UnexpectedResult();
 				testPassed = true;
 
-				Console.Write("ListReferences()... shows static and perishable: ");
+				Console.Write("ListReferences() ...: ");
 				result = await restApiUpdateMaster.ListReferences();
 				testPassed = result.HandleAs == Result.State.OK;
 				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
@@ -191,25 +195,25 @@ namespace BOG.DropZone.Test
 				if (testPassed)
 				{
 					Console.Write("  Value check... ");
-					testPassed &= result.Content == "this will go way";
+					testPassed &= result.Content == "this will go away";
 					Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: this will go way, got: {result.Content}");
 				}
 				if (!testPassed) UnexpectedResult();
 				testPassed = true;
 
 				Console.WriteLine("Wait 5 seconds for reference to expire...");
-				Thread.Sleep(5000);
+				Thread.Sleep(5100);
 
-				Console.Write("ListReferences()... shows static only... perishable has expired: ");
+				Console.Write("ListReferences()... : ");
 				result = await restApiUpdateMaster.ListReferences();
 				testPassed = result.HandleAs == Result.State.OK;
 				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
 				if (testPassed)
 				{
 					var list = Serializer<System.Collections.Generic.List<System.String>>.FromJson(result.Content);
-					Console.Write("  list.Count()... ");
+					Console.Write("  list.Count()...: ");
 					testPassed &= list.Count == 1;
-					Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: 0, got: {list.Count}");
+					Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: 1, got: {list.Count}");
 				}
 				if (!testPassed) UnexpectedResult();
 				testPassed = true;
@@ -218,13 +222,19 @@ namespace BOG.DropZone.Test
 				result = await restApiUpdateMaster.GetReference("Test-Ref02-Perish-5-Sec");
 				testPassed = result.HandleAs == Result.State.NoDataAvailable;
 				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
+				if (testPassed)
+				{
+					Console.Write("  Value from perishable reference is empty... ");
+					testPassed &= string.IsNullOrEmpty(result.Content);
+					Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: empty string, got: {result.Content}");
+				}
 				if (!testPassed) UnexpectedResult();
 				testPassed = true;
 
 				{
 					var bigData = new string('X', 524288);   // 512K of X's... not over limit.
 					Console.Write($"SetReference()... BIG...{bigData.Length}: ");
-					result = await restApiUpdateMaster.SetReference("BIG", bigData);
+					result = await restApiUpdateMaster.SetReference("BIG", bigData, DateTime.Now.AddSeconds(2));
 					testPassed = result.HandleAs == Result.State.OK;
 					Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
 					if (!testPassed) UnexpectedResult();
@@ -249,11 +259,14 @@ namespace BOG.DropZone.Test
 				{
 					var hugeData = new string('X', 41000000);
 					Console.Write($"SetReference()... HUGE... rejected due to size {hugeData.Length}: ");
-					result = await restApiUpdateMaster.SetReference("HUGE", hugeData);
+					result = await restApiUpdateMaster.SetReference("HUGE", hugeData, DateTime.Now.AddSeconds(2));
 					testPassed = result.HandleAs == Result.State.OverLimit;
 					Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: UnexpectedResponse, got: {result.HandleAs}");
 					if (!testPassed) UnexpectedResult();
 					testPassed = true;
+
+					Console.WriteLine("Wait 2 seconds for potential cleanup backlog...");
+					Thread.Sleep(2000);
 
 					Console.Write("GetReference()... HUGE...");
 					result = await restApiUpdateMaster.GetReference("HUGE");
@@ -261,9 +274,32 @@ namespace BOG.DropZone.Test
 					Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
 					if (!testPassed) UnexpectedResult();
 					testPassed = true;
-
 					result.Message = string.Empty;
 				}
+
+				Console.Write("DropReference() Test-Ref01 ...:  ");
+				result = await restApiUpdateMaster.DropReference("Test-Ref01");
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
+
+				Console.Write("ListReferences() ...: ");
+				result = await restApiUpdateMaster.ListReferences();
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: NoDataAvailable, got: {result.HandleAs}");
+				if (testPassed)
+				{
+					var list = Serializer<System.Collections.Generic.List<System.String>>.FromJson(result.Content);
+					Console.Write("  list.Count()... ");
+					testPassed &= list.Count == 0;
+					Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: 0, got: {list.Count}");
+				}
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
+
+				Console.WriteLine();
+				Console.WriteLine("--------------------------- Statistics");
 
 				Console.Write("GetStatistics(): ");
 				result = await restApiUpdateMaster.GetStatistics();
@@ -277,8 +313,8 @@ namespace BOG.DropZone.Test
 					Console.WriteLine(obj.PayloadCount == 0 ? "pass" : $"FAIL, expected: 0, got {obj.PayloadCount}");
 					testPassed &= obj.PayloadCount == 0;
 					Console.Write("  ReferenceCount: ");
-					Console.WriteLine(obj.ReferenceCount == 2 ? "pass" : $"FAIL, expected: 2, got {obj.PayloadCount}");
-					testPassed &= obj.ReferenceCount == 2;
+					Console.WriteLine(obj.ReferenceCount == 0 ? "pass" : $"FAIL, expected: 0, got {obj.ReferenceCount}");
+					testPassed &= obj.ReferenceCount == 0;
 					Console.Write("  PayloadExpiredCount: ");
 					Console.WriteLine(obj.PayloadExpiredCount == 0 ? "pass" : $"FAIL, expected: 1, got {obj.PayloadExpiredCount}");
 					testPassed &= obj.PayloadExpiredCount == 0;
@@ -288,6 +324,9 @@ namespace BOG.DropZone.Test
 				}
 				if (!testPassed) UnexpectedResult();
 				testPassed = true;
+
+				Console.WriteLine();
+				Console.WriteLine("--------------------------- Security Info");
 
 				Console.WriteLine("GetSecurityInfo(): ");
 				result = await restApiUpdateMaster.GetSecurity();
@@ -301,13 +340,14 @@ namespace BOG.DropZone.Test
 					testPassed &= obj.Count == 1;
 
 					Console.Write("  AccessAttemptsTotalCount: ");
-					Console.WriteLine(obj[0].AccessAttemptsTotalCount == 17 ? "pass" : $"FAIL, expected: 0, got {obj[0].AccessAttemptsTotalCount}");
-					testPassed &= obj[0].AccessAttemptsTotalCount == 17;
+					Console.WriteLine(obj[0].AccessAttemptsTotalCount == 16 ? "pass" : $"FAIL, expected: 0, got {obj[0].AccessAttemptsTotalCount}");
+					testPassed &= obj[0].AccessAttemptsTotalCount == 16;
 				}
 				if (!testPassed) UnexpectedResult();
 				testPassed = true;
 
-				// Payloads and recipients
+				Console.WriteLine();
+				Console.WriteLine("--------------------------- Payloads and recipients");
 
 				// Test a payload with and without a specific recipient
 
@@ -444,13 +484,6 @@ namespace BOG.DropZone.Test
 				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: NoDataAvailableK, got: {result.HandleAs}");
 				if (!testPassed) UnexpectedResult();
 
-				Console.Write("*** Clear: ");
-				result = await restApiUpdateMaster.Clear();
-				testPassed = result.HandleAs == Result.State.OK;
-				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
-				if (!testPassed) UnexpectedResult();
-				testPassed = true;
-
 				Console.WriteLine("*** Drop off some data.. places 501 items when 500 is the max ***");
 				for (int index = 0; index <= metrics.MaxPayloadCount; index++)
 				{
@@ -523,9 +556,10 @@ namespace BOG.DropZone.Test
 				if (!testPassed) UnexpectedResult();
 				testPassed = true;
 
-				Console.Write("ListReferences(): ");
+				Console.Write("ListReferences()... : ");
 				result = await restApiUpdateMaster.ListReferences();
 				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? " pass" : $" FAIL, expected: OK, got: {result.Content}");
 				if (testPassed)
 				{
 					var list = Serializer<System.Collections.Generic.List<System.String>>.FromJson(result.Content);
@@ -560,9 +594,7 @@ namespace BOG.DropZone.Test
 				if (!testPassed) UnexpectedResult();
 				testPassed = true;
 
-				// DONE THROUGH HERE for testPassed changes.
-
-				Console.Write("ListReferences(): ");
+				Console.Write("ListReferences()... : ");
 				result = await restApiUpdateMaster.ListReferences();
 				testPassed = result.HandleAs == Result.State.OK;
 				if (testPassed)
@@ -570,7 +602,143 @@ namespace BOG.DropZone.Test
 					var list = Serializer<System.Collections.Generic.List<System.String>>.FromJson(result.Content);
 					Console.Write("  list.Count()... ");
 					testPassed &= list.Count == metrics.MaxReferencesCount;
-					Console.WriteLine(list.Count == metrics.MaxReferencesCount ? "pass" : $"FAIL, expected: 0, got: {list.Count}");
+					Console.WriteLine(list.Count == metrics.MaxReferencesCount ? "pass" : $"FAIL, expected: {metrics.MaxReferencesCount}, got: {list.Count}");
+				}
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
+
+				Console.WriteLine();
+				Console.WriteLine("--------------------------- Blob Storage ");
+
+				const string TestItem01Value = "The quick brown fox jumped over the lazy dog's back.";
+
+				Console.WriteLine("Delete any existing blobs...");
+				Console.Write("Get blob list...: ");
+				result = await restApiUpdateMaster.ListBlobs();
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				if (testPassed)
+				{
+					foreach (var blobKey in Serializer<System.Collections.Generic.List<System.String>>.FromJson(result.Content))
+					{
+						Console.Write($"  Delete {blobKey} ...: ");
+						result = await restApiUpdateMaster.DropBlob(blobKey);
+						testPassed = result.HandleAs == Result.State.OK;
+						Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+					}
+				}
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
+
+				Console.WriteLine("Read blob list ...: ");
+				result = await restApiUpdateMaster.ListBlobs();
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				if (testPassed)
+				{
+					Console.Write($"  Blob list is empty ...: ");
+					var blobCount = Serializer<System.Collections.Generic.List<System.String>>.FromJson(result.Content).Count;
+					testPassed = (blobCount == 0);
+					Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				}
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
+
+				// Read a non-existent blob item key from storage: test for no content.
+				Console.Write("Read Blob TestItem01 ...: ");
+				result = await restApiUpdateMaster.GetBlob("TestItem01");
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				if (testPassed)
+				{
+					Console.Write("  Valid Blob Content TestItem01 ...: ");
+					testPassed |= string.IsNullOrEmpty(result.Content);
+					Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: (empty string), got: {result.Content}");
+				}
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
+
+				// Commit a blob item to storage: 
+				Console.Write("Write Blob TestItem01 ...: ");
+				result = await restApiUpdateMaster.SetBlob("TestItem01", TestItem01Value);
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
+
+				// Read the existent blob item key from storage: test for content stored above..
+				Console.Write("Read Blob TestItem01 ...: ");
+				result = await restApiUpdateMaster.GetBlob("TestItem01");
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				if (testPassed)
+				{
+					Console.Write("  Valid Blob Content TestItem01 ...: ");
+					testPassed |= string.Compare(result.Content, TestItem01Value, false) == 0;
+					Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: {TestItem01Value}\r\ngot: {result.Content}");
+				}
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
+
+				// Commit a large blob item to storage: 
+				Console.Write("Write large Blob TestItem02");
+				var bigFish = @"C:\Users\johnm\research\RR-AspectDynamic-20201216-PB-C.result.json";
+				string bigFishContent = null;
+				using (StreamReader t = new(bigFish))
+				{
+					bigFishContent = t.ReadToEnd();
+					result = await restApiUpdateMaster.SetBlob("TestItem02", bigFishContent);
+				}
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
+
+				Console.Write("Clear DropZone ...: ");
+				result = await restApiUpdateMaster.Clear();
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
+
+				Console.WriteLine("Read blob list ...: ");
+				result = await restApiUpdateMaster.ListBlobs();
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				if (testPassed)
+				{
+					Console.Write($"  Blob list has previous items ...: ");
+					var blobCount = Serializer<System.Collections.Generic.List<System.String>>.FromJson(result.Content).Count;
+					testPassed = (blobCount == 2);
+					Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: 2, got: {blobCount}");
+				}
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
+
+				// Read the blob item TestItem01: test for proper content.
+				Console.Write("Read Blob TestItem01 ...: ");
+				result = await restApiUpdateMaster.GetBlob("TestItem01");
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				if (testPassed)
+				{
+					Console.Write("  Valid Blob Content TestItem01 ...: ");
+					testPassed |= string.Compare(result.Content, TestItem01Value, false) == 0;
+					Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: (empty string), got: {result.Content}");
+				}
+				if (!testPassed) UnexpectedResult();
+				testPassed = true;
+
+				// Read the blob item TestItem01: test for proper content.
+				Console.Write("Read Blob TestItem02 ...: ");
+				result = await restApiUpdateMaster.GetBlob("TestItem02");
+				testPassed = result.HandleAs == Result.State.OK;
+				Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: OK, got: {result.HandleAs}");
+				if (testPassed)
+				{
+					Console.Write("  Valid Blob Content TestItem02 ...: ");
+					testPassed |= string.Compare(result.Content, bigFishContent, false) == 0;
+					Console.WriteLine(testPassed ? "pass" : $"FAIL, expected: (empty string), got: {result.Content}");
 				}
 				if (!testPassed) UnexpectedResult();
 				testPassed = true;
@@ -580,9 +748,14 @@ namespace BOG.DropZone.Test
 				Console.WriteLine($"Untrapped: {err.Message}");
 			}
 
-			Console.WriteLine("Done");
-
+			Console.WriteLine("---------------------------");
+			Console.WriteLine("### TESTING ENDS ###");
+			Console.WriteLine("---------------------------");
+#if DEBUG
+			Console.WriteLine();
+			Console.WriteLine("Press ENTER to finish");
 			Console.ReadLine();
+#endif
 		}
 
 		static void UnexpectedResult()

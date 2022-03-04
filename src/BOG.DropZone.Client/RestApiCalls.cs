@@ -155,6 +155,8 @@ namespace BOG.DropZone.Client
 		{
 			try
 			{
+				if (string.IsNullOrEmpty(payloadGram)) return string.Empty;
+
 				var gram = Serializer<PayloadGram>.FromJson(payloadGram);
 				var originalPayload = gram.Payload;
 				var originalPayloadHash = gram.HashValidation;
@@ -722,7 +724,7 @@ namespace BOG.DropZone.Client
 				if (expires != DateTime.MaxValue)
 				{
 					var query = HttpUtility.ParseQueryString(builder.Query);
-					query["expires"] = expires.ToString();
+					query["expiresOn"] = expires.ToString();
 					builder.Query = query.ToString();
 				}
 				var response = await _Client.PostAsync(builder.ToString(), new StringContent(datagram, Encoding.UTF8, "text/plain"));
@@ -948,6 +950,261 @@ namespace BOG.DropZone.Client
 			}
 			return result;
 		}
+
+		#region Blob
+
+		/// <summary>
+		/// Create/Update a blob file into a drop zone's key/value set.
+		/// </summary>
+		/// <param name="key">The string to identify this key</param>
+		/// <param name="value">The value for the key</param>
+		/// <returns>
+		/// Result: Content-Type = string, no payload
+		/// </returns>
+		public async Task<Result> SetBlob(string key, string value)
+		{
+			var result = new Result
+			{
+				HandleAs = Result.State.OK
+			};
+			try
+			{
+				var datagram = BuildPayloadGram(value);
+				var l = datagram.Length;
+				var builder = new UriBuilder(_DropZoneConfig.BaseUrl + $"/api/blob/set/{_DropZoneConfig.ZoneName}/{key}");
+				var response = await _Client.PostAsync(builder.ToString(), new StringContent(datagram, Encoding.UTF8, "text/plain"));
+				result.StatusCode = response.StatusCode;
+				result.Message = response.ReasonPhrase;
+
+				switch (response.StatusCode)
+				{
+					case HttpStatusCode.Created:
+						result.Content = await response.Content.ReadAsStringAsync();
+						break;
+
+					case HttpStatusCode.Unauthorized:
+						result.HandleAs = Result.State.InvalidAuthentication;
+						break;
+
+					case HttpStatusCode.Conflict:
+					case HttpStatusCode.RequestEntityTooLarge:
+					case HttpStatusCode.TooManyRequests:
+						result.HandleAs = Result.State.OverLimit;
+						break;
+
+					case HttpStatusCode.InternalServerError:
+						result.HandleAs = Result.State.ServerError;
+						break;
+
+					default:
+						result.HandleAs = Result.State.UnexpectedResponse;
+						break;
+				}
+			}
+			catch (DataGramException errDataGram)
+			{
+				result.HandleAs = Result.State.DataCompromised;
+				result.Message = errDataGram.Message;
+				result.Exception = errDataGram.InnerException;
+			}
+			catch (HttpRequestException errHttp)
+			{
+				result.HandleAs = Result.State.ConnectionFailed;
+				result.Exception = errHttp;
+			}
+			catch (Exception exFatal)
+			{
+				result.HandleAs = Result.State.Fatal;
+				result.Exception = exFatal;
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Retrieve a value from the blob storage for the given key.
+		/// </summary>
+		/// <param name="key">The key for the value to retrieve</param>
+		/// <returns>
+		/// Result: Content-Type = string (user-defined content), success has payload
+		/// </returns>
+		public async Task<Result> GetBlob(string key)
+		{
+			var result = new Result
+			{
+				HandleAs = Result.State.OK
+			};
+			try
+			{
+				var response = await _Client.GetAsync(_DropZoneConfig.BaseUrl + $"/api/blob/get/{_DropZoneConfig.ZoneName}/{key}", HttpCompletionOption.ResponseContentRead);
+				result.StatusCode = response.StatusCode;
+				result.Message = response.ReasonPhrase;
+
+				switch (response.StatusCode)
+				{
+					case HttpStatusCode.OK:
+						result.Content = ExtractPayloadFromGram(await response.Content.ReadAsStringAsync());
+						break;
+
+					case HttpStatusCode.Unauthorized:
+						result.HandleAs = Result.State.InvalidAuthentication;
+						break;
+
+					case HttpStatusCode.BadRequest:
+						result.HandleAs = Result.State.InvalidRequest;
+						break;
+
+					case HttpStatusCode.Conflict:
+						result.HandleAs = Result.State.OverLimit;
+						break;
+
+					case HttpStatusCode.NoContent:
+						result.HandleAs = Result.State.NoDataAvailable;
+						break;
+
+					case HttpStatusCode.InternalServerError:
+						result.HandleAs = Result.State.ServerError;
+						break;
+
+					default:
+						result.HandleAs = Result.State.UnexpectedResponse;
+						break;
+
+				}
+			}
+			catch (DataGramException errDataGram)
+			{
+				result.HandleAs = Result.State.DataCompromised;
+				result.Message = errDataGram.Message;
+				result.Exception = errDataGram.InnerException;
+			}
+			catch (HttpRequestException errHttp)
+			{
+				result.HandleAs = Result.State.ConnectionFailed;
+				result.Exception = errHttp;
+			}
+			catch (Exception exFatal)
+			{
+				result.HandleAs = Result.State.Fatal;
+				result.Exception = exFatal;
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Drop a blob from the drop zone's key/value set.
+		/// </summary>
+		/// <param name="key">The string to identify this key</param>
+		/// <returns>
+		/// Result: Content-Type = string, no payload
+		/// </returns>
+		public async Task<Result> DropBlob(string key)
+		{
+			var result = new Result
+			{
+				HandleAs = Result.State.OK
+			};
+			try
+			{
+				var builder = new UriBuilder(_DropZoneConfig.BaseUrl + $"/api/blob/drop/{_DropZoneConfig.ZoneName}/{key}");
+				var response = await _Client.DeleteAsync(builder.ToString());
+				result.StatusCode = response.StatusCode;
+				result.Message = response.ReasonPhrase;
+
+				switch (response.StatusCode)
+				{
+					case HttpStatusCode.OK:
+						break;
+
+					case HttpStatusCode.Unauthorized:
+						result.HandleAs = Result.State.InvalidAuthentication;
+						break;
+
+					case HttpStatusCode.BadRequest:
+						result.HandleAs = Result.State.InvalidAuthentication;
+						break;
+
+					case HttpStatusCode.NotFound:
+						result.HandleAs = Result.State.NoDataAvailable;
+						break;
+
+					case HttpStatusCode.InternalServerError:
+						result.HandleAs = Result.State.ServerError;
+						break;
+
+					default:
+						result.HandleAs = Result.State.UnexpectedResponse;
+						break;
+				}
+			}
+			catch (HttpRequestException errHttp)
+			{
+				result.HandleAs = Result.State.ConnectionFailed;
+				result.Exception = errHttp;
+			}
+			catch (Exception exFatal)
+			{
+				result.HandleAs = Result.State.Fatal;
+				result.Exception = exFatal;
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// Returns a list of key names in the blob key/value set.
+		/// </summary>
+		/// <returns>
+		/// Result: Content-Type = string (List<string></string>), success has payload
+		/// </returns>
+		public async Task<Result> ListBlobs()
+		{
+			var result = new Result
+			{
+				HandleAs = Result.State.OK
+			};
+			try
+			{
+				var response = await _Client.GetAsync(_DropZoneConfig.BaseUrl + $"/api/blob/list/{_DropZoneConfig.ZoneName}", HttpCompletionOption.ResponseContentRead);
+				result.StatusCode = response.StatusCode;
+				result.Message = response.ReasonPhrase;
+
+				switch (response.StatusCode)
+				{
+					case HttpStatusCode.OK:
+						result.Content = await response.Content.ReadAsStringAsync();
+						result.CastType = "System.Collections.Generic.List<System.String>";
+						break;
+
+					case HttpStatusCode.Unauthorized:
+						result.HandleAs = Result.State.InvalidAuthentication;
+						break;
+
+					case HttpStatusCode.Conflict:
+						result.HandleAs = Result.State.OverLimit;
+						break;
+
+					case HttpStatusCode.InternalServerError:
+						result.HandleAs = Result.State.ServerError;
+						break;
+
+					default:
+						result.HandleAs = Result.State.UnexpectedResponse;
+						break;
+				}
+			}
+			catch (HttpRequestException errHttp)
+			{
+				result.HandleAs = Result.State.ConnectionFailed;
+				result.Exception = errHttp;
+			}
+			catch (Exception exFatal)
+			{
+				result.HandleAs = Result.State.Fatal;
+				result.Exception = exFatal;
+			}
+			return result;
+		}
+
+		#endregion
 
 		/// <summary>
 		/// Clears out all payloads, references and statistics for a sigle dropzone.
