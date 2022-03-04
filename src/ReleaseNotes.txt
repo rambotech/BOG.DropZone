@@ -1,10 +1,11 @@
 Release Notes:
 
 2.3.0 -- 2022.02.23
-* Added blob storage. Similar to reference key/value.  Use for non-volatile key/value: no limit on coun tor size imposed.
+* Added blob storage. Similar to reference key/value.  Use for non-volatile key/value: no limit on count tor size imposed.
   ** Stored on file system instead of memory to survive app restarts.
-  ** Dropped when the drop zone is cleared.
-  ** No expiration date for blobs.  Size limit determined by ASP body size limit, not user controlled.
+  ** Not dropped when the drop zone is cleared.  Must be explicitly dropped using the blob/delete endpoint
+  ** No expiration date for blobs. Size limit determined by ASP body size limit, not user controlled.
+* Target changed from NET5 to NET6.
 
 2.2.0 -- 2021.06.29
 * Changed from queue to dictionary internally for more effective handling of expired payloads.

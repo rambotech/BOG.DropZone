@@ -682,7 +682,8 @@ namespace BOG.DropZone.Test
 
 				// Commit a large blob item to storage: 
 				Console.Write("Write large Blob TestItem02");
-				var bigFish = @"C:\Users\johnm\research\RR-AspectDynamic-20201216-PB-C.result.json";
+				// This is just a file containing a large amount of text data (100K or more).
+				var bigFish = @"C:\Users\johnm\research\RR-Dynamic-20201216-C.result.json";
 				string bigFishContent = null;
 				using (StreamReader t = new(bigFish))
 				{
