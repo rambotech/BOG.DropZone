@@ -9,11 +9,11 @@
     <AssemblyVersion>2.3.0.0</AssemblyVersion>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Any CPU'">
     <DocumentationFile>bin\Debug\netcoreapp2.0\BOG.DropZone.xml</DocumentationFile>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Any CPU'">
     <DocumentationFile>bin\Release\netcoreapp2.0\BOG.DropZone.xml</DocumentationFile>
   </PropertyGroup>
 
