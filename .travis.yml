@@ -1,5 +1,7 @@
 language: csharp
 solution: ./src/BOG.DropZone.sln
+os:
+- linux
 mono: none
 dotnet: 5.0.405
 script:
