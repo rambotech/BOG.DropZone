@@ -89,19 +89,19 @@ namespace BOG.DropZone
 
 			// Register the Swagger generator, defining one or more Swagger documents
 			services.AddSwaggerGen(c =>
-							{
-								c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
-								{
-									Version = $"v{this.GetType().Assembly.GetName().Version}",
-									Title = "BOG.DropZone API",
-									Description = "A non-secure, volatile drop-off and pickup location for quick, inter-application data handoff",
-									Contact = new Microsoft.OpenApi.Models.OpenApiContact { Name = "John J Schultz", Email = "", Url = new Uri("https://github.com/rambotech") },
-									License = new Microsoft.OpenApi.Models.OpenApiLicense { Name = "MIT", Url = new Uri("https://opensource.org/licenses/MIT") }
-								});
-								// Set the comments path for the Swagger JSON and UI.
-								var xmlPath = Path.Combine(PlatformServices.Default.Application.ApplicationBasePath, "BOG.DropZone.xml");
-								c.IncludeXmlComments(xmlPath);
-							});
+			{
+				c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+				{
+					Version = $"v{this.GetType().Assembly.GetName().Version}",
+					Title = "BOG.DropZone API",
+					Description = "A non-secure, volatile drop-off and pickup location for quick, inter-application data handoff",
+					Contact = new Microsoft.OpenApi.Models.OpenApiContact { Name = "John J Schultz", Email = "", Url = new Uri("https://github.com/rambotech") },
+					License = new Microsoft.OpenApi.Models.OpenApiLicense { Name = "MIT", Url = new Uri("https://opensource.org/licenses/MIT") }
+				});
+				// Set the comments path for the Swagger JSON and UI.
+				var xmlPath = Path.Combine(PlatformServices.Default.Application.ApplicationBasePath, "BOG.DropZone.xml");
+				c.IncludeXmlComments(xmlPath);
+			});
 		}
 
 		/// <summary>
