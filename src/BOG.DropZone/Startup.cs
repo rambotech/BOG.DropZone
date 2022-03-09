@@ -70,18 +70,15 @@ namespace BOG.DropZone
 			var useLetsEncrypt = Configuration.GetValue<bool>("UseLetsEncrypt", false);
 			if (valueHttp == 80 && valueHttps == 443 && useLetsEncrypt)
 			{
-				// Register Let's Encrypt for SSL, if enabled in the config
-				services.AddLettuceEncrypt(o => 
-					new LettuceEncrypt.LettuceEncryptOptions
-					{
-						AcceptTermsOfService = Configuration.GetValue<bool>("LettuceEncrypt:AcceptTermsOfService"),
-						EmailAddress = Configuration.GetValue<string>("LettuceEncrypt:EmailAddress"),
-						DomainNames = Configuration.GetValue<string[]>("LettuceEncrypt:Domains"),
-						RenewalCheckPeriod = TimeSpan.FromHours(Configuration.GetValue<double>("LettuceEncrypt:RenewalCheckPeriodHours", 6)),
-						RenewDaysInAdvance = TimeSpan.FromDays(Configuration.GetValue<double>("LettuceEncrypt:RenewDaysInAdvance", 2)),
-						UseStagingServer = Configuration.GetValue<bool>("LettuceEncrypt:UseStagingServer")
-					});
-				services.AddLettuceEncrypt();
+				// Register Let's Encrypt for SSL, if enabled in the config.
+				services.AddLettuceEncrypt( o => {
+					o.AcceptTermsOfService = Configuration.GetValue<bool>("LettuceEncrypt:AcceptTermsOfService");
+					o.EmailAddress = Configuration.GetValue<string>("LettuceEncrypt:EmailAddress");
+					o.DomainNames = Configuration.GetValue<string[]>("LettuceEncrypt:Domains");
+					o.RenewalCheckPeriod = TimeSpan.FromHours(Configuration.GetValue<double>("LettuceEncrypt:RenewalCheckPeriodHours", 6));
+					o.RenewDaysInAdvance = TimeSpan.FromDays(Configuration.GetValue<double>("LettuceEncrypt:RenewDaysInAdvance", 2));
+					o.UseStagingServer = Configuration.GetValue<bool>("LettuceEncrypt:UseStagingServer");
+				});
 			}
 
 			// Register the Swagger generator, defining one or more Swagger documents
@@ -163,7 +160,6 @@ namespace BOG.DropZone
 				return next();
 			});
 
-#if FALSE
 			app.UseMvc(routes =>
 			{
 				routes.MapRoute(
@@ -177,7 +173,6 @@ namespace BOG.DropZone
 					defaults: new { controller = "Home", action = "Index" }
 				);
 			});
-#endif
 		}
 	}
 }
