@@ -25,8 +25,8 @@ namespace BOG.DropZone.Controllers
 		private readonly IStorage _Storage;
 		private readonly IAssemblyVersion _AssemblyVersion;
 
-		private readonly object _LockClientWatchList = new();
-		private readonly object _LockDropZoneInfo = new();
+		private readonly object _LockClientWatchList = new object();
+		private readonly object _LockDropZoneInfo = new object();
 
 		/// <summary>
 		/// Instantiated via injection
@@ -613,7 +613,7 @@ namespace BOG.DropZone.Controllers
 				}
 				var dropzone = _Storage.DropZoneList[dropzoneName];
 				dropzone.Statistics.ReferenceCount = dropzone.References.Count;
-				List<string> returnList = new();
+				List<string> returnList = new List<string>();
 				if (dropzone.References.Count > 0)
 				{
 					returnList = dropzone.References

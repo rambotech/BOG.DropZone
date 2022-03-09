@@ -685,7 +685,7 @@ namespace BOG.DropZone.Test
 				// This is just a file containing a large amount of text data (100K or more).
 				var bigFish = @"C:\Users\johnm\research\RR-Dynamic-20201216-C.result.json";
 				string bigFishContent = null;
-				using (StreamReader t = new(bigFish))
+				using (var t = new StreamReader(bigFish))
 				{
 					bigFishContent = t.ReadToEnd();
 					result = await restApiUpdateMaster.SetBlob("TestItem02", bigFishContent);
@@ -783,7 +783,7 @@ namespace BOG.DropZone.Test
 	/// </summary>
 	public static class Converter
 	{
-		public static readonly JsonSerializerSettings Config = new()
+		public static readonly JsonSerializerSettings Config = new JsonSerializerSettings()
 		{
 			MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
 			DateParseHandling = DateParseHandling.DateTime,

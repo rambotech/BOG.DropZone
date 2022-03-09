@@ -22,8 +22,8 @@ namespace BOG.DropZone
 		const string ZoneNamePattern = @"^[A-Za-z][A-Za-z0-9_\-\.]{0,58}[A-Za-z0-9\.]$";
 		const string KeyNamePattern = @"^[A-Za-z][A-Za-z0-9_\-\.]{0,58}[A-Za-z0-9\.]$";
 
-		readonly Timer stopTimer = new();
-		readonly object lockPoint = new();
+		readonly Timer stopTimer = new Timer();
+		readonly object lockPoint = new object();
 
 		/// <summary>
 		/// If not empty, the header value "AccessToken" from the client must contain this value to use the site.
@@ -140,7 +140,7 @@ namespace BOG.DropZone
 
 			var filename = Path.Combine(zoneFolder, MakeBlobFilename(key));
 			if (!File.Exists(filename)) return string.Empty;
-			using StreamReader sr = new(filename);
+			using StreamReader sr = new StreamReader(filename);
 			return sr.ReadToEnd();
 		}
 

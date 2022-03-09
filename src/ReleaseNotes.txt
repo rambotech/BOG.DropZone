@@ -1,10 +1,11 @@
 Release Notes:
 
-2.3.0 -- 2022.02.23
+2.3.0 -- 2022.03.09
 * Added blob storage. Similar to reference key/value.  Use for non-volatile key/value: no limit on count tor size imposed.
   ** Stored on file system instead of memory to survive app restarts.
   ** Not dropped when the drop zone is cleared.  Must be explicitly dropped using the blob/delete endpoint
   ** No expiration date for blobs. Size limit determined by ASP body size limit, not user controlled.
+  ** Make main project use NET6.  Note: Travis CI breaks with this framework.  Waiting for support on the CI pipeline.
 
 2.2.0 -- 2021.06.29
 * Changed from queue to dictionary internally for more effective handling of expired payloads.
