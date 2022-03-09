@@ -10,7 +10,9 @@
   "profiles": {
     "BOG.DropZone": {
       "commandName": "Project",
-      "commandLineArgs": "--AccessToken YourAccessTokenValueHere --AdminToken YourAdminTokenValueHere --httpPort 5000 --HttpsPort 0 --UseLetsEncrypt false"
+      "commandLineArgs": "--AccessToken YourAccessTokenValueHere --AdminToken YourAdminTokenValueHere --httpPort 5000 --HttpsPort 0 --UseLetsEncrypt false",
+      "launchBrowser": true,
+      "launchUrl": "http://localhost:5000/swagger"
     }
   }
 }

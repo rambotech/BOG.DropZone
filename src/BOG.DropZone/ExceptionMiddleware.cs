@@ -38,12 +38,12 @@ namespace BOG.DropZone
 			}
 		}
 
-		private static void HandleExceptionAsync(HttpContext context, Exception exception)
-		{
-			if (exception is BadHttpRequestException)
-			{
-				context.Response.StatusCode = (int)HttpStatusCode.RequestEntityTooLarge;
-			}
-		}
-	}
+        private static void HandleExceptionAsync(HttpContext context, Exception exception)
+        {
+            if (exception is Microsoft.AspNetCore.Http.BadHttpRequestException)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.RequestEntityTooLarge;
+            }
+        }
+    }
 }

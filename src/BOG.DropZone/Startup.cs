@@ -63,16 +63,14 @@ namespace BOG.DropZone
 					options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 					options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
 				});
-
 			services.AddHttpContextAccessor();
 
 			var valueHttp = Configuration.GetValue<int>("HttpPort", 5000);
 			var valueHttps = Configuration.GetValue<int>("HttpsPort", 0);
-			var useLetsEncrypt = Configuration.GetValue<bool>("UseLetsEncrypt");
+			var useLetsEncrypt = Configuration.GetValue<bool>("UseLetsEncrypt", false);
 			if (valueHttp == 80 && valueHttps == 443 && useLetsEncrypt)
 			{
-				// Register Let's Encrypt for SSL.
-#if FALSE
+				// Register Let's Encrypt for SSL, if enabled in the config
 				services.AddLettuceEncrypt(o => 
 					new LettuceEncrypt.LettuceEncryptOptions
 					{
@@ -83,7 +81,6 @@ namespace BOG.DropZone
 						RenewDaysInAdvance = TimeSpan.FromDays(Configuration.GetValue<double>("LettuceEncrypt:RenewDaysInAdvance", 2)),
 						UseStagingServer = Configuration.GetValue<bool>("LettuceEncrypt:UseStagingServer")
 					});
-#endif
 				services.AddLettuceEncrypt();
 			}
 
@@ -166,6 +163,7 @@ namespace BOG.DropZone
 				return next();
 			});
 
+#if FALSE
 			app.UseMvc(routes =>
 			{
 				routes.MapRoute(
@@ -179,6 +177,7 @@ namespace BOG.DropZone
 					defaults: new { controller = "Home", action = "Index" }
 				);
 			});
+#endif
 		}
 	}
 }

@@ -50,7 +50,7 @@ namespace BOG.DropZone
 		/// <returns></returns>
 		public override string ToString()
 		{
-			return $"{Path.GetFileName(Filename)}, {Version}, {BuildDate.ToString("G")}";
+			return $"{Path.GetFileName(Filename)}, {Version}, {BuildDate:G}";
 		}
 
 		/// <summary>
