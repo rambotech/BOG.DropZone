@@ -12,11 +12,11 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DocumentationFile>bin\Debug\net6.0\BOG.DropZone.xml</DocumentationFile>
+    <DocumentationFile>bin\debug\net6.0\BOG.DropZone.xml</DocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DocumentationFile>bin\Release\net6.0\BOG.DropZone.xml</DocumentationFile>
+    <DocumentationFile>bin\release\net6.0\BOG.DropZone.xml</DocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup>
