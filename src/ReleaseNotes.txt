@@ -1,5 +1,12 @@
 Release Notes:
 
+2.3.1 -- 2022.03.15
+* Added support for ReverseProxy use
+  * New argument: --UseReverseProxy true|false
+  * New argument: --KnownProxies ipaddr[,ipaddr[,..]]
+* Changed example start_me.bat to show Windows multi-line command usage.
+* Ref: https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/linux-nginx?view=aspnetcore-6.0
+
 2.3.0 -- 2022.03.09
 * Added blob storage. Similar to reference key/value.  Use for non-volatile key/value: no limit on count or size imposed.
   ** Stored on file system instead of memory to survive app restarts.

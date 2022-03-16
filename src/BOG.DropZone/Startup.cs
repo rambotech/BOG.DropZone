@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using BOG.DropZone.Interface;
@@ -11,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.PlatformAbstractions;
+using Microsoft.AspNetCore.HttpOverrides;
 
 namespace BOG.DropZone
 {
@@ -67,11 +69,24 @@ namespace BOG.DropZone
 
 			var valueHttp = Configuration.GetValue<int>("HttpPort", 5000);
 			var valueHttps = Configuration.GetValue<int>("HttpsPort", 0);
+
+			var valueUseReverseProxy = Configuration.GetValue<bool>("UseReverseProxy", false);
+			var knownProxies = Configuration.GetValue<string>("KnownProxies", String.Empty);
+			if (valueUseReverseProxy && !string.IsNullOrWhiteSpace(knownProxies))
+			{
+				string[] ipAddresses = knownProxies.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+				services.Configure<ForwardedHeadersOptions>(options =>
+				{
+					foreach (var ip in ipAddresses) options.KnownProxies.Add(IPAddress.Parse(ip));
+				});
+			}
+
 			var useLetsEncrypt = Configuration.GetValue<bool>("UseLetsEncrypt", false);
 			if (valueHttp == 80 && valueHttps == 443 && useLetsEncrypt)
 			{
 				// Register Let's Encrypt for SSL, if enabled in the config.
-				services.AddLettuceEncrypt( o => {
+				services.AddLettuceEncrypt(o =>
+				{
 					o.AcceptTermsOfService = Configuration.GetValue<bool>("LettuceEncrypt:AcceptTermsOfService");
 					o.EmailAddress = Configuration.GetValue<string>("LettuceEncrypt:EmailAddress");
 					o.DomainNames = Configuration.GetValue<string[]>("LettuceEncrypt:Domains");
@@ -142,6 +157,15 @@ namespace BOG.DropZone
 			else
 			{
 				app.UseExceptionHandler("/Home/Error");
+			}
+
+			var valueUseReverseProxy = Configuration.GetValue<bool>("UseReverseProxy", false);
+			if (valueUseReverseProxy)
+			{
+				app.UseForwardedHeaders(new ForwardedHeadersOptions
+				{
+					ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+				});
 			}
 
 			app.UseMiddleware<ExceptionMiddleware>();
