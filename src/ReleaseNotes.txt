@@ -12,7 +12,9 @@ Release Notes:
   ** Stored on file system instead of memory to survive app restarts.
   ** Not dropped when the drop zone is cleared.  Must be explicitly dropped using the blob/delete endpoint
   ** No expiration date for blobs. Size limit determined by ASP body size limit, not user controlled.
-  ** Make main project use NET6.  Note: Travis CI breaks with this framework.  Waiting for support on the CI pipeline.
+  ** Make main project use NET6.  Note: Travis CI breaks with this framework. Waiting for support on the CI pipeline.
+* Now requrires a Raspberry Pi 3B+ or 4.  Microsoft made NET 6 only support ARM v7 or later, and retrofitted NET Core 3.1
+  to only work on ARM v7 or later... or at least, my tests show that.
 
 2.2.0 -- 2021.06.29
 * Changed from queue to dictionary internally for more effective handling of expired payloads.
