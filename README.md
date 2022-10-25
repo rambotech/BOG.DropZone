@@ -8,7 +8,7 @@
 ![alt text](https://github.com/rambotech/BOG.DropZone/blob/master/assets/DropZone.png "They just keep coming and going, and going and coming!")
 
 A very simple volatile aspnetcore webapi site for inter-application dropoff and pickup of payloads (queue), and key/value pair storage (references).
-It is inspired by [BOG.Pathways.Server](https://github.com/rambotech/BOG.Pathways.Server), but uses access and admin tokens for
+It is inspired by the deprecated BOG.Pathways.Server, but uses access and admin tokens for
 authentication, and auto-creates a dropzone as needed.
 
 BOG.DropZone is a pull-only approach: no data is pushed to any user.  The site has a Swagger interface for testing.
