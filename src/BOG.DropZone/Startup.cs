@@ -1,18 +1,17 @@
-﻿using System;
-using System.IO;
-using System.Net;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using BOG.DropZone.Interface;
+﻿using BOG.DropZone.Interface;
 //using Certes;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.PlatformAbstractions;
-using Microsoft.AspNetCore.HttpOverrides;
+using System;
+using System.IO;
+using System.Net;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace BOG.DropZone
 {
