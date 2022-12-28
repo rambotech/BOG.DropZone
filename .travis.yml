@@ -3,7 +3,7 @@ solution: ./src/BOG.DropZone.sln
 os:
 - linux
 mono: none
-dotnet: 6.0.201
+dotnet: 7.0.101
 script:
 - chmod +x ./deploy.sh 
 - ./deploy.sh
