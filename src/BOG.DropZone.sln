@@ -1,4 +1,5 @@
-﻿Microsoft Visual Studio Solution File, Format Version 12.00
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32210.238
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -15,6 +16,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_SolutionItems", "_Solution
 		.gitignore = .gitignore
 		..\.travis.yml = ..\.travis.yml
 		..\deploy.sh = ..\deploy.sh
+		global.json = global.json
 		..\LICENSE = ..\LICENSE
 		..\md-styles.css = ..\md-styles.css
 		..\md-template.html = ..\md-template.html
@@ -27,6 +29,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Assets", "Assets", "{60624F
 	ProjectSection(SolutionItems) = preProject
 		..\assets\DropZone.png = ..\assets\DropZone.png
 		..\assets\flow.png = ..\assets\flow.png
+		global.json = global.json
 		..\assets\parachute.ico = ..\assets\parachute.ico
 		..\assets\parachute.png = ..\assets\parachute.png
 	EndProjectSection
