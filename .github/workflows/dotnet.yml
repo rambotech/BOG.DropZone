@@ -1,17 +1,19 @@
 # This workflow will build a .NET project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+# modified to always make a release build, and do nuget pushes for the two library projects when on master branch.
 
 name: .NET
 
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    branches: [ "develop", "release", "master" ]
+
+defaults:
+  run:
+    working-directory: src
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -23,6 +25,19 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
-      run: dotnet build --no-restore
-    - name: Test
-      run: dotnet test --no-build --verbosity normal
+      run: |
+        dotnet build --no-restore -c release ./BOG.DropZone/BOG.DropZone.csproj
+    - name: NuGet package publish (BOG.DropZone.Common)
+      if: github.event.ref == 'refs/heads/master'
+      env:
+        NGKEY: ${{ secrets.NUGET_API_KEY }}
+        NGSRC: ${{ vars.NUGET_SOURCE }}
+      run: |
+        dotnet nuget push ./BOG.DropZone.Common/bin/release/BOG.DropZone.Common.*.nupkg --api-key ${NGKEY} --source ${NGSRC} --skip-duplicate
+    - name: NuGet package publish (BOG.DropZone.Client)
+      if: github.event.ref == 'refs/heads/master'
+      env:
+        NGKEY: ${{ secrets.NUGET_API_KEY }}
+        NGSRC: ${{ vars.NUGET_SOURCE }}
+      run: |
+        dotnet nuget push ./BOG.DropZone.Client/bin/release/BOG.DropZone.Client.*.nupkg --api-key ${NGKEY} --source ${NGSRC} --skip-duplicate

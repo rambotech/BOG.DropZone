@@ -1,4 +1,5 @@
-﻿Microsoft Visual Studio Solution File, Format Version 12.00
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32210.238
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -13,8 +14,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_SolutionItems", "_Solution
 	ProjectSection(SolutionItems) = preProject
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
-		..\.travis.yml = ..\.travis.yml
-		..\deploy.sh = ..\deploy.sh
 		..\LICENSE = ..\LICENSE
 		..\md-styles.css = ..\md-styles.css
 		..\md-template.html = ..\md-template.html
@@ -44,6 +43,13 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Website", "Website", "{D7AF1693-C1BA-49DF-90A8-CFF5E0D3F372}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Nuget", "Nuget", "{2D915F45-AD84-47F3-8CD0-88B9D453233C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{2B83CAC5-3EA8-4430-A700-A12562A17EB2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{CE2DF88C-0F3C-44EC-9088-CCEEB0A5193B}"
+	ProjectSection(SolutionItems) = preProject
+		..\.github\workflows\dotnet.yml = ..\.github\workflows\dotnet.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -80,6 +86,8 @@ Global
 		{016AD6A9-5FDB-4392-8494-BF030F86FFA4} = {19548F2B-113C-4F78-9907-D9AE7BF11B6E}
 		{45E022BF-6854-4CB4-BBBD-16E7697BE021} = {016AD6A9-5FDB-4392-8494-BF030F86FFA4}
 		{D7AF1693-C1BA-49DF-90A8-CFF5E0D3F372} = {19548F2B-113C-4F78-9907-D9AE7BF11B6E}
+		{2B83CAC5-3EA8-4430-A700-A12562A17EB2} = {1960AC6A-324C-4458-80F7-199C48181DD1}
+		{CE2DF88C-0F3C-44EC-9088-CCEEB0A5193B} = {2B83CAC5-3EA8-4430-A700-A12562A17EB2}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D09B7B87-8148-438D-9E25-C109693457C0}
