@@ -8,7 +8,7 @@
 ![alt text](https://github.com/rambotech/BOG.DropZone/blob/master/assets/DropZone.png "They just keep coming and going, and going and coming!")
 
 A very simple volatile aspnetcore webapi site for inter-application dropoff and pickup of payloads (queue), and key/value pair storage (references).
-It is inspired by [BOG.Pathways.Server](https://github.com/rambotech/BOG.Pathways.Server), but uses access and admin tokens for
+It is inspired by the deprecated BOG.Pathways.Server, but uses access and admin tokens for
 authentication, and auto-creates a dropzone as needed.
 
 BOG.DropZone is a pull-only approach: no data is pushed to any user.  The site has a Swagger interface for testing.
@@ -59,10 +59,15 @@ The drop zone supports seven operational actions, and two admin actions.
 
 These actions require the access token, if one is defined for the drop zone site.
 
-*Dropoff* :: places a new string (as a payload) onto the queue of other payloads.
-The recipient can be specific, or global.
+#### Payloads
+*A FIFO queue of strings containing data for the application. Not persisted for surviving a restart*
 
-*Pickup* :: removes a string payload from the queue and provides it to the calling client.
+*Dropoff* :: places a payload onto the queue. The recipient can be specific, or global.
+
+*Pickup* :: removes a payload from the queue and provides it to the calling client.
+
+#### References
+*List of values indexed by a key. Not persisted for surviving a restart*
 
 *Set Reference* :: creates a key/value pair in the drop zone.
 
@@ -70,6 +75,16 @@ The recipient can be specific, or global.
 Returns an empty string if the key doesn't exist.
 
 *List References* :: returns the refence key names available within the drop zone as a string array.
+
+#### Lists
+*List of values indexed by a key.  Persisted to survive a restart: requires explict *
+
+*Set Blob* :: creates a key/blob pair in the drop zone.
+
+*Get Blobs* :: returns the blob value for the specified key within the drop zone.
+Returns an empty string if the key doesn't exist.
+
+*List Blobs* :: returns the blob key names available within the drop zone as a string array.
 
 *Get Statistics* :: returns the metrics for the given drop zone.
 
