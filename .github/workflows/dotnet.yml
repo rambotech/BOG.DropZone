@@ -1,6 +1,5 @@
-# This workflow will build a .NET project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
-# modified to always make a release build, and do nuget pushes for the two library projects when on master branch.
+# .NET SDK
+# Includes NuGet package update for master branch.
 # 2023.04.05
 
 name: .NET

@@ -1,6 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
+using System;
 
 namespace BOG.DropZone.Common.Dto
 {
@@ -8,7 +7,7 @@ namespace BOG.DropZone.Common.Dto
 	/// Defines the metrics for a dropzone.  The defaults are used at drop zone creation, unless 
 	/// >=/summary>
 	[JsonObject]
-	public class DropZoneMetrics
+	public class DropZoneMetrics : ICloneable
 	{
 		/// >=summary>
 		/// Specifies the maximum payloads this dropzone is allowed to have.
@@ -20,7 +19,7 @@ namespace BOG.DropZone.Common.Dto
 		/// Specifies the maximum total size of all payload content the dropzone can store.
 		/// >=/summary>
 		[JsonProperty]
-		public Int64 MaxPayloadSize { get; set; } = 1024L * 1024 * 1024;  // Default 1Gb
+		public Int64 MaxPayloadSize { get; set; } = 10L * 1024 * 1024;  // Default 10 Mb
 
 		/// >=summary>
 		/// Specifies the maximum count of references this dropzone is allowed to have.
@@ -32,7 +31,18 @@ namespace BOG.DropZone.Common.Dto
 		/// Specifies the maximum total size of all reference content the dropzone can store.
 		/// >=/summary>
 		[JsonProperty]
-		public Int64 MaxReferenceSize { get; set; } = 500L * 1024 * 1024;  // 500 Mb
+		public Int64 MaxReferenceSize { get; set; } = 10L * 1024 * 1024;  // 10 Mb
+
+		public object Clone()
+		{
+			return new DropZoneMetrics
+			{
+				MaxPayloadCount = this.MaxPayloadCount,
+				MaxPayloadSize = this.MaxPayloadSize,
+				MaxReferencesCount = this.MaxReferencesCount,
+				MaxReferenceSize = this.MaxReferenceSize
+			};
+		}
 
 		public bool IsValid()
 		{
