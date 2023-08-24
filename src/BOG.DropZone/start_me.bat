@@ -9,6 +9,6 @@ BOG.DropZone.exe ^
 --HttpPort 5000 ^
 --HttpsPort 5001 ^
 --UseReverseProxy true ^
---KnownProxies 172.25.175.1,172.18.144.1
+--KnownProxies 192.168.175.1,192.168.144.1
 
 POPD

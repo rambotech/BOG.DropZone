@@ -1,6 +1,8 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using BOG.DropZone.Common.Dto;
+using Microsoft.VisualBasic;
 
 namespace BOG.DropZone.Storage
 {
@@ -24,5 +26,10 @@ namespace BOG.DropZone.Storage
 		/// The reference storage.
 		/// </summary>
 		public Dictionary<string, StoredValue> References { get; set; } = new Dictionary<string, StoredValue>();
+
+		/// <summary>
+		/// DropZoneInfo
+		/// </summary>
+		public DateTime Expires { get; set; } = DateTime.MaxValue;
 	}
 }
