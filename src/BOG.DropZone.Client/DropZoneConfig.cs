@@ -1,9 +1,12 @@
-﻿namespace BOG.DropZone.Client
+﻿using BOG.DropZone.Common.Dto;
+using System;
+
+namespace BOG.DropZone.Client
 {
 	/// <summary>
 	/// Defines the parameters to connect to and use a drop zone.
 	/// </summary>
-	public class DropZoneConfig
+	public class DropZoneConfig : ICloneable
 	{
 		/// <summary>
 		/// The URI of the drop zone ( e.g. http://localhost:5000, https://localhost:5001, https://io.mydomain.com:5001)
@@ -43,5 +46,26 @@
 		/// The timeout value for connections.  Increase this if payloads require more than the existing value to arrive.
 		/// </summary>
 		public int TimeoutSeconds { get; set; } = 15;
+		/// <summary>
+		/// An optional override object for the default zone metrics.
+		/// </summary>
+		public DropZoneMetrics ZoneMetricsDefault { get; set; } = new DropZoneMetrics();
+
+		public object Clone()
+		{
+			return new DropZoneConfig
+			{
+				BaseUrl = this.BaseUrl,
+				IgnoreSslCertProblems = this.IgnoreSslCertProblems,
+				ZoneName = this.ZoneName,
+				AccessToken = this.AccessToken,
+				AdminToken = this.AdminToken,
+				Password = this.Password,
+				Salt = this.Salt,
+				UseEncryption = this.UseEncryption,
+				TimeoutSeconds = this.TimeoutSeconds,
+				ZoneMetricsDefault = (DropZoneMetrics)this.ZoneMetricsDefault.Clone()
+			};
+		}
 	}
 }
