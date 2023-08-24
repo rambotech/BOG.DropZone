@@ -13,10 +13,10 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageIconUrl></PackageIconUrl>
-    <Version>2.3.2</Version>
-    <AssemblyVersion>2.3.2.0</AssemblyVersion>
-    <FileVersion>2.3.2.0</FileVersion>
-    <Copyright>(c) 2017-2022, John J Schultz</Copyright>
+    <Version>2.4.0</Version>
+    <AssemblyVersion>2.4.0.0</AssemblyVersion>
+    <FileVersion>2.4.0.0</FileVersion>
+    <Copyright>(c) 2017-2023, John J Schultz</Copyright>
     <Description>A console app to test and serve as an example of usage for BOG.DropZone.Client.</Description>
     <PackageIcon>parachute.png</PackageIcon>
   </PropertyGroup>
