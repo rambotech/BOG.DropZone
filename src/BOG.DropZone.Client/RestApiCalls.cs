@@ -51,8 +51,9 @@ namespace BOG.DropZone.Client
 			if (config.ZoneMetricsDefault != null)
 			{
 				RestApiCalls._DropZoneConfig.ZoneMetricsDefault = (DropZoneMetrics)config.ZoneMetricsDefault.Clone();
-				httpClientHandler.ServerCertificateCustomValidationCallback = ServerCertificateCustomValidation;
 			}
+
+			httpClientHandler.ServerCertificateCustomValidationCallback = ServerCertificateCustomValidation;
 
 			_Client = new HttpClient(httpClientHandler)
 			{
