@@ -48,6 +48,10 @@ namespace BOG.DropZone.Client
 			RestApiCalls._DropZoneConfig.Salt = config.UseEncryption ? config.Salt : string.Empty;
 			RestApiCalls._DropZoneConfig.UseEncryption = config.UseEncryption && !string.IsNullOrEmpty(config.Password);
 			RestApiCalls._DropZoneConfig.TimeoutSeconds = config.TimeoutSeconds;
+			if (config.ZoneMetricsDefault != null)
+			{
+				RestApiCalls._DropZoneConfig.ZoneMetricsDefault = (DropZoneMetrics)config.ZoneMetricsDefault.Clone();
+			}
 
 			httpClientHandler.ServerCertificateCustomValidationCallback = ServerCertificateCustomValidation;
 
