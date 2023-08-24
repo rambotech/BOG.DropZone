@@ -14,6 +14,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_SolutionItems", "_Solution
 	ProjectSection(SolutionItems) = preProject
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
+		global.json = global.json
 		..\LICENSE = ..\LICENSE
 		..\md-styles.css = ..\md-styles.css
 		..\md-template.html = ..\md-template.html
@@ -26,6 +27,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Assets", "Assets", "{60624F
 	ProjectSection(SolutionItems) = preProject
 		..\assets\DropZone.png = ..\assets\DropZone.png
 		..\assets\flow.png = ..\assets\flow.png
+		global.json = global.json
 		..\assets\parachute.ico = ..\assets\parachute.ico
 		..\assets\parachute.png = ..\assets\parachute.png
 	EndProjectSection
