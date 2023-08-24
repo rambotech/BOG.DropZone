@@ -1,6 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
+using System;
 
 namespace BOG.DropZone.Common.Dto
 {
@@ -8,7 +7,7 @@ namespace BOG.DropZone.Common.Dto
 	/// Defines the metrics for a dropzone.  The defaults are used at drop zone creation, unless 
 	/// >=/summary>
 	[JsonObject]
-	public class DropZoneMetrics :ICloneable
+	public class DropZoneMetrics : ICloneable
 	{
 		/// >=summary>
 		/// Specifies the maximum payloads this dropzone is allowed to have.
