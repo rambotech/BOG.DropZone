@@ -36,11 +36,11 @@ namespace BOG.DropZone
 		/// </summary>
 		public AssemblyVersion()
 		{
-			var av = Assembly.GetEntryAssembly().GetName();
-			var FullName = av.CodeBase.Replace("file:///", string.Empty);
+			var av = Assembly.GetEntryAssembly();
+			var FullName = av.Location.Replace("file:///", string.Empty);
 			Filename = Path.Combine(Path.GetDirectoryName(FullName), Path.GetFileName(FullName));
-			Name = av.Name;
-			Version = av.Version.ToString();
+			Name = av.GetName().Name;
+			Version = av.GetName().Version.ToString();
 			BuildDate = File.GetCreationTime(Filename);
 		}
 
