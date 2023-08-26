@@ -9,6 +9,7 @@ using BOG.SwissArmyKnife;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
+using BOG.DropZone.Helpers;
 
 namespace BOG.DropZone.Controllers
 {
@@ -77,6 +78,7 @@ namespace BOG.DropZone.Controllers
 		/// <param name="expiresOn">(optional): when the value should no longer be returned.</param>
 		/// <returns>varies: see method declaration</returns>
 		[HttpPost("payload/dropoff/{dropzoneName}", Name = "DropoffPayload")]
+		[SwaggerConsumes("text/plain")]
 		[ProducesResponseType(201, Type = typeof(string))]
 		[ProducesResponseType(400, Type = typeof(string))]
 		[ProducesResponseType(401)]
@@ -341,6 +343,7 @@ namespace BOG.DropZone.Controllers
 		/// <param name="metrics">the max counts and max sizes of payloads and references.</param>
 		/// <returns>varies: see method declaration</returns>
 		[HttpPost("metrics/{dropzoneName}", Name = "SetMetrics")]
+		[SwaggerConsumes("application/json")]
 		[ProducesResponseType(201, Type = typeof(string))]
 		[ProducesResponseType(400, Type = typeof(string))]
 		[ProducesResponseType(401)]
@@ -357,7 +360,7 @@ namespace BOG.DropZone.Controllers
 			{
 				return Unauthorized();
 			}
-			// vadlidate the metrics
+			// validate the metrics
 			if (!metrics.IsValid())
 			{
 				return StatusCode(400, $"Invalid metrics: all values must zero or greater.");
@@ -413,6 +416,7 @@ namespace BOG.DropZone.Controllers
 		/// <param name="value">the value to store for the key name</param>
 		/// <returns>varies: see method declaration</returns>
 		[HttpPost("reference/set/{dropzoneName}/{key}", Name = "SetReference")]
+		[SwaggerConsumes("text/plain")]
 		[ProducesResponseType(400, Type = typeof(string))]
 		[ProducesResponseType(401)]
 		[ProducesResponseType(201, Type = typeof(string))]
@@ -637,6 +641,7 @@ namespace BOG.DropZone.Controllers
 		/// <param name="value">the value to store for the key name</param>
 		/// <returns>varies: see method declaration</returns>
 		[HttpPost("blob/set/{dropzoneName}/{key}", Name = "SetBlob")]
+		[SwaggerConsumes("text/plain")]
 		[ProducesResponseType(400)]
 		[ProducesResponseType(401)]
 		[ProducesResponseType(201, Type = typeof(string))]

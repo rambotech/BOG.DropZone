@@ -46,7 +46,7 @@ namespace BOG.DropZone.Common.Dto
 
 		public bool IsValid()
 		{
-			return (MaxPayloadCount >= 0 && MaxPayloadSize >= 0L && MaxReferencesCount >= 0 && MaxReferenceSize >= 0L);
+			return (MaxPayloadCount >= 1 && MaxPayloadSize >= 1L && MaxReferencesCount >= 1 && MaxReferenceSize >= 1L);
 		}
 	}
 }
