@@ -7,8 +7,8 @@
 		<RuntimeIdentifiers>linux-x64</RuntimeIdentifiers>
     <RuntimeIdentifiers>linux-arm</RuntimeIdentifiers>
 		<!-- <PublishSingleFile>true</PublishSingleFile> -->
-    <Version>2.4.2</Version>
-    <AssemblyVersion>2.4.2.0</AssemblyVersion>
+    <Version>2.4.3</Version>
+    <AssemblyVersion>2.4.3.0</AssemblyVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -21,7 +21,7 @@
 
   <PropertyGroup>
     <PublishWithAspNetCoreTargetManifest>false</PublishWithAspNetCoreTargetManifest>
-    <FileVersion>2.4.2.0</FileVersion>
+    <FileVersion>2.4.3.0</FileVersion>
     <Authors>John J Schultz</Authors>
     <Company />
     <Description>A standalone interapplication communication point</Description>
