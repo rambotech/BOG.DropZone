@@ -10,11 +10,18 @@ namespace BOG.DropZone.Helpers
 	[AttributeUsage(AttributeTargets.Method)]
 	public class SwaggerConsumesAttribute : Attribute
 	{
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="contentTypes"></param>
 		public SwaggerConsumesAttribute(params string[] contentTypes)
 		{
 			this.ContentTypes = contentTypes;
 		}
 
+		/// <summary>
+		/// 
+		/// </summary>
 		public IEnumerable<string> ContentTypes { get; }
 	}
 }
