@@ -179,7 +179,7 @@ namespace BOG.DropZone
 
 			app.Use((context, next) =>
 			{
-				context.Response.Headers.Add("X-Server-App", $"BOG.DropZone v{new AssemblyVersion().Version}");
+				context.Response.Headers.Append("X-Server-App", $"BOG.DropZone v{new AssemblyVersion().Version}");
 				return next();
 			});
 

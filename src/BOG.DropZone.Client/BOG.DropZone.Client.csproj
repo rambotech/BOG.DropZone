@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Authors>John J Schultz</Authors>
     <Company>Bits of Genius</Company>
     <Description>A client for calling the BOG.DropZone API, which supports optional encryption.</Description>
@@ -15,9 +15,9 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageIconUrl></PackageIconUrl>
-    <Version>2.4.2</Version>
-    <AssemblyVersion>2.4.2.0</AssemblyVersion>
-    <FileVersion>2.4.2.0</FileVersion>
+    <Version>2.4.3</Version>
+    <AssemblyVersion>2.4.3.0</AssemblyVersion>
+    <FileVersion>2.4.3.0</FileVersion>
     <Copyright>(c) 2017-2023, John J Schultz</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>parachute.png</PackageIcon>
