@@ -20,16 +20,11 @@ namespace BOG.DropZone.Storage
 		/// The payload storage. Key is empty or null for any, otherwise the optional identifier on the DropOffPayload or PickUpPayload endpoints.
 		/// The dictionary for stored values uses a key of 
 		/// </summary>
-		public Dictionary<string, Dictionary<long, StoredValue>> Payloads { get; set; } = new Dictionary<string, Dictionary<long, StoredValue>>();
+		public Dictionary<string, Dictionary<string, StoredValue>> Payloads { get; set; } = new Dictionary<string, Dictionary<string, StoredValue>>();
 
 		/// <summary>
 		/// The reference storage.
 		/// </summary>
 		public Dictionary<string, StoredValue> References { get; set; } = new Dictionary<string, StoredValue>();
-
-		/// <summary>
-		/// DropZoneInfo
-		/// </summary>
-		public DateTime Expires { get; set; } = DateTime.MaxValue;
 	}
 }

@@ -8,18 +8,24 @@ namespace BOG.DropZone.Storage
 	public class StoredValue
     {
         /// <summary>
-        /// The content
+        /// The intended recipient
         /// </summary>
-        public string Value { get; set; }
+        public string Recipient{ get; set; }
+
+        /// <summary>
+        /// The name within the storage and type to retrieve the value
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// The optional tracking reference provider by the sender, to later query whether the entry has yet been retrieved.
+        /// </summary>
+        public string Tracking { get; set; } = string.Empty;
 
         /// <summary>
         /// The point in time where the content is no longer valid.
         /// </summary>
         public DateTime Expires { get; set; } = DateTime.MaxValue;
 
-        /// <summary>
-        /// The optional tracking reference provider by the sender, to later query whether the entry has yet been retrieved.
-        /// </summary>
-        public string Tracking { get; set; } = string.Empty;
     }
 }

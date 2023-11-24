@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using BOG.DropZone.Common.Dto;
 using BOG.DropZone.Storage;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 
 namespace BOG.DropZone.Interface
 {
@@ -44,14 +46,76 @@ namespace BOG.DropZone.Interface
 		/// </summary>
 		List<ClientWatch> ClientWatchList { get; set; }
 
+        /// <summary>
+        /// Launched by implementer after it has completed its initialization.
+        /// </summary>
+        void Start();
+
+        /// <summary>
+        /// FIFO push item
+        /// </summary>
+        /// <param name="zoneName"></param>
+        /// <param name="recipient">Use * for any recipient</param>
+        /// <param name="tracking"></param>
+        /// <param name="expiresOn"></param>
+        /// <param name="payload"></param>
+        void PushToQueue(string zoneName, string recipient, string tracking, DateTime expiresOn, string payload);
+
+        /// <summary>
+		/// FIFO pull item for a specific recipient (* = global queue)
+		/// </summary>
+		/// <param name="zoneName"></param>
+		/// <param name="recipient"></param>
+		/// <param name="payload"></param>
+		StoredValue PullFromQueue(string zoneName, string recipient, out string payload);
+
+        /// <summary>
+		/// FIFO add to queues.
+		/// </summary>
+		/// <param name="zoneName"></param>
+		/// <param name="recipient"></param>
+		/// <param name="tracking"></param>
+		/// <param name="expiresOn"></param>
+		void EnqueuePayload(string zoneName, string recipient, string tracking, DateTime expiresOn);
+
+        /// <summary>
+        /// Reads the content from a file, using the key as the file name.
+        /// </summary>
+        /// <param name="zoneName"></param>
+        /// <param name="key"></param>
+        /// <param name="defaultValue">A default value to return if the reference is not present.</param>
+        /// <returns></returns>
+        string GetReference(string zoneName, string key, string defaultValue);
+
 		/// <summary>
-		/// Reads the content from a file, using the key as the file name.
+		/// Creates a file with the content, using the key as the file name
 		/// </summary>
 		/// <param name="zoneName"></param>
 		/// <param name="key"></param>
-		/// <param name="value">A default value to return if the file is not present.</param>
+		/// <param name="value"></param>
 		/// <returns></returns>
-		string ReadBlob(string zoneName, string key, string value);
+		void SaveBlob(string zoneName, string key, string value);
+
+		/// <summary>
+		/// Deletes a file with the content, using the key as the file name
+		/// </summary>
+		/// <param name="zoneName"></param>
+		/// <param name="key"></param>
+		void DeleteBlob(string zoneName, string key);
+
+		/// <summary>
+		/// Make a list of the blobs keys available in this zone.
+		/// </summary>
+		List<string> GetBlobKeys(string zoneName);
+
+        /// <summary>
+        /// Reads the content from a file, using the key as the file name.
+        /// </summary>
+        /// <param name="zoneName"></param>
+        /// <param name="key"></param>
+        /// <param name="value">A default value to return if the file is not present.</param>
+        /// <returns></returns>
+        string ReadBlob(string zoneName, string key, string value);
 
 		/// <summary>
 		/// Creates a file with the content, using the key as the file name

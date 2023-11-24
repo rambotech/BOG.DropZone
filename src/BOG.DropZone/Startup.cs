@@ -1,4 +1,6 @@
 ﻿using BOG.DropZone.Interface;
+using BOG.DropZone.Providers;
+
 //using Certes;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
