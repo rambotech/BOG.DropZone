@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using BOG.DropZone.Base;
 using BOG.DropZone.Common.Dto;
 using BOG.DropZone.Storage;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
@@ -37,19 +38,26 @@ namespace BOG.DropZone.Interface
 		int LockoutSeconds { get; set; }
 
 		/// <summary>
-		/// The list of dropzone information
+		/// The list of dropzone information.
 		/// </summary>
 		Dictionary<string, DropPoint> DropZoneList { get; set; }
 
 		/// <summary>
-		/// The list of clients who have submitted invalid 
+		/// The list of clients who have submitted invalid tokens for access.  Used to block IPs with too many failures.
 		/// </summary>
 		List<ClientWatch> ClientWatchList { get; set; }
 
         /// <summary>
         /// Launched by implementer after it has completed its initialization.
+		/// The implementer needs to hydrate the memory objects with the existing values, when applicable.
         /// </summary>
         void Start();
+
+        /// <summary>
+        /// Launched by implementer after it has completed its initialization.
+		/// The implementer needs to hydrate the memory objects with the existing values, when applicable.
+        /// </summary>
+        void LoadExisting();
 
         /// <summary>
         /// FIFO push item
@@ -59,24 +67,16 @@ namespace BOG.DropZone.Interface
         /// <param name="tracking"></param>
         /// <param name="expiresOn"></param>
         /// <param name="payload"></param>
-        void PushToQueue(string zoneName, string recipient, string tracking, DateTime expiresOn, string payload);
+		/// <returns>Enum to semaphore handling</returns>
+        RetrievedStorage PushToQueue(string zoneName, string recipient, string tracking, DateTime expiresOn, string payload);
 
         /// <summary>
-		/// FIFO pull item for a specific recipient (* = global queue)
+		/// FIFO pull item for a specific recipient (* = global queue: default for null or whitepace string)
 		/// </summary>
 		/// <param name="zoneName"></param>
 		/// <param name="recipient"></param>
-		/// <param name="payload"></param>
-		StoredValue PullFromQueue(string zoneName, string recipient, out string payload);
-
-        /// <summary>
-		/// FIFO add to queues.
-		/// </summary>
-		/// <param name="zoneName"></param>
-		/// <param name="recipient"></param>
-		/// <param name="tracking"></param>
-		/// <param name="expiresOn"></param>
-		void EnqueuePayload(string zoneName, string recipient, string tracking, DateTime expiresOn);
+		/// <returns>Enum to semaphore handling</returns>
+        RetrievedStorage PullFromQueue(string zoneName, string recipient);
 
         /// <summary>
         /// Reads the content from a file, using the key as the file name.
@@ -84,74 +84,84 @@ namespace BOG.DropZone.Interface
         /// <param name="zoneName"></param>
         /// <param name="key"></param>
         /// <param name="defaultValue">A default value to return if the reference is not present.</param>
-        /// <returns></returns>
-        string GetReference(string zoneName, string key, string defaultValue);
+		/// <returns>Enum to semaphore handling</returns>
+        RetrievedStorage GetReference(string zoneName, string key, string defaultValue);
 
-		/// <summary>
-		/// Creates a file with the content, using the key as the file name
-		/// </summary>
-		/// <param name="zoneName"></param>
-		/// <param name="key"></param>
-		/// <param name="value"></param>
-		/// <returns></returns>
-		void SaveBlob(string zoneName, string key, string value);
+        /// <summary>
+        /// Creates a referece value under the key
+        /// </summary>
+        /// <param name="zoneName"></param>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns>Enum to semaphore handling</returns>
+        RetrievedStorage SaveReference(string zoneName, string key, string value);
 
-		/// <summary>
-		/// Deletes a file with the content, using the key as the file name
-		/// </summary>
-		/// <param name="zoneName"></param>
-		/// <param name="key"></param>
-		void DeleteBlob(string zoneName, string key);
+        /// <summary>
+        /// Deletes a reference with the key
+        /// </summary>
+        /// <param name="zoneName"></param>
+        /// <param name="key"></param>
+        /// <returns>Enum to semaphore handling</returns>
+        RetrievedStorage DeleteReference(string zoneName, string key);
 
-		/// <summary>
-		/// Make a list of the blobs keys available in this zone.
-		/// </summary>
-		List<string> GetBlobKeys(string zoneName);
+        /// <summary>
+        /// Make a list of the blobs keys available in this zone.
+        /// </summary>
+        /// <param name="zoneName"></param>
+        /// <returns>Enum to semaphore handling</returns>
+        RetrievedStorage GetReferenceKeys(string zoneName);
 
         /// <summary>
         /// Reads the content from a file, using the key as the file name.
         /// </summary>
         /// <param name="zoneName"></param>
         /// <param name="key"></param>
-        /// <param name="value">A default value to return if the file is not present.</param>
-        /// <returns></returns>
-        string ReadBlob(string zoneName, string key, string value);
+        /// <param name="defaultValue">A default value to return if the file is not present.</param>
+        /// <returns>Enum to semaphore handling</returns>
+        RetrievedStorage ReadBlob(string zoneName, string key, string defaultValue);
 
-		/// <summary>
-		/// Creates a file with the content, using the key as the file name
-		/// </summary>
-		/// <param name="zoneName"></param>
-		/// <param name="key"></param>
-		/// <param name="value"></param>
-		/// <returns></returns>
-		void SaveBlob(string zoneName, string key, string value);
+        /// <summary>
+        /// Creates a file with the content, using the key as the file name
+        /// </summary>
+        /// <param name="zoneName"></param>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <returns>Enum to semaphore handling</returns>
+        RetrievedStorage SaveBlob(string zoneName, string key, string value);
 
-		/// <summary>
-		/// Deletes a file with the content, using the key as the file name
-		/// </summary>
-		/// <param name="zoneName"></param>
-		/// <param name="key"></param>
-		void DeleteBlob(string zoneName, string key);
+        /// <summary>
+        /// Deletes a file with the content, using the key as the file name
+        /// </summary>
+        /// <param name="zoneName"></param>
+        /// <param name="key"></param>
+        /// <returns>Enum to semaphore handling</returns>
+        RetrievedStorage DeleteBlob(string zoneName, string key);
 
-		/// <summary>
-		/// Make a list of the blobs keys available in this zone.
-		/// </summary>
-		List<string> GetBlobKeys(string zoneName);
+        /// <summary>
+        /// Make a list of the blobs keys available in this zone.
+        /// </summary>
+        /// <param name="zoneName"></param>
+        /// <returns>Enum to semaphore handling</returns>
+        RetrievedStorage GetBlobKeys(string zoneName);
 
-		/// <summary>
-		/// Reset the site to a fresh startup state.
-		/// </summary>
-		void Reset();
+        /// <summary>
+        /// Reset the site to a fresh startup state.
+        /// </summary>
+        /// <returns>Enum to semaphore handling</returns>
+        RetrievedStorage Reset();
 
-		/// <summary>
-		/// Reset only this dropzone to a fresh startup state.
-		/// </summary>
-		void Clear(string dropZoneName);
+        /// <summary>
+        /// Reset only this dropzone to a fresh startup state.
+        /// </summary>
+        /// <param name="zoneName"></param>
+        /// <returns>Enum to semaphore handling</returns>
+        RetrievedStorage Clear(string dropZoneName);
 
-		/// <summary>
-		/// Shutdown the site using an application exit.
-		/// </summary>
-		void Shutdown();
+        /// <summary>
+        /// Shutdown the site using an application exit.
+        /// </summary>
+        /// <returns>Enum to semaphore handling</returns>
+        RetrievedStorage Shutdown();
 
 		/// <summary>
 		/// Determines if the name is acceptable for processing

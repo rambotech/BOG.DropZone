@@ -67,5 +67,10 @@ namespace BOG.DropZone.Client
 				ZoneMetricsDefault = (DropZoneMetrics)this.ZoneMetricsDefault.Clone()
 			};
 		}
+
+		public bool IsValid()
+		{
+			return ZoneMetricsDefault.IsValid();
+		}
 	}
 }

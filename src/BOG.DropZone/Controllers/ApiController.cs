@@ -160,7 +160,7 @@ namespace BOG.DropZone.Controllers
 		/// <param name="recipient">(optional): a specific identifier for a specfic recipient of the payload.</param>
 		/// <param name="tracking">(optional): a tracking key which can later be used to check if the payload was picked up.</param>
 		/// <param name="expiresOn">(optional): an new expiration time to set for the payload.</param>
-		/// <returns>200: PayloadInquir object with the results.</returns>
+ 		/// <returns>200: PayloadInquiry object with the results.</returns>
 		/// <remarks>
 		/// The same arguments must be used for recipient and tracking query parameters, as used when the payload was dropped off.
 		/// Otherwise, unpredictble answers will ok.  The response is an empty text body: the HTTP Response code contins the answer.

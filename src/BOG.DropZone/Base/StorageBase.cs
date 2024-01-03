@@ -1,6 +1,7 @@
 ﻿using BOG.DropZone.Common.Dto;
 using BOG.DropZone.Interface;
 using BOG.DropZone.Storage;
+using Microsoft.DotNet.Scaffolding.Shared;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,8 @@ namespace BOG.DropZone.Base
     {
         const string ZoneNamePattern = @"^[A-Za-z][A-Za-z0-9_\-\.]{0,58}[A-Za-z0-9\.]$";
         const string KeyNamePattern = @"^[A-Za-z][A-Za-z0-9_\-\.]{0,58}[A-Za-z0-9\.]$";
+
+        private readonly IPersistProvider _provider;
 
         readonly Timer stopTimer = new Timer();
         readonly object lockPoint = new object();
@@ -58,8 +61,9 @@ namespace BOG.DropZone.Base
         /// <summary>
         /// Constructor.
         /// </summary>
-        public StorageBase(IConfiguration config)
+        public StorageBase(IConfiguration config, IPersistProvider provider)
         {
+            _provider = provider ?? throw new ArgumentNullException(nameof(provider));
             PersistBaseFolder = config.GetValue<string>(
                     "PersistFolderRoot",
                     Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "app.data", "local", "dropzones")
@@ -78,6 +82,16 @@ namespace BOG.DropZone.Base
             stopTimer.Enabled = false;
             stopTimer.Elapsed += new ElapsedEventHandler(OnTimedEvent);
             stopTimer.Interval = 1000;
+        }
+
+        /// <summary>
+        /// Shutdowns down the web server, requiring restart at the command line.
+        /// When running as a service, the service normally will restart it.
+        /// </summary>
+        public void Shutdown()
+        {
+            // triggers a timer, which does the actual shutdown after the thread is in an idle state.
+            stopTimer.Enabled = true;
         }
 
         /// <summary>
@@ -100,29 +114,40 @@ namespace BOG.DropZone.Base
             return new Regex(KeyNamePattern, RegexOptions.IgnoreCase).IsMatch(key);
         }
 
-        public void PushToQueue(string zoneName, string recipient, string tracking, DateTime expiresOn, string payload)
-        {
-            throw new NotImplementedException();
-        }
-
-        public StoredValue PullFromQueue(string zoneName, string recipient, out string payload)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void EnqueuePayload(string zoneName, string recipient, string tracking, DateTime expiresOn)
+        /// <summary>
+        /// FIFO push item
+        /// </summary>
+        /// <param name="zoneName"></param>
+        /// <param name="recipient">Use * for any recipient</param>
+        /// <param name="tracking"></param>
+        /// <param name="expiresOn"></param>
+        /// <param name="payload"></param>
+		/// <returns>Enum to semaphore handling</returns>
+        RetrievedStorage PushToQueue(string zoneName, string recipient, string tracking, DateTime expiresOn, string payload)
         {
             throw new NotImplementedException();
         }
 
         /// <summary>
-        /// Blobs are always stored in the file system, regardless of implementation.
+		/// FIFO pull item for a specific recipient (* = global queue: default for null or whitepace string)
+		/// </summary>
+		/// <param name="zoneName"></param>
+		/// <param name="recipient"></param>
+		/// <param name="payload"></param>
+		/// <returns>Enum to semaphore handling</returns>
+        RetrievedStorage PullFromQueue(string zoneName, string recipient)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Make a list of the blobs keys available in this zone.
         /// </summary>
         /// <param name="zoneName"></param>
-        /// <returns></returns>
-        public List<string> GetBlobKeys(string zoneName)
+        /// <returns>Enum to semaphore handling</returns>
+        RetrievedStorage GetBlobKeys(string zoneName)
         {
-            var result = new List<string>();
+            var items = new List<string>();
 
             if (IsValidZoneName(zoneName))
             {
@@ -132,11 +157,15 @@ namespace BOG.DropZone.Base
                     foreach (var filename in Directory.GetFiles(zoneFolder, MakeBlobFilename("*"), SearchOption.TopDirectoryOnly))
                     {
                         var filenameOnly = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(filename));
-                        result.Add(filenameOnly);
+                        items.Add(filenameOnly);
                     }
                 }
             }
-            return result;
+            return new RetrievedStorage
+            {
+                Result = Enums.StorageResult.Success,
+                Payload = (object)items
+            };
         }
 
         /// <summary>
@@ -242,18 +271,9 @@ namespace BOG.DropZone.Base
             ClearCommon(zoneName);
         }
 
-        /// <summary>
-        /// Shutdowns down the web server, requiring restart at the command line.
-        /// When running as a service, the service normally will restart it.
-        /// </summary>
-        public void Shutdown()
-        {
-            // triggers a timer, which does the actual shutdown after the thread is in an idle state.
-            stopTimer.Enabled = true;
-        }
-
         private static void OnTimedEvent(object source, ElapsedEventArgs e)
         {
+            SaveObjects();
             System.Environment.Exit(0);
         }
 

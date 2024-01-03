@@ -23,12 +23,6 @@ namespace BOG.DropZone.Common.Dto
         public Dictionary<string, int> Recipients { get; set; } = new Dictionary<string, int>();
 
         /// <summary>
-        /// The message to display if the data is not to be trusted.
-        /// </summary>
-        [JsonProperty]
-        public string Message { get; set; } = string.Empty;
-
-        /// <summary>
         /// The number of reference set actions denied due to count or size limits triggered.
         /// </summary>
         [JsonProperty]
