@@ -63,13 +63,13 @@ namespace BOG.DropZone.Test
 
                 var zone = new DropZoneConfig
                 {
-                    BaseUrl = "http://sbc08:5000",
+                    BaseUrl = "http://localhost:5000",
                     ZoneName = "TestPlace",
                     Password = string.Empty,
                     Salt = string.Empty,
                     UseEncryption = false,
-                    AccessToken = "DZO-30c282f1-1a83-467e-ae7b-44a60a314505",
-                    AdminToken = "DZA-34ef0a0a-83bd-44dd-a51d-da4d626a56a6",
+                    AccessToken = "YourAccessTokenValueHere",
+                    AdminToken = "YourAdminTokenValueHere",
                     TimeoutSeconds = 600
                 };
 

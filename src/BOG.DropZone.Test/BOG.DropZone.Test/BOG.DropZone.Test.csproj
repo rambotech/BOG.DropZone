@@ -38,10 +38,4 @@
     </None>
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="Testing\TextFile1.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>
