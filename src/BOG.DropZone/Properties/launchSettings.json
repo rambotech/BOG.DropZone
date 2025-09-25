@@ -2,22 +2,29 @@
   "profiles": {
     "IISE - BOG.DropZone": {
       "commandName": "IISExpress",
-      "commandLineArgs": "--AccessToken YourAccessTokenValueHere --AdminToken YourAdminTokenValueHere --httpPort 5000 --HttpsPort 0 --UseLetsEncrypt false",
-      "launchBrowser": true
-    },
-    "CMD - BOG.DropZone": {
-      "commandName": "Project",
-      "commandLineArgs": "--AccessToken YourAccessTokenValueHere --AdminToken YourAdminTokenValueHere --httpPort 5000 --HttpsPort 0 --UseLetsEncrypt false",
+      "commandLineArgs": "--AccessToken YourAccessTokenValueHere --AdminToken YourAdminTokenValueHere --httpPort 5005 --HttpsPort 5445 --UseLetsEncrypt false",
       "launchBrowser": true,
-      "launchUrl": "http://localhost:5000/swagger"
+      "launchUrl": "http://localhost:5005/swagger"
+    },
+    "CMD (http) - BOG.DropZone": {
+      "commandName": "Project",
+      "commandLineArgs": "--AccessToken YourAccessTokenValueHere --AdminToken YourAdminTokenValueHere --httpPort 5005 --HttpsPort 5445 --UseLetsEncrypt false",
+      "launchBrowser": true,
+      "launchUrl": "http://localhost:5005/swagger"
+    },
+    "CMD (https) - BOG.DropZone": {
+      "commandName": "Project",
+      "commandLineArgs": "--AccessToken YourAccessTokenValueHere --AdminToken YourAdminTokenValueHere --httpPort 5005 --HttpsPort 5445 --UseLetsEncrypt false",
+      "launchBrowser": true,
+      "launchUrl": "http://localhost:5005/swagger"
     }
   },
   "iisSettings": {
     "windowsAuthentication": false,
     "anonymousAuthentication": true,
     "iisExpress": {
-      "applicationUrl": "http://localhost:54771/",
-      "sslPort": 44304
+      "applicationUrl": "http://localhost:12569/",
+      "sslPort": 44363
     }
   }
 }

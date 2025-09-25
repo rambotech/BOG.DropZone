@@ -134,8 +134,8 @@ MaxDropzones: 5
 MaximumFailedAttemptsBeforeLockout: 3
 LockoutSeconds: 300
 Hosting environment: Development
-Content root path: C:\src\BOG\Public\BOG.DropZone\src\BOG.DropZone\bin\Debug\net5.0
-Now listening on: http://[::]:5000
+Content root path: C:\src\BOG\Public\BOG.DropZone\src\BOG.DropZone\bin\Debug\net8.0
+Now listening on: http://[::]:5005
 Application started. Press Ctrl+C to shut down.
 ```
 

@@ -63,7 +63,7 @@ namespace BOG.DropZone.Test
 
                 var zone = new DropZoneConfig
                 {
-                    BaseUrl = "http://localhost:5000",
+                    BaseUrl = "http://localhost:5005",
                     ZoneName = "TestPlace",
                     Password = string.Empty,
                     Salt = string.Empty,

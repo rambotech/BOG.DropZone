@@ -66,8 +66,8 @@ namespace BOG.DropZone
 				});
 			services.AddHttpContextAccessor();
 
-			var valueHttp = Configuration.GetValue<int>("HttpPort", 5000);
-			var valueHttps = Configuration.GetValue<int>("HttpsPort", 0);
+			var valueHttp = Configuration.GetValue<int>("HttpPort", 5005);
+			var valueHttps = Configuration.GetValue<int>("HttpsPort", 5445);
 
 			var valueUseReverseProxy = Configuration.GetValue<bool>("UseReverseProxy", false);
 			var knownProxies = Configuration.GetValue<string>("KnownProxies", String.Empty);

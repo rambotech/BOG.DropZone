@@ -32,26 +32,11 @@ namespace BOG.DropZone
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .AddEnvironmentVariables()
                 .AddCommandLine(args)
-           .Build();
+                .Build();
 
             var host = WebHost
                 .CreateDefaultBuilder(args)
-                .UseConfiguration(config);
-
-            var useUrls = new List<string>();
-            var valueHttp = config.GetValue<int>("HttpPort", 5000);
-            useUrls.Add($"http://*:{valueHttp}");
-
-            var valueHttps = config.GetValue<int>("HttpsPort", 0);
-            if (valueHttps > 0)
-            {
-                useUrls.Add($"https://*:{valueHttps}");
-                host.UseSetting("https_port", valueHttps.ToString());
-                host.UseKestrel();
-            }
-
-            host
-                .UseUrls(useUrls.ToArray())
+                .UseConfiguration(config)
                 .UseStartup<Startup>();
 
             return host.Build();
