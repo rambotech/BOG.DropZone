@@ -1,8 +1,8 @@
 | *branch* | BOG.DropZone  | BOG.DropZone.Client   | BOG.DropZone.Common |
 | :--- | :---: | :---: | :---: |
-| master    | [![Build status](https://app.travis-ci.com/rambotech/BOG.DropZone.svg?branch=master)](https://app.travis-ci.com/github/rambotech/BOG.DropZone/branches) |  [![Nuget](https://img.shields.io/nuget/v/BOG.DropZone.Client)](https://www.nuget.org/packages/BOG.DropZone.Client/)  | [![Nuget](https://img.shields.io/nuget/v/BOG.DropZone.Client)](https://www.nuget.org/packages/BOG.DropZone.Common/) |
-| release   | [![Build status](https://app.travis-ci.com/rambotech/BOG.DropZone.svg?branch=release)](https://app.travis-ci.com/github/rambotech/BOG.DropZone/branches) | (n/a)  |  (n/a) |
-| develop   | [![Build status](https://app.travis-ci.com/rambotech/BOG.DropZone.svg?branch=develop)](https://app.travis-ci.com/github/rambotech/BOG.DropZone/branches) | (n/a)  |  (n/a) |
+| master    | ![Build status](https://github.com/rambotech/BOG.DropZone/actions/workflows/dotnet.yml/badge.svg?branch=master) |  [![Nuget](https://img.shields.io/nuget/v/BOG.DropZone.Client)](https://www.nuget.org/packages/BOG.DropZone.Client/)  | [![Nuget](https://img.shields.io/nuget/v/BOG.DropZone.Client)](https://www.nuget.org/packages/BOG.DropZone.Common/) |
+| release   | ![Build status](https://github.com/rambotech/BOG.DropZone/actions/workflows/dotnet.yml/badge.svg?branch=release) | (n/a)  |  (n/a) |
+| develop   | ![Build status](https://github.com/rambotech/BOG.DropZone/actions/workflows/dotnet.yml/badge.svg?branch=develop) | (n/a)  |  (n/a) |
 
 # BOG.DropZone
 ![alt text](https://github.com/rambotech/BOG.DropZone/blob/master/assets/DropZone.png "They just keep coming and going, and going and coming!")
@@ -134,8 +134,8 @@ MaxDropzones: 5
 MaximumFailedAttemptsBeforeLockout: 3
 LockoutSeconds: 300
 Hosting environment: Development
-Content root path: C:\src\BOG\Public\BOG.DropZone\src\BOG.DropZone\bin\Debug\net8.0
-Now listening on: http://[::]:5005
+Content root path: ...wherever...
+Now listening on: http://[::]:port      ... default port is 5000
 Application started. Press Ctrl+C to shut down.
 ```
 

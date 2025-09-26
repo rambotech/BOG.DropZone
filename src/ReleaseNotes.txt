@@ -1,5 +1,11 @@
 Release Notes:
 
+2.4.4 -- 2025.09.25
+* Update to .NET 5 to .NET 8
+* Remove Lettuce Encrypt. If you choose this path (LetsEncrypt), consider using NGINX as the entry point.
+* Adjust badges on README to github actions.
+* Misc cleanup, inclduing changes to defaults.
+
 2.4.3 -- 2023.11.14
 * Update to .NET 8
 

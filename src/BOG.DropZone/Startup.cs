@@ -1,17 +1,16 @@
-﻿using BOG.DropZone.Interface;
-//using Certes;
+﻿using System;
+using System.IO;
+using System.Net;
+using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using BOG.DropZone.Interface;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.PlatformAbstractions;
-using System;
-using System.IO;
-using System.Net;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace BOG.DropZone
 {
@@ -80,21 +79,6 @@ namespace BOG.DropZone
 				});
 			}
 
-			var useLetsEncrypt = Configuration.GetValue<bool>("UseLetsEncrypt", false);
-			if (valueHttp == 80 && valueHttps == 443 && useLetsEncrypt)
-			{
-				// Register Let's Encrypt for SSL, if enabled in the config.
-				services.AddLettuceEncrypt(o =>
-				{
-					o.AcceptTermsOfService = Configuration.GetValue<bool>("LettuceEncrypt:AcceptTermsOfService");
-					o.EmailAddress = Configuration.GetValue<string>("LettuceEncrypt:EmailAddress");
-					o.DomainNames = Configuration.GetValue<string[]>("LettuceEncrypt:Domains");
-					o.RenewalCheckPeriod = TimeSpan.FromHours(Configuration.GetValue<double>("LettuceEncrypt:RenewalCheckPeriodHours", 6));
-					o.RenewDaysInAdvance = TimeSpan.FromDays(Configuration.GetValue<double>("LettuceEncrypt:RenewDaysInAdvance", 2));
-					o.UseStagingServer = Configuration.GetValue<bool>("LettuceEncrypt:UseStagingServer");
-				});
-			}
-
 			// Register the Swagger generator, defining one or more Swagger documents
 			services.AddSwaggerGen(c =>
 			{
@@ -107,7 +91,7 @@ namespace BOG.DropZone
 					License = new Microsoft.OpenApi.Models.OpenApiLicense { Name = "MIT", Url = new Uri("https://opensource.org/licenses/MIT") }
 				});
 				// Set the comments path for the Swagger JSON and UI.
-				var xmlPath = Path.Combine(PlatformServices.Default.Application.ApplicationBasePath, "BOG.DropZone.xml");
+				var xmlPath = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "BOG.DropZone.xml");
 				c.IncludeXmlComments(xmlPath);
 			});
 		}

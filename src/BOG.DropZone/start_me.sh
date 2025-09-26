@@ -7,8 +7,8 @@
 		--MaxDropzones 5 \
 		--MaximumFailedAttemptsBeforeLockout 3 \
 		--LockoutSeconds 300 \
-		--HttpPort 5005 \
-		--HttpsPort 5445 \
+		--HttpPort 5000 \
+		--HttpsPort 5001 \
 		--UseReverseProxy true \
-		--KnownProxies 172.25.175.1,172.18.144.1
+		--KnownProxies 192.168.25.175.1,192.168.144.1
 

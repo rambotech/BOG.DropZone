@@ -2,21 +2,21 @@
   "profiles": {
     "IISE - BOG.DropZone": {
       "commandName": "IISExpress",
-      "commandLineArgs": "--AccessToken YourAccessTokenValueHere --AdminToken YourAdminTokenValueHere --httpPort 5005 --HttpsPort 5445 --UseLetsEncrypt false",
+      "commandLineArgs": "--AccessToken YourAccessTokenValueHere --AdminToken YourAdminTokenValueHere --httpPort 5000 --HttpsPort 5001 --UseLetsEncrypt false",
       "launchBrowser": true,
-      "launchUrl": "http://localhost:5005/swagger"
+      "launchUrl": "http://localhost:5000"
     },
     "CMD (http) - BOG.DropZone": {
       "commandName": "Project",
-      "commandLineArgs": "--AccessToken YourAccessTokenValueHere --AdminToken YourAdminTokenValueHere --httpPort 5005 --HttpsPort 5445 --UseLetsEncrypt false",
+      "commandLineArgs": "--AccessToken YourAccessTokenValueHere --AdminToken YourAdminTokenValueHere --httpPort 5000 --HttpsPort 5001 --UseLetsEncrypt false",
       "launchBrowser": true,
-      "launchUrl": "http://localhost:5005/swagger"
+      "launchUrl": "http://localhost:5000"
     },
     "CMD (https) - BOG.DropZone": {
       "commandName": "Project",
-      "commandLineArgs": "--AccessToken YourAccessTokenValueHere --AdminToken YourAdminTokenValueHere --httpPort 5005 --HttpsPort 5445 --UseLetsEncrypt false",
+      "commandLineArgs": "--AccessToken YourAccessTokenValueHere --AdminToken YourAdminTokenValueHere --httpPort 5000 --HttpsPort 5001 --UseLetsEncrypt false",
       "launchBrowser": true,
-      "launchUrl": "http://localhost:5005/swagger"
+      "launchUrl": "http://localhost:5000"
     }
   },
   "iisSettings": {
