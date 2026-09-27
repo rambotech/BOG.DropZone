@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Net;
 using System.Reflection;
@@ -49,24 +49,39 @@ namespace BOG.DropZone
 				// This lambda determines whether user consent for non-essential cookies is needed for a given request.
 				options.CheckConsentNeeded = context => false;
 				options.MinimumSameSitePolicy = SameSiteMode.None;
+			})
+			.AddMvc(options =>
+			{
+				options.InputFormatters.Insert(0, new RawRequestBodyFormatter());
+				options.EnableEndpointRouting = false;
+			})
+			.AddJsonOptions(options =>
+			{
+				options.JsonSerializerOptions.WriteIndented = true;
+				options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault;
+				options.JsonSerializerOptions.IgnoreReadOnlyProperties = false;
+				options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+				options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
 			});
-			services.AddMvc(options =>
-				{
-					options.InputFormatters.Insert(0, new RawRequestBodyFormatter());
-					options.EnableEndpointRouting = false;
-				})
-				.AddJsonOptions(options =>
-				{
-					options.JsonSerializerOptions.WriteIndented = true;
-					options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault;
-					options.JsonSerializerOptions.IgnoreReadOnlyProperties = false;
-					options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-					options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-				});
 			services.AddHttpContextAccessor();
 
 			var valueHttp = Configuration.GetValue<int>("HttpPort", 5005);
 			var valueHttps = Configuration.GetValue<int>("HttpsPort", 5445);
+			var useUrls = string.Empty;
+			
+			if (valueHttp > 0)
+			{
+				useUrls = $"http://*:{valueHttp}";
+			}
+			if (valueHttps > 0)
+			{
+				if (valueHttp > 0)
+				{
+					useUrls += $";";
+				}
+				useUrls += $"https://*:{valueHttps}";
+			}
+			if (useUrls.Length == 0) throw new Exception("No port number specified for either http or https.  At least one must be used.");
 
 			var valueUseReverseProxy = Configuration.GetValue<bool>("UseReverseProxy", false);
 			var knownProxies = Configuration.GetValue<string>("KnownProxies", String.Empty);

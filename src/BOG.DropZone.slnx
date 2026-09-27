@@ -1,0 +1,38 @@
+<Solution>
+  <Folder Name="/App/" />
+  <Folder Name="/App/Testing/" />
+  <Folder Name="/App/Testing/Console/">
+    <Project Path="BOG.DropZone.Test/BOG.DropZone.Test/BOG.DropZone.Test.csproj" />
+  </Folder>
+  <Folder Name="/App/Website/">
+    <Project Path="BOG.DropZone/BOG.DropZone.csproj">
+      <BuildDependency Project="BOG.DropZone.Client/BOG.DropZone.Client.csproj" />
+    </Project>
+  </Folder>
+  <Folder Name="/Nuget/">
+    <Project Path="BOG.DropZone.Client/BOG.DropZone.Client.csproj" />
+    <Project Path="BOG.DropZone.Common/BOG.DropZone.Common.csproj" />
+  </Folder>
+  <Folder Name="/_SolutionItems/">
+    <File Path="../LICENSE" />
+    <File Path="../md-styles.css" />
+    <File Path="../md-template.html" />
+    <File Path="../README.md" />
+    <File Path="../ROADMAP.md" />
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path="global.json" />
+    <File Path="ReleaseNotes.txt" />
+  </Folder>
+  <Folder Name="/_SolutionItems/.github/" />
+  <Folder Name="/_SolutionItems/.github/workflows/">
+    <File Path="../.github/workflows/dotnet.yml" />
+  </Folder>
+  <Folder Name="/_SolutionItems/Assets/">
+    <File Path="../assets/DropZone.png" />
+    <File Path="../assets/flow.png" />
+    <File Path="../assets/parachute.ico" />
+    <File Path="../assets/parachute.png" />
+    <File Path="global.json" />
+  </Folder>
+</Solution>

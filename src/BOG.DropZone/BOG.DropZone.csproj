@@ -1,72 +1,76 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <RuntimeIdentifiers>win10-x64</RuntimeIdentifiers>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
 		<RuntimeIdentifiers>osx-x64</RuntimeIdentifiers>
 		<RuntimeIdentifiers>linux-x64</RuntimeIdentifiers>
-    <RuntimeIdentifiers>linux-arm</RuntimeIdentifiers>
+		<RuntimeIdentifiers>linux-arm</RuntimeIdentifiers>
 		<!-- <PublishSingleFile>true</PublishSingleFile> -->
-    <Version>2.4.4</Version>
-    <AssemblyVersion>2.4.4.0</AssemblyVersion>
-  </PropertyGroup>
+		<Version>2.4.4</Version>
+		<AssemblyVersion>2.4.4.0</AssemblyVersion>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DocumentationFile>bin\debug\net6.0\BOG.DropZone.xml</DocumentationFile>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<DocumentationFile>bin\debug\net6.0\BOG.DropZone.xml</DocumentationFile>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DocumentationFile>bin\release\net6.0\BOG.DropZone.xml</DocumentationFile>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<DocumentationFile>bin\release\net6.0\BOG.DropZone.xml</DocumentationFile>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <PublishWithAspNetCoreTargetManifest>false</PublishWithAspNetCoreTargetManifest>
-    <FileVersion>2.4.4.0</FileVersion>
-    <Authors>John J Schultz</Authors>
-    <Company />
-    <Description>A standalone interapplication communication point</Description>
-    <Copyright>(c) 2017-2025, John J Schultz</Copyright>
-    <PackageProjectUrl>https://github.com/rambotech/BOG.DropZone</PackageProjectUrl>
-    <PackageIconUrl></PackageIconUrl>
-    <RepositoryUrl>https://github.com/rambotech/BOG.DropZone</RepositoryUrl>
-    <RepositoryType>Git</RepositoryType>
-    <PackageTags>Rest api queue key value</PackageTags>
-    <PackageLicenseUrl></PackageLicenseUrl>
-    <PackageIcon>parachute.png</PackageIcon>
-    <GenerateDocumentationFile>True</GenerateDocumentationFile>
-  </PropertyGroup>
+	<PropertyGroup>
+		<PublishWithAspNetCoreTargetManifest>false</PublishWithAspNetCoreTargetManifest>
+		<FileVersion>2.4.4.0</FileVersion>
+		<Authors>John J Schultz</Authors>
+		<Company />
+		<Description>A standalone interapplication communication point</Description>
+		<Copyright>(c) 2017-2026, John J Schultz</Copyright>
+		<PackageProjectUrl>https://github.com/rambotech/BOG.DropZone</PackageProjectUrl>
+		<PackageIconUrl></PackageIconUrl>
+		<RepositoryUrl>https://github.com/rambotech/BOG.DropZone</RepositoryUrl>
+		<RepositoryType>Git</RepositoryType>
+		<PackageTags>Rest api queue key value</PackageTags>
+		<PackageLicenseUrl></PackageLicenseUrl>
+		<PackageIcon>parachute.png</PackageIcon>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="BOG.SwissArmyKnife" Version="1.10.0" />
-    <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.9" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="9.0.9" />
+	<PropertyGroup>
+		<InvariantGlobalization>true</InvariantGlobalization>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="BOG.SwissArmyKnife" Version="1.10.0" />
+		<PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.9" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="9.0.9" />
 		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.4" />
-    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="9.0.4" />
-  </ItemGroup>
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.4" />
+		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="9.0.4" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.3" />
-  </ItemGroup>
+	<ItemGroup>
+		<DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.3" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\BOG.DropZone.Client\BOG.DropZone.Client.csproj" />
-    <ProjectReference Include="..\BOG.DropZone.Common\BOG.DropZone.Common.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\BOG.DropZone.Client\BOG.DropZone.Client.csproj" />
+		<ProjectReference Include="..\BOG.DropZone.Common\BOG.DropZone.Common.csproj" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <None Update="start_me.bat">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="start_me.sh">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="..\..\assets\parachute.png">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
-  </ItemGroup>
+	<ItemGroup>
+		<None Update="start_me.bat">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="start_me.sh">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Include="..\..\assets\parachute.png">
+			<Pack>True</Pack>
+			<PackagePath></PackagePath>
+		</None>
+	</ItemGroup>
 
 </Project>
