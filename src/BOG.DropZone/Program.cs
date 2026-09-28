@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.AspNetCore;
@@ -34,9 +35,12 @@ namespace BOG.DropZone
                 .AddCommandLine(args)
                 .Build();
 
-            var host = WebHost
+			var useUrls = config.GetValue<string>("UseUrls") ?? "http://0.0.0.0:5000;https://0.0.0.0:5001";
+
+			var host = WebHost
                 .CreateDefaultBuilder(args)
                 .UseConfiguration(config)
+                .UseUrls(useUrls.Split(new char[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
                 .UseStartup<Startup>();
 
             return host.Build();

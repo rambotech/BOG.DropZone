@@ -1,4 +1,4 @@
-﻿using BOG.DropZone.Common.Dto;
+using BOG.DropZone.Common.Dto;
 using System;
 
 namespace BOG.DropZone.Client
@@ -9,7 +9,7 @@ namespace BOG.DropZone.Client
 	public class DropZoneConfig : ICloneable
 	{
 		/// <summary>
-		/// The URI of the drop zone ( e.g. http://localhost:5005, https://localhost:5445, https://io.mydomain.com:5445)
+		/// The URI of the drop zone ( e.g. http://localhost:5000, https://localhost:5001, https://io.mydomain.com:5445)
 		/// </summary>
 		public string BaseUrl { get; set; } = null;
 		/// <summary>

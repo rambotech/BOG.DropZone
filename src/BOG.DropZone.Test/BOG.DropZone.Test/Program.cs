@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -63,7 +63,7 @@ namespace BOG.DropZone.Test
 
                 var zone = new DropZoneConfig
                 {
-                    BaseUrl = "http://localhost:5005",
+                    BaseUrl = "http://localhost:5000",
                     ZoneName = "TestPlace",
                     Password = string.Empty,
                     Salt = string.Empty,

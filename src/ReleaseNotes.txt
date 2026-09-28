@@ -1,5 +1,9 @@
 Release Notes:
 
+2.4.5 -- 2026.09.27
+* Add new option for UseUrls
+* Add InvariantGlobalization to project defintions for Armbian compatibility.
+
 2.4.4 -- 2025.09.25
 * Update to .NET 5 to .NET 8
 * Remove Lettuce Encrypt. If you choose this path (LetsEncrypt), consider using NGINX as the entry point.
